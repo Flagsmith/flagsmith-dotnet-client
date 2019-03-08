@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
 using System.Text;
@@ -10,6 +11,14 @@ namespace SolidStateGroup.BulletTrain
     public class BulletTrainClient
     {
         public string environmentKey { get; set; }
+
+        private static readonly HttpClient httpClient;
+
+        static BulletTrainClient() {
+            var sp = ServicePointManager.FindServicePoint(new Uri(Config.API));
+            sp.ConnectionLeaseTimeout = 60*1000*5;
+            httpClient = new HttpClient();
+        }
 
         /// <summary>
         /// Get all feature flags (flags and remote config) optionally for a specific identity.
@@ -155,27 +164,24 @@ namespace SolidStateGroup.BulletTrain
         }
 
         private async Task<string> GetJSON(HttpMethod method, string url, string body = null) {
-            using (HttpClient client = new HttpClient())
-            {
-                try {
-                    HttpRequestMessage request = new HttpRequestMessage(method, url) {
-                        Headers = {
-                            { "X-Environment-Key", environmentKey }
-                        }
-                    };
-                    if (body != null) {
-                        request.Content = new StringContent(body, Encoding.UTF8, "application/json");
+            try {
+                HttpRequestMessage request = new HttpRequestMessage(method, url) {
+                    Headers = {
+                        { "X-Environment-Key", environmentKey }
                     }
-                    HttpResponseMessage response = await client.SendAsync(request);
-                    response.EnsureSuccessStatusCode();
-                    return await response.Content.ReadAsStringAsync();
+                };
+                if (body != null) {
+                    request.Content = new StringContent(body, Encoding.UTF8, "application/json");
                 }
-                catch (HttpRequestException e)
-                {
-                    Console.WriteLine("\nHTTP Request Exception Caught!");
-                    Console.WriteLine("Message :{0} ",e.Message);
-                    return null;
-                }
+                HttpResponseMessage response = await httpClient.SendAsync(request);
+                response.EnsureSuccessStatusCode();
+                return await response.Content.ReadAsStringAsync();
+            }
+            catch (HttpRequestException e)
+            {
+                Console.WriteLine("\nHTTP Request Exception Caught!");
+                Console.WriteLine("Message :{0} ",e.Message);
+                return null;
             }
         }
     }

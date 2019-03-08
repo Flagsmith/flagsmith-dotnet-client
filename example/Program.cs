@@ -10,7 +10,7 @@ namespace example
         static void Main(string[] args)
         {
             BulletTrainClient client = new BulletTrainClient() {
-                environmentKey = "QjgYur4LQTwe5HpvbvhpzK"
+                environmentKey = "env-key-goes-here"
             };
 
             // Get all flags
@@ -23,7 +23,7 @@ namespace example
             Console.WriteLine("");
 
             // Get flags for a specific user
-            flags = client.GetFeatureFlags("bullet_train_sample_user").GetAwaiter().GetResult();
+            flags = client.GetFeatureFlags("development_user_123456").GetAwaiter().GetResult();
 
             Console.WriteLine("Flags for specific user");
             foreach (Flag flag in flags) {
