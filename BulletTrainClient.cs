@@ -14,9 +14,10 @@ namespace SolidStateGroup.BulletTrain
 
         private static readonly HttpClient httpClient;
 
-        static BulletTrainClient() {
+        static BulletTrainClient()
+        {
             var sp = ServicePointManager.FindServicePoint(new Uri(Config.API));
-            sp.ConnectionLeaseTimeout = 60*1000*5;
+            sp.ConnectionLeaseTimeout = 60 * 1000 * 5;
             httpClient = new HttpClient();
         }
 
@@ -28,26 +29,30 @@ namespace SolidStateGroup.BulletTrain
             string url;
             if (identity == null)
             {
-                url = Config.API +  "flags/";
+                url = Config.API + "flags/";
             }
             else
             {
                 url = Config.API + "identities/" + identity + "/";
             }
 
-            try {
+            try
+            {
                 string json = await GetJSON(HttpMethod.Get, url);
 
-                if (identity == null) {
+                if (identity == null)
+                {
                     return JsonConvert.DeserializeObject<List<Flag>>(json);
-                } else {
+                }
+                else
+                {
                     return JsonConvert.DeserializeObject<Identity>(json).flags;
                 }
             }
             catch (JsonException e)
             {
                 Console.WriteLine("\nJSON Exception Caught!");
-                Console.WriteLine("Message :{0} ",e.Message);
+                Console.WriteLine("Message :{0} ", e.Message);
                 return null;
             }
         }
@@ -58,8 +63,10 @@ namespace SolidStateGroup.BulletTrain
         public async Task<bool> HasFeatureFlag(string featureId, string identity = null)
         {
             List<Flag> flags = await GetFeatureFlags(identity);
-            foreach (Flag flag in flags) {
-                if (flag.GetFeature().GetName().Equals(featureId) && flag.IsEnabled()) {
+            foreach (Flag flag in flags)
+            {
+                if (flag.GetFeature().GetName().Equals(featureId) && flag.IsEnabled())
+                {
                     return true;
                 }
             }
@@ -73,8 +80,10 @@ namespace SolidStateGroup.BulletTrain
         public async Task<string> GetFeatureValue(string featureId, string identity = null)
         {
             List<Flag> flags = await GetFeatureFlags(identity);
-            foreach (Flag flag in flags) {
-                if (flag.GetFeature().GetName().Equals(featureId)) {
+            foreach (Flag flag in flags)
+            {
+                if (flag.GetFeature().GetName().Equals(featureId))
+                {
                     return flag.GetValue();
                 }
             }
@@ -85,18 +94,23 @@ namespace SolidStateGroup.BulletTrain
         /// <summary>
         /// Get all user traits for provided identity. Optionally filter results with a list of keys
         /// </summary>
-        public async Task<List<Trait>> GetTraits(string identity, List<string> keys = null) {
-            try {
+        public async Task<List<Trait>> GetTraits(string identity, List<string> keys = null)
+        {
+            try
+            {
                 string json = await GetJSON(HttpMethod.Get, Config.API + "identities/" + identity + "/");
 
                 List<Trait> traits = JsonConvert.DeserializeObject<Identity>(json).traits;
-                if (keys == null) {
+                if (keys == null)
+                {
                     return traits;
                 }
 
                 List<Trait> filteredTraits = new List<Trait>();
-                foreach (Trait trait in traits) {
-                    if (keys.Contains(trait.GetKey())) {
+                foreach (Trait trait in traits)
+                {
+                    if (keys.Contains(trait.GetKey()))
+                    {
                         filteredTraits.Add(trait);
                     }
                 }
@@ -106,7 +120,7 @@ namespace SolidStateGroup.BulletTrain
             catch (JsonException e)
             {
                 Console.WriteLine("\nJSON Exception Caught!");
-                Console.WriteLine("Message :{0} ",e.Message);
+                Console.WriteLine("Message :{0} ", e.Message);
                 return null;
             }
         }
@@ -118,8 +132,10 @@ namespace SolidStateGroup.BulletTrain
         {
             List<Trait> traits = await GetTraits(identity);
 
-            foreach (Trait trait in traits) {
-                if (trait.GetKey().Equals(key)) {
+            foreach (Trait trait in traits)
+            {
+                if (trait.GetKey().Equals(key))
+                {
                     return trait.GetValue();
                 }
             }
@@ -132,7 +148,8 @@ namespace SolidStateGroup.BulletTrain
         /// </summary>
         public async Task<Trait> SetTrait(string identity, string key, string value)
         {
-            try {
+            try
+            {
                 string json = await GetJSON(HttpMethod.Post, Config.API + "identities/" + identity + "/traits/" + key, JsonConvert.SerializeObject(new { trait_value = value }));
 
                 return JsonConvert.DeserializeObject<Trait>(json);
@@ -140,7 +157,7 @@ namespace SolidStateGroup.BulletTrain
             catch (JsonException e)
             {
                 Console.WriteLine("\nJSON Exception Caught!");
-                Console.WriteLine("Message :{0} ",e.Message);
+                Console.WriteLine("Message :{0} ", e.Message);
                 return null;
             }
         }
@@ -150,7 +167,8 @@ namespace SolidStateGroup.BulletTrain
         /// </summary>
         public async Task<Identity> GetUserIdentity(string identity)
         {
-            try {
+            try
+            {
                 string json = await GetJSON(HttpMethod.Get, Config.API + "identities/" + identity + "/");
 
                 return JsonConvert.DeserializeObject<Identity>(json);
@@ -158,19 +176,23 @@ namespace SolidStateGroup.BulletTrain
             catch (JsonException e)
             {
                 Console.WriteLine("\nJSON Exception Caught!");
-                Console.WriteLine("Message :{0} ",e.Message);
+                Console.WriteLine("Message :{0} ", e.Message);
                 return null;
             }
         }
 
-        private async Task<string> GetJSON(HttpMethod method, string url, string body = null) {
-            try {
-                HttpRequestMessage request = new HttpRequestMessage(method, url) {
+        private async Task<string> GetJSON(HttpMethod method, string url, string body = null)
+        {
+            try
+            {
+                HttpRequestMessage request = new HttpRequestMessage(method, url)
+                {
                     Headers = {
                         { "X-Environment-Key", environmentKey }
                     }
                 };
-                if (body != null) {
+                if (body != null)
+                {
                     request.Content = new StringContent(body, Encoding.UTF8, "application/json");
                 }
                 HttpResponseMessage response = await httpClient.SendAsync(request);
@@ -180,7 +202,7 @@ namespace SolidStateGroup.BulletTrain
             catch (HttpRequestException e)
             {
                 Console.WriteLine("\nHTTP Request Exception Caught!");
-                Console.WriteLine("Message :{0} ",e.Message);
+                Console.WriteLine("Message :{0} ", e.Message);
                 return null;
             }
         }
