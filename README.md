@@ -19,12 +19,16 @@ The client library is available from NuGet and can be added to your project by m
 
 Sign Up and create account at [https://bullet-train.io/](https://www.bullet-train.io/)
 
-In your application initialise the Bullet Train client with your environment API key
+In your application initialise the Bullet Train client with your environment API key and API URL.
 
 ```c#
-BulletTrainClient bulletClient = new BulletTrainClient() {
-  environmentKey: "<environment-key-here>"
+BulletTrainConfiguration configuration = new BulletTrainConfiguration()
+{
+    ApiUrl = "https://api.bullet-train.io/api/v1/",
+    EnvironmentKey = "env-key-goes-here"
 };
+
+BulletTrainClient bulletClient = new BulletTrainClient(configuration);
 ```
 
 To check if a feature flag exists and is enabled:

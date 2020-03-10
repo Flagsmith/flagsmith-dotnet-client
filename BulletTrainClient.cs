@@ -10,15 +10,27 @@ namespace SolidStateGroup.BulletTrain
 {
     public class BulletTrainClient
     {
-        public string environmentKey { get; set; }
+        private readonly BulletTrainConfiguration configuration;
 
-        private static readonly HttpClient httpClient;
+        private static HttpClient httpClient;
+        private static bool isInitialized;
 
-        static BulletTrainClient()
+        public BulletTrainClient(BulletTrainConfiguration bulletTrainConfiguration)
         {
-            var sp = ServicePointManager.FindServicePoint(new Uri(Config.API));
-            sp.ConnectionLeaseTimeout = 60 * 1000 * 5;
-            httpClient = new HttpClient();
+            if (bulletTrainConfiguration == null)
+            {
+                throw new ArgumentNullException(nameof(bulletTrainConfiguration),
+                    "Parameter must be provided when constructing an instance of the client.");
+            }
+
+            if (!isInitialized)
+            {
+                configuration = bulletTrainConfiguration;
+                var sp = ServicePointManager.FindServicePoint(new Uri(configuration.ApiUrl));
+                sp.ConnectionLeaseTimeout = 60 * 1000 * 5;
+                httpClient = new HttpClient();
+                isInitialized = true;
+            }
         }
 
         /// <summary>
@@ -29,11 +41,11 @@ namespace SolidStateGroup.BulletTrain
             string url;
             if (identity == null)
             {
-                url = Config.API + "flags/";
+                url = configuration.ApiUrl + "flags/";
             }
             else
             {
-                url = Config.API + "identities/" + identity + "/";
+                url = configuration.ApiUrl + "identities/" + identity + "/";
             }
 
             try
@@ -98,7 +110,7 @@ namespace SolidStateGroup.BulletTrain
         {
             try
             {
-                string json = await GetJSON(HttpMethod.Get, Config.API + "identities/" + identity + "/");
+                string json = await GetJSON(HttpMethod.Get, configuration.ApiUrl + "identities/" + identity + "/");
 
                 List<Trait> traits = JsonConvert.DeserializeObject<Identity>(json).traits;
                 if (keys == null)
@@ -150,7 +162,7 @@ namespace SolidStateGroup.BulletTrain
         {
             try
             {
-                string json = await GetJSON(HttpMethod.Post, Config.API + "identities/" + identity + "/traits/" + key, JsonConvert.SerializeObject(new { trait_value = value }));
+                string json = await GetJSON(HttpMethod.Post, configuration.ApiUrl + "identities/" + identity + "/traits/" + key, JsonConvert.SerializeObject(new { trait_value = value }));
 
                 return JsonConvert.DeserializeObject<Trait>(json);
             }
@@ -169,7 +181,7 @@ namespace SolidStateGroup.BulletTrain
         {
             try
             {
-                string json = await GetJSON(HttpMethod.Get, Config.API + "identities/" + identity + "/");
+                string json = await GetJSON(HttpMethod.Get, configuration.ApiUrl + "identities/" + identity + "/");
 
                 return JsonConvert.DeserializeObject<Identity>(json);
             }
@@ -188,7 +200,7 @@ namespace SolidStateGroup.BulletTrain
                 HttpRequestMessage request = new HttpRequestMessage(method, url)
                 {
                     Headers = {
-                        { "X-Environment-Key", environmentKey }
+                        { "X-Environment-Key", configuration.EnvironmentKey }
                     }
                 };
                 if (body != null)

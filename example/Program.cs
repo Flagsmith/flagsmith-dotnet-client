@@ -1,7 +1,6 @@
-﻿using System;
+﻿using SolidStateGroup.BulletTrain;
+using System;
 using System.Collections.Generic;
-using System.Threading.Tasks;
-using SolidStateGroup.BulletTrain;
 
 namespace example
 {
@@ -9,9 +8,13 @@ namespace example
     {
         static void Main(string[] args)
         {
-            BulletTrainClient client = new BulletTrainClient() {
-                environmentKey = "env-key-goes-here"
+            BulletTrainConfiguration configuration = new BulletTrainConfiguration()
+            {
+                ApiUrl = "https://api.bullet-train.io/api/v1/",
+                EnvironmentKey = "env-key-goes-here"
             };
+
+            BulletTrainClient client = new BulletTrainClient(configuration);
 
             // Get all flags
             List<Flag> flags = client.GetFeatureFlags().GetAwaiter().GetResult();
