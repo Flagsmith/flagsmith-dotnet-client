@@ -23,6 +23,11 @@ namespace SolidStateGroup.BulletTrain
                     "Parameter must be provided when constructing an instance of the client.");
             }
 
+            if (!bulletTrainConfiguration.IsValid())
+            {
+                throw new ArgumentException("The provided configuration is not valid. An API Url and Environment Key must be provided.", nameof(bulletTrainConfiguration));
+            }
+
             if (!isInitialized)
             {
                 configuration = bulletTrainConfiguration;
