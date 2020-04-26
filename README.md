@@ -93,12 +93,9 @@ if (userTraits != null && userTraits) {
 To get a specific user trait:
 
 ```c#
-Trait userTrait = await bulletClient.GetTrait("my_user_id", "cookies_key");
-if (userTrait != null) {
-    // run the code to use user trait
-} else {
-    // run the code without user trait
-}
+string userTrait = await bulletClient.GetTrait("my_user_id", "cookies_key");
+bool userTrait = await bulletClient.GetBoolTrait("my_user_id", "cookies_key");
+int userTrait = await bulletClient.GetIntegerTrait("my_user_id", "cookies_key");
 ```
 
 To get filtered user traits:

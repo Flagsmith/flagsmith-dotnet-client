@@ -12,7 +12,7 @@
     <PackageDescription>Client SDK for Bullet Train. Ship features with confidence using feature flags and remote config. Host yourself or use our hosted version at https://bullet-train.io/</PackageDescription>
     <Copyright>Copyright © 2019 Solid State Group Ltd</Copyright>
     <PackageProjectUrl>https://bullet-train.io/</PackageProjectUrl>
-    <PackageIconUrl>https://bullet-train.io/images/icon-2.png</PackageIconUrl>
+    <PackageIcon>icon-2.png</PackageIcon>
     <PackageReleaseNotes>Singleton HTTP client</PackageReleaseNotes>
     <PackageTags>feature flags remote config toggles</PackageTags>
     <RepositoryUrl>https://github.com/BulletTrainHQ/bullet-train-dotnet-client</RepositoryUrl>
@@ -24,6 +24,7 @@
     <PackageReference Include="Microsoft.CSharp" Version="4.7.0" />
     <PackageReference Include="Newtonsoft.Json" Version="12.0.1" />
     <None Include="LICENSE.txt" Pack="true" Visible="false" PackagePath="" />
+    <None Include="icon-2.png" Pack="true" PackagePath="\"/>
   </ItemGroup>
 
 </Project>
