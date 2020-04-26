@@ -116,6 +116,14 @@ To set or update a user trait:
 
 ```c#
 Trait userTrait = await bulletClient.SetTrait("my_user_id", "my_user_trait", "blue");
+Trait userTrait = await bulletClient.SetTrait("my_user_id", "my_user_number_trait", 4);
+Trait userTrait = await bulletClient.SetTrait("my_user_id", "my_user_bool_trait", true);
+```
+
+To increment a numeric user trait:
+
+```c#
+Trait userTrait = await bulletClient.IncrementTrait("my_user_id", "my_user_number_trait", 1);
 ```
 
 To retrieve a user identity (both features and traits):
