@@ -1,16 +1,21 @@
-using System;
 using Newtonsoft.Json;
 
-namespace SolidStateGroup.BulletTrain
+namespace BulletTrain
 {
     [JsonObject(MemberSerialization.OptIn)]
     public class Trait
     {
         [JsonProperty("trait_key")]
-        private string key;
+        private string key = null;
 
-        [JsonProperty("trait_value")]
-        private string value;
+        [JsonProperty("string_value")]
+        private string strValue = null;
+
+        [JsonProperty("integer_value")]
+        private int intValue = 0;
+
+        [JsonProperty("bool_value")]
+        private bool boolValue = false;
 
         public string GetKey()
         {
@@ -19,7 +24,22 @@ namespace SolidStateGroup.BulletTrain
 
         public string GetValue()
         {
-            return value;
+            return strValue;
+        }
+
+        public string GetStringValue()
+        {
+            return strValue;
+        }
+
+        public bool GetBoolValue()
+        {
+            return boolValue;
+        }
+
+        public int GetIntValue()
+        {
+            return intValue;
         }
 
         public override string ToString()

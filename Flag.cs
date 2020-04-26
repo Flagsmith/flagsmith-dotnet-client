@@ -1,19 +1,18 @@
-using System;
 using Newtonsoft.Json;
 
-namespace SolidStateGroup.BulletTrain
+namespace BulletTrain
 {
     [JsonObject(MemberSerialization.OptIn)]
     public class Flag
     {
         [JsonProperty]
-        private Feature feature;
+        private Feature feature = null;
 
         [JsonProperty]
-        private bool enabled;
+        private bool enabled = false;
 
         [JsonProperty("feature_state_value")]
-        private string value;
+        private string value = null;
 
         public override string ToString()
         {

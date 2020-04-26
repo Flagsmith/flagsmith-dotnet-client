@@ -1,8 +1,7 @@
-using System;
 using System.Collections.Generic;
 using Newtonsoft.Json;
 
-namespace SolidStateGroup.BulletTrain
+namespace BulletTrain
 {
     [JsonObject(MemberSerialization.OptIn)]
     public class Identity

@@ -4,9 +4,10 @@ using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
 using System.Text;
+using System.Dynamic;
 using Newtonsoft.Json;
 
-namespace SolidStateGroup.BulletTrain
+namespace BulletTrain
 {
     public class BulletTrainClient
     {
@@ -46,11 +47,11 @@ namespace SolidStateGroup.BulletTrain
             string url;
             if (identity == null)
             {
-                url = configuration.ApiUrl + "flags/";
+                url = $"{configuration.ApiUrl}flags/";
             }
             else
             {
-                url = configuration.ApiUrl + "identities/" + identity + "/";
+                url = $"{configuration.ApiUrl}identities/{identity}/";
             }
 
             try
@@ -115,7 +116,7 @@ namespace SolidStateGroup.BulletTrain
         {
             try
             {
-                string json = await GetJSON(HttpMethod.Get, configuration.ApiUrl + "identities/" + identity + "/");
+                string json = await GetJSON(HttpMethod.Get, $"{configuration.ApiUrl}identities/{identity}/");
 
                 List<Trait> traits = JsonConvert.DeserializeObject<Identity>(json).traits;
                 if (keys == null)
@@ -153,7 +154,7 @@ namespace SolidStateGroup.BulletTrain
             {
                 if (trait.GetKey().Equals(key))
                 {
-                    return trait.GetValue();
+                    return trait.GetStringValue();
                 }
             }
 
@@ -161,13 +162,83 @@ namespace SolidStateGroup.BulletTrain
         }
 
         /// <summary>
+        /// Get boolean user trait for provided identity and trait key.
+        /// </summary>
+        public async Task<bool> GetBoolTrait(string identity, string key)
+        {
+            List<Trait> traits = await GetTraits(identity);
+
+            foreach (Trait trait in traits)
+            {
+                if (trait.GetKey().Equals(key))
+                {
+                    return trait.GetBoolValue();
+                }
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// Get integer user trait for provided identity and trait key.
+        /// </summary>
+        public async Task<int> GetIntegerTrait(string identity, string key)
+        {
+            List<Trait> traits = await GetTraits(identity);
+
+            foreach (Trait trait in traits)
+            {
+                if (trait.GetKey().Equals(key))
+                {
+                    return trait.GetIntValue();
+                }
+            }
+
+            return 0;
+        }
+
+        /// <summary>
         /// Set user trait value for provided identity and trait key.
         /// </summary>
-        public async Task<Trait> SetTrait(string identity, string key, string value)
+        public async Task<Trait> SetTrait(string identity, string key, object value)
         {
             try
             {
-                string json = await GetJSON(HttpMethod.Post, configuration.ApiUrl + "identities/" + identity + "/traits/" + key, JsonConvert.SerializeObject(new { trait_value = value }));
+                if (!(value is bool) && !(value is int) && !(value is string)) {
+                    throw new ArgumentException("Value parameter must be string, int or boolean");
+                }
+
+                dynamic obj = new ExpandoObject();
+                obj.identity = new { identifier = identity };
+                obj.trait_key = key;
+                obj.trait_value = value;
+                string json = await GetJSON(HttpMethod.Post, $"{configuration.ApiUrl}traits/", JsonConvert.SerializeObject(obj));
+
+                return JsonConvert.DeserializeObject<Trait>(json);
+            }
+            catch (JsonException e)
+            {
+                Console.WriteLine("\nJSON Exception Caught!");
+                Console.WriteLine("Message :{0} ", e.Message);
+                return null;
+            }
+            catch (ArgumentException e)
+            {
+                Console.WriteLine("\nArgument Exception Caught!");
+                Console.WriteLine("Message :{0} ", e.Message);
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// Increment user trait value for provided identity and trait key.
+        /// </summary>
+        public async Task<Trait> IncrementTrait(string identity, string key, int incrementBy)
+        {
+            try
+            {
+                string json = await GetJSON(HttpMethod.Post, $"{configuration.ApiUrl}traits/increment-value/", 
+                    JsonConvert.SerializeObject(new { identifier = identity, trait_key = key, increment_by = incrementBy }));
 
                 return JsonConvert.DeserializeObject<Trait>(json);
             }
@@ -186,7 +257,7 @@ namespace SolidStateGroup.BulletTrain
         {
             try
             {
-                string json = await GetJSON(HttpMethod.Get, configuration.ApiUrl + "identities/" + identity + "/");
+                string json = await GetJSON(HttpMethod.Get, $"{configuration.ApiUrl}identities/{identity}/");
 
                 return JsonConvert.DeserializeObject<Identity>(json);
             }

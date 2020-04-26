@@ -1,13 +1,12 @@
-using System;
 using Newtonsoft.Json;
 
-namespace SolidStateGroup.BulletTrain
+namespace BulletTrain
 {
     [JsonObject(MemberSerialization.OptIn)]
     public class Feature
     {
         [JsonProperty]
-        private string name;
+        private string name = null;
 
         public string GetName()
         {

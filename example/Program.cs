@@ -1,4 +1,4 @@
-﻿using SolidStateGroup.BulletTrain;
+﻿using BulletTrain;
 using System;
 using System.Collections.Generic;
 
@@ -90,6 +90,20 @@ namespace example
             traitValue = client.GetTrait("bullet_train_sample_user", "dotnet_test").GetAwaiter().GetResult();
             Console.WriteLine(traitValue + "\n");
 
+            // Set integer trait for user
+            Console.WriteLine("Set trait 'dotnet_number_test'");
+            newTrait = client.SetTrait("bullet_train_sample_user", "dotnet_number_test", 3).GetAwaiter().GetResult();
+            Console.WriteLine(newTrait.ToString() + "\n");
+
+            // Increment integer trait for user
+            Console.WriteLine("Increment trait 'dotnet_number_test'");
+            Trait incrementedTrait = client.IncrementTrait("bullet_train_sample_user", "dotnet_number_test", 1).GetAwaiter().GetResult();
+            Console.WriteLine(incrementedTrait.ToString() + "\n");
+
+            // Set boolean trait for user
+            Console.WriteLine("Set trait 'dotnet_bool_test'");
+            newTrait = client.SetTrait("bullet_train_sample_user", "dotnet_bool_test", false).GetAwaiter().GetResult();
+            Console.WriteLine(newTrait.ToString() + "\n");
         }
     }
 }

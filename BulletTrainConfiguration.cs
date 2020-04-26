@@ -1,6 +1,4 @@
-using System;
-
-namespace SolidStateGroup.BulletTrain
+namespace BulletTrain
 {
     public class BulletTrainConfiguration
     {
