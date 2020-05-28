@@ -11,10 +11,10 @@ namespace BulletTrain
 {
     public class BulletTrainClient
     {
-        private readonly BulletTrainConfiguration configuration;
+        public static BulletTrainClient instance;
 
+        private readonly BulletTrainConfiguration configuration;
         private static HttpClient httpClient;
-        private static bool isInitialized;
 
         public BulletTrainClient(BulletTrainConfiguration bulletTrainConfiguration)
         {
@@ -29,13 +29,15 @@ namespace BulletTrain
                 throw new ArgumentException("The provided configuration is not valid. An API Url and Environment Key must be provided.", nameof(bulletTrainConfiguration));
             }
 
-            if (!isInitialized)
+            if (instance == null)
             {
                 configuration = bulletTrainConfiguration;
                 var sp = ServicePointManager.FindServicePoint(new Uri(configuration.ApiUrl));
                 sp.ConnectionLeaseTimeout = 60 * 1000 * 5;
                 httpClient = new HttpClient();
-                isInitialized = true;
+                instance = this;
+            } else {
+                throw new NotSupportedException("BulletTrainClient should only be initialised once. Use BulletTrainClient.instance after successful initialisation");
             }
         }
 
@@ -207,12 +209,8 @@ namespace BulletTrain
                 if (!(value is bool) && !(value is int) && !(value is string)) {
                     throw new ArgumentException("Value parameter must be string, int or boolean");
                 }
-
-                dynamic obj = new ExpandoObject();
-                obj.identity = new { identifier = identity };
-                obj.trait_key = key;
-                obj.trait_value = value;
-                string json = await GetJSON(HttpMethod.Post, $"{configuration.ApiUrl}traits/", JsonConvert.SerializeObject(obj));
+                
+                string json = await GetJSON(HttpMethod.Post, $"{configuration.ApiUrl}traits/", JsonConvert.SerializeObject(new { identity = new { identifier = identity }, trait_key = key, trait_value = value }));
 
                 return JsonConvert.DeserializeObject<Trait>(json);
             }
