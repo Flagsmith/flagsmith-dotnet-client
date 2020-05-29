@@ -19,7 +19,7 @@ The client library is available from NuGet and can be added to your project by m
 
 Sign Up and create account at [https://bullet-train.io/](https://www.bullet-train.io/)
 
-In your application initialise the Bullet Train client with your environment API key and API URL.
+In your application initialise the Bullet Train client once with your environment API key and API URL.
 
 ```c#
 BulletTrainConfiguration configuration = new BulletTrainConfiguration()
@@ -31,10 +31,12 @@ BulletTrainConfiguration configuration = new BulletTrainConfiguration()
 BulletTrainClient bulletClient = new BulletTrainClient(configuration);
 ```
 
+You can then use the `instance` static variable on `BulletTrainClient` anywhere within your app.
+
 To check if a feature flag exists and is enabled:
 
 ```c#
-bool featureEnabled = await bulletClient.HasFeatureFlag("my_test_feature");
+bool featureEnabled = await BulletTrainClient.instance.HasFeatureFlag("my_test_feature");
 if (featureEnabled) {
     // run the code to execute enabled feature
 } else {
@@ -45,7 +47,7 @@ if (featureEnabled) {
 To get a remote config feature value:
 
 ```c#
-string myRemoteConfig = await bulletClient.GetFeatureValue("my_test_feature");
+string myRemoteConfig = await BulletTrainClient.instance.GetFeatureValue("my_test_feature");
 if (myRemoteConfig != null) {
     // run the code to use remote config value
 } else {
@@ -60,7 +62,7 @@ Identifying users allows you to target specific users from the [Bullet Train das
 To check if a feature exists and is enabled for a specific user:
 
 ```c#
-bool featureEnabled = await bulletClient.HasFeatureFlag("my_test_feature", "my_user_id");
+bool featureEnabled = await BulletTrainClient.instance.HasFeatureFlag("my_test_feature", "my_user_id");
 if (featureEnabled) {
     // run the code to execute enabled feature for given user
 } else {
@@ -71,7 +73,7 @@ if (featureEnabled) {
 To get a remote config value for specific user:
 
 ```c#
-string myRemoteConfig = await bulletClient.GetFeatureValue("my_test_feature", "my_user_id");
+string myRemoteConfig = await BulletTrainClient.instance.GetFeatureValue("my_test_feature", "my_user_id");
 if (myRemoteConfig != null) {
     // run the code to use remote config value
 } else {
@@ -82,7 +84,7 @@ if (myRemoteConfig != null) {
 To get user traits:
 
 ```c#
-List<Trait> userTraits = await bulletClient.GetTraits("my_user_id")
+List<Trait> userTraits = await BulletTrainClient.instance.GetTraits("my_user_id")
 if (userTraits != null && userTraits) {
     // run the code to use user traits
 } else {
@@ -93,15 +95,15 @@ if (userTraits != null && userTraits) {
 To get a specific user trait:
 
 ```c#
-string userTrait = await bulletClient.GetTrait("my_user_id", "cookies_key");
-bool userTrait = await bulletClient.GetBoolTrait("my_user_id", "cookies_key");
-int userTrait = await bulletClient.GetIntegerTrait("my_user_id", "cookies_key");
+string userTrait = await BulletTrainClient.instance.GetTrait("my_user_id", "cookies_key");
+bool userTrait = await BulletTrainClient.instance.GetBoolTrait("my_user_id", "cookies_key");
+int userTrait = await BulletTrainClient.instance.GetIntegerTrait("my_user_id", "cookies_key");
 ```
 
 To get filtered user traits:
 
 ```c#
-List<Trait> userTraits = await bulletClient.GetTraits("my_user_id", new List<string> { "specific_key", /* rest of elements */ });
+List<Trait> userTraits = await BulletTrainClient.instance.GetTraits("my_user_id", new List<string> { "specific_key", /* rest of elements */ });
 if (userTraits != null) {
     // run the code to use user traits
 } else {
@@ -112,21 +114,21 @@ if (userTraits != null) {
 To set or update a user trait:
 
 ```c#
-Trait userTrait = await bulletClient.SetTrait("my_user_id", "my_user_trait", "blue");
-Trait userTrait = await bulletClient.SetTrait("my_user_id", "my_user_number_trait", 4);
-Trait userTrait = await bulletClient.SetTrait("my_user_id", "my_user_bool_trait", true);
+Trait userTrait = await BulletTrainClient.instance.SetTrait("my_user_id", "my_user_trait", "blue");
+Trait userTrait = await BulletTrainClient.instance.SetTrait("my_user_id", "my_user_number_trait", 4);
+Trait userTrait = await BulletTrainClient.instance.SetTrait("my_user_id", "my_user_bool_trait", true);
 ```
 
 To increment a numeric user trait:
 
 ```c#
-Trait userTrait = await bulletClient.IncrementTrait("my_user_id", "my_user_number_trait", 1);
+Trait userTrait = await BulletTrainClient.instance.IncrementTrait("my_user_id", "my_user_number_trait", 1);
 ```
 
 To retrieve a user identity (both features and traits):
 
 ```c#
-Identity userIdentity = await bulletClient.GetUserIdentity("my_user_id");
+Identity userIdentity = await BulletTrainClient.instance.GetUserIdentity("my_user_id");
 if (userIdentity != null) {
   // Run the code to use user identity i.e. userIdentity.flags or userIdentity.traits
 }
