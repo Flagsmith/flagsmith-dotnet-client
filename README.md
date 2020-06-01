@@ -13,7 +13,8 @@ The SDK for .NET Core, .NET Framework, Mono, Xamarin and Universal Windows Platf
 The client library is available from NuGet and can be added to your project by many tools. You can find the package here [https://www.nuget.org/packages/BulletTrain/](https://www.nuget.org/packages/BulletTrain/)
 
 ## Usage
-**Retrieving feature flags for your project**
+
+### Retrieving feature flags for your project
 
 **For full documentation visit [https://docs.bullet-train.io](https://docs.bullet-train.io)**
 
@@ -55,7 +56,7 @@ if (myRemoteConfig != null) {
 }
 ```
 
-**Identifying users**
+### Identifying users
 
 Identifying users allows you to target specific users from the [Bullet Train dashboard](https://www.bullet-train.io/).
 
@@ -136,7 +137,7 @@ if (userIdentity != null) {
 
 ## Contributing
 
-Please read [CONTRIBUTING.md](https://gist.github.com/kyle-ssg/c36a03aebe492e45cbd3eefb21cb0486) for details on our code of conduct, and the process for submitting pull requests to us.
+Please read [Contributing](https://docs.bullet-train.io/contributing/) for details on our code of conduct, and the process for submitting pull requests to us.
 
 ## Getting Help
 
@@ -144,4 +145,4 @@ If you encounter a bug or feature request we would like to hear about it. Before
 
 ## Get in touch
 
-If you have any questions about our projects you can email <a href="mailto:projects@solidstategroup.com">projects@solidstategroup.com</a>.
+If you have any questions about our projects you can email [support@bullet-train.io](mailto:support@bullet-train.io).
