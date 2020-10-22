@@ -1,19 +1,26 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>netstandard2.0</TargetFramework>
+    <TargetFramework>netcoreapp3.1</TargetFramework>
+    <RootNamespace>BulletTrain</RootNamespace>
     <DefaultItemExcludes>$(DefaultItemExcludes);example/**;</DefaultItemExcludes>
     <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
     <PackageId>BulletTrain</PackageId>
     <Title>Bullet Train</Title>
-    <Version>2.0.1</Version>
+    <Version>3.0.0</Version>
     <Authors>ssg-luke</Authors>
     <Company>Solid State Group</Company>
     <PackageDescription>Client SDK for Bullet Train. Ship features with confidence using feature flags and remote config. Host yourself or use our hosted version at https://bullet-train.io/</PackageDescription>
     <Copyright>Copyright © 2019 Solid State Group Ltd</Copyright>
     <PackageProjectUrl>https://bullet-train.io/</PackageProjectUrl>
     <PackageIcon>icon-2.png</PackageIcon>
-    <PackageReleaseNotes>Singleton HTTP client</PackageReleaseNotes>
+    <PackageReleaseNotes>
+    - donet core 3.1
+    - removed singleton antipattern
+    - bullet train client can be injected
+    - bullet train http client introduced
+    - bullet train api enpoints
+    </PackageReleaseNotes>
     <PackageTags>feature flags remote config toggles</PackageTags>
     <RepositoryUrl>https://github.com/BulletTrainHQ/bullet-train-dotnet-client</RepositoryUrl>
     <NeutralLanguage>en-GB</NeutralLanguage>
