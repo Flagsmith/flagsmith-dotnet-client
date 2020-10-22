@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text.Json;
 using System.Threading.Tasks;
 
 namespace BulletTrain
@@ -40,14 +39,14 @@ namespace BulletTrain
 
         public async Task<bool> HasFeatureFlag(string featureId, string identity = null)
         {
-            var flags =  await GetFeatureFlags(identity);
+            var flags = await GetFeatureFlags(identity);
 
             return flags.Any(f => f.IsEnabled() && f.GetFeature().GetName().Equals(featureId));
         }
 
         public async Task<string> GetFeatureValue(string featureId, string identity = null)
         {
-            var flags =  await GetFeatureFlags(identity);
+            var flags = await GetFeatureFlags(identity);
 
             return flags.SingleOrDefault(f => f.GetFeature().GetName().Equals(featureId))?.GetValue();
         }
@@ -113,7 +112,7 @@ namespace BulletTrain
             return _bulletTrainHttpClient.PostAsync<Trait>(GetUri("traits/increment-value/"), new
             {
                 identifier = identity,
-                trait_key = key, 
+                trait_key = key,
                 increment_by = incrementBy,
             });
         }
@@ -127,15 +126,7 @@ namespace BulletTrain
         {
             var uri = GetUri("identities", identity);
 
-            try
-            {
-                return await _bulletTrainHttpClient.GetAsync<Identity>(uri);
-            }
-            catch (JsonException e)
-            {
-                
-                return null;
-            }
+            return await _bulletTrainHttpClient.GetAsync<Identity>(uri);
         }
 
         private Uri GetUri(params string[] pathSegments)
