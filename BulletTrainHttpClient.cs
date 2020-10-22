@@ -13,18 +13,26 @@ namespace BulletTrain
 
         public BulletTrainHttpClient(BulletTrainConfiguration configuration)
         {
-            _configuration = configuration;
+            _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration),
+                "Parameter must be provided when constructing an instance of the client.");
+
+            if (!_configuration.IsValid())
+            {
+                throw new ArgumentException("The provided configuration is not valid. An API Url and Environment Key must be provided.", nameof(configuration));
+            }
         }
 
-        public async Task<TResponse> GetAsync<TResponse>(Uri uri)
+        public async Task<TResponse> GetAsync<TResponse>(string endpoint)
         {
+            var uri = GetEndpointUri(endpoint);
             var response = await GetJsonAsync(HttpMethod.Get, uri);
 
             return JsonSerializer.Deserialize<TResponse>(response);
         }
 
-        public async Task<TResponse> PostAsync<TResponse>(Uri uri, object payload)
+        public async Task<TResponse> PostAsync<TResponse>(string endpoint, object payload)
         {
+            var uri = GetEndpointUri(endpoint);
             var response = await GetJsonAsync(HttpMethod.Post, uri, JsonSerializer.Serialize(payload));
 
             return JsonSerializer.Deserialize<TResponse>(response);
@@ -47,6 +55,17 @@ namespace BulletTrain
             var response = await _client.SendAsync(request);
             response.EnsureSuccessStatusCode();
             return await response.Content.ReadAsStringAsync();
+        }
+
+        private Uri GetEndpointUri(string endpoint)
+        {
+            var path = _configuration.ApiUrl.AppendPath(endpoint);
+            if (Uri.TryCreate(path, UriKind.Absolute, out var uri))
+            {
+                return uri;
+            }
+
+            throw new ArgumentException($"Cannot create service uri {path}.");
         }
     }
 }

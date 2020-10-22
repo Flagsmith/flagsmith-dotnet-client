@@ -7,34 +7,23 @@ namespace BulletTrain
 {
     public class BulletTrainClient : IBulletTrainClient
     {
-        private readonly BulletTrainConfiguration _configuration;
         private readonly IBulletTrainHttpClient _bulletTrainHttpClient;
 
-        public BulletTrainClient(BulletTrainConfiguration configuration, IBulletTrainHttpClient bulletTrainHttpClient)
+        public BulletTrainClient(IBulletTrainHttpClient bulletTrainHttpClient)
         {
-            _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration),
+            _bulletTrainHttpClient = bulletTrainHttpClient ?? throw new ArgumentNullException(nameof(bulletTrainHttpClient),
                 "Parameter must be provided when constructing an instance of the client.");
-            _bulletTrainHttpClient = bulletTrainHttpClient ?? throw new ArgumentNullException(nameof(configuration),
-                "Parameter must be provided when constructing an instance of the client.");
-
-            if (!_configuration.IsValid())
-            {
-                throw new ArgumentException("The provided configuration is not valid. An API Url and Environment Key must be provided.", nameof(configuration));
-            }
         }
 
         public async Task<List<Flag>> GetFeatureFlags(string identity = null)
         {
-            if (!string.IsNullOrWhiteSpace(identity))
+            if (string.IsNullOrWhiteSpace(identity))
             {
-                var userIdentity = await GetUserIdentityAsync(identity);
-
-                return userIdentity.Flags;
+                return await _bulletTrainHttpClient.GetAsync<List<Flag>>(Endpoints.Flags);
             }
-
-            var uri = GetUri("flags");
-
-            return await _bulletTrainHttpClient.GetAsync<List<Flag>>(uri);
+            
+            var userIdentity = await GetUserIdentityAsync(identity);
+            return userIdentity.Flags;
         }
 
         public async Task<bool> HasFeatureFlag(string featureId, string identity = null)
@@ -96,7 +85,7 @@ namespace BulletTrain
                 throw new ArgumentException("Value parameter must be string, int or boolean");
             }
 
-            return _bulletTrainHttpClient.PostAsync<Trait>(GetUri("traits"), new
+            return _bulletTrainHttpClient.PostAsync<Trait>(Endpoints.Traits, new
             {
                 identity = new
                 {
@@ -109,7 +98,7 @@ namespace BulletTrain
 
         public Task<Trait> IncrementTrait(string identity, string key, int incrementBy)
         {
-            return _bulletTrainHttpClient.PostAsync<Trait>(GetUri("traits/increment-value/"), new
+            return _bulletTrainHttpClient.PostAsync<Trait>(Endpoints.TraitsIncrement, new
             {
                 identifier = identity,
                 trait_key = key,
@@ -124,20 +113,7 @@ namespace BulletTrain
 
         private async Task<Identity> GetUserIdentityAsync(string identity)
         {
-            var uri = GetUri("identities", identity);
-
-            return await _bulletTrainHttpClient.GetAsync<Identity>(uri);
-        }
-
-        private Uri GetUri(params string[] pathSegments)
-        {
-            var path = _configuration.ApiUrl.AppendPath(pathSegments);
-            if (Uri.TryCreate(path, UriKind.Absolute, out var uri))
-            {
-                return uri;
-            }
-
-            throw new ArgumentException($"Cannot create service uri {path}.");
+            return await _bulletTrainHttpClient.GetAsync<Identity>($"{Endpoints.Identities}/{identity}");
         }
     }
 }
