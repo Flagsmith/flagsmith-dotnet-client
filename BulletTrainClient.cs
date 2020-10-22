@@ -1,296 +1,152 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Net;
-using System.Net.Http;
+using System.Linq;
+using System.Text.Json;
 using System.Threading.Tasks;
-using System.Text;
-using System.Dynamic;
-using Newtonsoft.Json;
 
 namespace BulletTrain
 {
-    public class BulletTrainClient
+    public class BulletTrainClient : IBulletTrainClient
     {
-        public static BulletTrainClient instance;
+        private readonly BulletTrainConfiguration _configuration;
+        private readonly IBulletTrainHttpClient _bulletTrainHttpClient;
 
-        private readonly BulletTrainConfiguration configuration;
-        private static HttpClient httpClient;
-
-        public BulletTrainClient(BulletTrainConfiguration bulletTrainConfiguration)
+        public BulletTrainClient(BulletTrainConfiguration configuration, IBulletTrainHttpClient bulletTrainHttpClient)
         {
-            if (bulletTrainConfiguration == null)
-            {
-                throw new ArgumentNullException(nameof(bulletTrainConfiguration),
-                    "Parameter must be provided when constructing an instance of the client.");
-            }
+            _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration),
+                "Parameter must be provided when constructing an instance of the client.");
+            _bulletTrainHttpClient = bulletTrainHttpClient ?? throw new ArgumentNullException(nameof(configuration),
+                "Parameter must be provided when constructing an instance of the client.");
 
-            if (!bulletTrainConfiguration.IsValid())
+            if (!_configuration.IsValid())
             {
-                throw new ArgumentException("The provided configuration is not valid. An API Url and Environment Key must be provided.", nameof(bulletTrainConfiguration));
-            }
-
-            if (instance == null)
-            {
-                configuration = bulletTrainConfiguration;
-                var sp = ServicePointManager.FindServicePoint(new Uri(configuration.ApiUrl));
-                sp.ConnectionLeaseTimeout = 60 * 1000 * 5;
-                httpClient = new HttpClient();
-                instance = this;
-            } else {
-                throw new NotSupportedException("BulletTrainClient should only be initialised once. Use BulletTrainClient.instance after successful initialisation");
+                throw new ArgumentException("The provided configuration is not valid. An API Url and Environment Key must be provided.", nameof(configuration));
             }
         }
 
-        /// <summary>
-        /// Get all feature flags (flags and remote config) optionally for a specific identity.
-        /// </summary>
         public async Task<List<Flag>> GetFeatureFlags(string identity = null)
         {
-            string url;
-            if (identity == null)
+            if (!string.IsNullOrWhiteSpace(identity))
             {
-                url = $"{configuration.ApiUrl}flags/";
-            }
-            else
-            {
-                url = $"{configuration.ApiUrl}identities/{identity}/";
+                var userIdentity = await GetUserIdentityAsync(identity);
+
+                return userIdentity.Flags;
             }
 
-            try
-            {
-                string json = await GetJSON(HttpMethod.Get, url);
+            var uri = GetUri("flags");
 
-                if (identity == null)
-                {
-                    return JsonConvert.DeserializeObject<List<Flag>>(json);
-                }
-                else
-                {
-                    return JsonConvert.DeserializeObject<Identity>(json).flags;
-                }
-            }
-            catch (JsonException e)
-            {
-                Console.WriteLine("\nJSON Exception Caught!");
-                Console.WriteLine("Message :{0} ", e.Message);
-                return null;
-            }
+            return await _bulletTrainHttpClient.GetAsync<List<Flag>>(uri);
         }
 
-        /// <summary>
-        /// Check feature exists and is enabled optionally for a specific identity
-        /// </summary>
         public async Task<bool> HasFeatureFlag(string featureId, string identity = null)
         {
-            List<Flag> flags = await GetFeatureFlags(identity);
-            foreach (Flag flag in flags)
-            {
-                if (flag.GetFeature().GetName().Equals(featureId) && flag.IsEnabled())
-                {
-                    return true;
-                }
-            }
+            var flags =  await GetFeatureFlags(identity);
 
-            return false;
+            return flags.Any(f => f.IsEnabled() && f.GetFeature().GetName().Equals(featureId));
         }
 
-        /// <summary>
-        /// Get remote config value optionally for a specific identity
-        /// </summary>
         public async Task<string> GetFeatureValue(string featureId, string identity = null)
         {
-            List<Flag> flags = await GetFeatureFlags(identity);
-            foreach (Flag flag in flags)
-            {
-                if (flag.GetFeature().GetName().Equals(featureId))
-                {
-                    return flag.GetValue();
-                }
-            }
+            var flags =  await GetFeatureFlags(identity);
 
-            return null;
+            return flags.SingleOrDefault(f => f.GetFeature().GetName().Equals(featureId))?.GetValue();
         }
 
-        /// <summary>
-        /// Get all user traits for provided identity. Optionally filter results with a list of keys
-        /// </summary>
         public async Task<List<Trait>> GetTraits(string identity, List<string> keys = null)
         {
-            try
+            var userIdentity = await GetUserIdentityAsync(identity);
+
+            if (keys == null)
             {
-                string json = await GetJSON(HttpMethod.Get, $"{configuration.ApiUrl}identities/{identity}/");
-
-                List<Trait> traits = JsonConvert.DeserializeObject<Identity>(json).traits;
-                if (keys == null)
-                {
-                    return traits;
-                }
-
-                List<Trait> filteredTraits = new List<Trait>();
-                foreach (Trait trait in traits)
-                {
-                    if (keys.Contains(trait.GetKey()))
-                    {
-                        filteredTraits.Add(trait);
-                    }
-                }
-
-                return filteredTraits;
+                return userIdentity.Traits;
             }
-            catch (JsonException e)
-            {
-                Console.WriteLine("\nJSON Exception Caught!");
-                Console.WriteLine("Message :{0} ", e.Message);
-                return null;
-            }
+
+            var keysSet = new HashSet<string>(keys);
+            var filteredTraits = userIdentity.Traits.Where(
+                t => keysSet.Contains(t.GetKey())
+            );
+
+            return filteredTraits.ToList();
         }
 
-        /// <summary>
-        /// Get user trait for provided identity and trait key.
-        /// </summary>
         public async Task<string> GetTrait(string identity, string key)
         {
-            List<Trait> traits = await GetTraits(identity);
+            var traits = await GetTraits(identity);
 
-            foreach (Trait trait in traits)
-            {
-                if (trait.GetKey().Equals(key))
-                {
-                    return trait.GetStringValue();
-                }
-            }
-
-            return null;
+            return traits.SingleOrDefault(t => t.GetKey().Equals(key))?.GetStringValue();
         }
 
-        /// <summary>
-        /// Get boolean user trait for provided identity and trait key.
-        /// </summary>
         public async Task<bool> GetBoolTrait(string identity, string key)
         {
-            List<Trait> traits = await GetTraits(identity);
+            var traits = await GetTraits(identity);
 
-            foreach (Trait trait in traits)
-            {
-                if (trait.GetKey().Equals(key))
-                {
-                    return trait.GetBoolValue();
-                }
-            }
-
-            return false;
+            return traits.SingleOrDefault(t => t.GetKey().Equals(key))?.GetBoolValue() ?? false;
         }
 
-        /// <summary>
-        /// Get integer user trait for provided identity and trait key.
-        /// </summary>
         public async Task<int> GetIntegerTrait(string identity, string key)
         {
-            List<Trait> traits = await GetTraits(identity);
+            var traits = await GetTraits(identity);
 
-            foreach (Trait trait in traits)
-            {
-                if (trait.GetKey().Equals(key))
-                {
-                    return trait.GetIntValue();
-                }
-            }
-
-            return 0;
+            return traits.SingleOrDefault(t => t.GetKey().Equals(key))?.GetIntValue() ?? 0;
         }
 
-        /// <summary>
-        /// Set user trait value for provided identity and trait key.
-        /// </summary>
-        public async Task<Trait> SetTrait(string identity, string key, object value)
+        public Task<Trait> SetTrait(string identity, string key, object value)
         {
+            if (!(value is bool) && !(value is int) && !(value is string))
+            {
+                throw new ArgumentException("Value parameter must be string, int or boolean");
+            }
+
+            return _bulletTrainHttpClient.PostAsync<Trait>(GetUri("traits"), new
+            {
+                identity = new
+                {
+                    identifier = identity
+                },
+                trait_key = key,
+                trait_value = value,
+            });
+        }
+
+        public Task<Trait> IncrementTrait(string identity, string key, int incrementBy)
+        {
+            return _bulletTrainHttpClient.PostAsync<Trait>(GetUri("traits/increment-value/"), new
+            {
+                identifier = identity,
+                trait_key = key, 
+                increment_by = incrementBy,
+            });
+        }
+
+        public Task<Identity> GetUserIdentity(string identity)
+        {
+            return GetUserIdentityAsync(identity);
+        }
+
+        private async Task<Identity> GetUserIdentityAsync(string identity)
+        {
+            var uri = GetUri("identities", identity);
+
             try
             {
-                if (!(value is bool) && !(value is int) && !(value is string)) {
-                    throw new ArgumentException("Value parameter must be string, int or boolean");
-                }
+                return await _bulletTrainHttpClient.GetAsync<Identity>(uri);
+            }
+            catch (JsonException e)
+            {
                 
-                string json = await GetJSON(HttpMethod.Post, $"{configuration.ApiUrl}traits/", JsonConvert.SerializeObject(new { identity = new { identifier = identity }, trait_key = key, trait_value = value }));
-
-                return JsonConvert.DeserializeObject<Trait>(json);
-            }
-            catch (JsonException e)
-            {
-                Console.WriteLine("\nJSON Exception Caught!");
-                Console.WriteLine("Message :{0} ", e.Message);
-                return null;
-            }
-            catch (ArgumentException e)
-            {
-                Console.WriteLine("\nArgument Exception Caught!");
-                Console.WriteLine("Message :{0} ", e.Message);
                 return null;
             }
         }
 
-        /// <summary>
-        /// Increment user trait value for provided identity and trait key.
-        /// </summary>
-        public async Task<Trait> IncrementTrait(string identity, string key, int incrementBy)
+        private Uri GetUri(params string[] pathSegments)
         {
-            try
+            var path = _configuration.ApiUrl.AppendPath(pathSegments);
+            if (Uri.TryCreate(path, UriKind.Absolute, out var uri))
             {
-                string json = await GetJSON(HttpMethod.Post, $"{configuration.ApiUrl}traits/increment-value/", 
-                    JsonConvert.SerializeObject(new { identifier = identity, trait_key = key, increment_by = incrementBy }));
+                return uri;
+            }
 
-                return JsonConvert.DeserializeObject<Trait>(json);
-            }
-            catch (JsonException e)
-            {
-                Console.WriteLine("\nJSON Exception Caught!");
-                Console.WriteLine("Message :{0} ", e.Message);
-                return null;
-            }
-        }
-
-        /// <summary>
-        /// Get both feature flags and user traits for the provided identity
-        /// </summary>
-        public async Task<Identity> GetUserIdentity(string identity)
-        {
-            try
-            {
-                string json = await GetJSON(HttpMethod.Get, $"{configuration.ApiUrl}identities/{identity}/");
-
-                return JsonConvert.DeserializeObject<Identity>(json);
-            }
-            catch (JsonException e)
-            {
-                Console.WriteLine("\nJSON Exception Caught!");
-                Console.WriteLine("Message :{0} ", e.Message);
-                return null;
-            }
-        }
-
-        private async Task<string> GetJSON(HttpMethod method, string url, string body = null)
-        {
-            try
-            {
-                HttpRequestMessage request = new HttpRequestMessage(method, url)
-                {
-                    Headers = {
-                        { "X-Environment-Key", configuration.EnvironmentKey }
-                    }
-                };
-                if (body != null)
-                {
-                    request.Content = new StringContent(body, Encoding.UTF8, "application/json");
-                }
-                HttpResponseMessage response = await httpClient.SendAsync(request);
-                response.EnsureSuccessStatusCode();
-                return await response.Content.ReadAsStringAsync();
-            }
-            catch (HttpRequestException e)
-            {
-                Console.WriteLine("\nHTTP Request Exception Caught!");
-                Console.WriteLine("Message :{0} ", e.Message);
-                return null;
-            }
+            throw new ArgumentException($"Cannot create service uri {path}.");
         }
     }
 }
