@@ -4,7 +4,6 @@ using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
 using System.Text;
-using System.Dynamic;
 using Newtonsoft.Json;
 
 namespace BulletTrain
@@ -36,7 +35,9 @@ namespace BulletTrain
                 sp.ConnectionLeaseTimeout = 60 * 1000 * 5;
                 httpClient = new HttpClient();
                 instance = this;
-            } else {
+            }
+            else
+            {
                 throw new NotSupportedException("BulletTrainClient should only be initialised once. Use BulletTrainClient.instance after successful initialisation");
             }
         }
@@ -49,11 +50,11 @@ namespace BulletTrain
             string url;
             if (identity == null)
             {
-                url = $"{configuration.ApiUrl}flags/";
+                url = configuration.ApiUrl.AppendPath("flags");
             }
             else
             {
-                url = $"{configuration.ApiUrl}identities/{identity}/";
+                url = configuration.ApiUrl.AppendPath("identities", identity);
             }
 
             try
@@ -118,7 +119,8 @@ namespace BulletTrain
         {
             try
             {
-                string json = await GetJSON(HttpMethod.Get, $"{configuration.ApiUrl}identities/{identity}/");
+                string url = configuration.ApiUrl.AppendPath("identities", identity);
+                string json = await GetJSON(HttpMethod.Get, url);
 
                 List<Trait> traits = JsonConvert.DeserializeObject<Identity>(json).traits;
                 if (keys == null)
@@ -206,11 +208,13 @@ namespace BulletTrain
         {
             try
             {
-                if (!(value is bool) && !(value is int) && !(value is string)) {
+                if (!(value is bool) && !(value is int) && !(value is string))
+                {
                     throw new ArgumentException("Value parameter must be string, int or boolean");
                 }
-                
-                string json = await GetJSON(HttpMethod.Post, $"{configuration.ApiUrl}traits/", JsonConvert.SerializeObject(new { identity = new { identifier = identity }, trait_key = key, trait_value = value }));
+
+                string url = configuration.ApiUrl.AppendPath("traits");
+                string json = await GetJSON(HttpMethod.Post, url, JsonConvert.SerializeObject(new { identity = new { identifier = identity }, trait_key = key, trait_value = value }));
 
                 return JsonConvert.DeserializeObject<Trait>(json);
             }
@@ -235,7 +239,8 @@ namespace BulletTrain
         {
             try
             {
-                string json = await GetJSON(HttpMethod.Post, $"{configuration.ApiUrl}traits/increment-value/", 
+                string url = configuration.ApiUrl.AppendPath("traits", "increment-value");
+                string json = await GetJSON(HttpMethod.Post, url,
                     JsonConvert.SerializeObject(new { identifier = identity, trait_key = key, increment_by = incrementBy }));
 
                 return JsonConvert.DeserializeObject<Trait>(json);
@@ -255,7 +260,8 @@ namespace BulletTrain
         {
             try
             {
-                string json = await GetJSON(HttpMethod.Get, $"{configuration.ApiUrl}identities/{identity}/");
+                string url = configuration.ApiUrl.AppendPath("identities", identity);
+                string json = await GetJSON(HttpMethod.Get, url);
 
                 return JsonConvert.DeserializeObject<Identity>(json);
             }
