@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace BulletTrain
+﻿namespace BulletTrain
 {
     public class BulletTrainConfiguration
     {
@@ -15,7 +13,7 @@ namespace BulletTrain
 
         public bool IsValid()
         {
-            return !Uri.TryCreate(ApiUrl, UriKind.RelativeOrAbsolute, out _) && !string.IsNullOrEmpty(EnvironmentKey);
+            return !string.IsNullOrEmpty(ApiUrl) && !string.IsNullOrEmpty(EnvironmentKey);
         }
     }
 }
