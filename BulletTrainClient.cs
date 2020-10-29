@@ -54,7 +54,7 @@ namespace BulletTrain
             }
             else
             {
-                url = configuration.ApiUrl.AppendPath("identities", identity);
+                url = configuration.ApiUrl.AppendPath("identities",$"?identifier={identity}");
             }
 
             try
