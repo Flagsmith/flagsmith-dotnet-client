@@ -1,4 +1,4 @@
-Copyright (c) 2019 Solid State Technology Ltd (https://www.solidstategroup.com/) and individual contributors.
+Copyright (c) 2019 Bullet Train Ltd (https://bullet-train.io/) and individual contributors.
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:

@@ -6,11 +6,11 @@
     <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
     <PackageId>BulletTrain</PackageId>
     <Title>Bullet Train</Title>
-    <Version>2.0.1</Version>
+    <Version>2.1.1</Version>
     <Authors>ssg-luke</Authors>
-    <Company>Solid State Group</Company>
+    <Company>Bullet Train Ltd</Company>
     <PackageDescription>Client SDK for Bullet Train. Ship features with confidence using feature flags and remote config. Host yourself or use our hosted version at https://bullet-train.io/</PackageDescription>
-    <Copyright>Copyright © 2019 Solid State Group Ltd</Copyright>
+    <Copyright>Copyright © 2020 Bullet Train Ltd</Copyright>
     <PackageProjectUrl>https://bullet-train.io/</PackageProjectUrl>
     <PackageIcon>icon-2.png</PackageIcon>
     <PackageReleaseNotes>Singleton HTTP client</PackageReleaseNotes>
