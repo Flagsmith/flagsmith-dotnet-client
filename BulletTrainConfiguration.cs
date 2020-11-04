@@ -6,11 +6,12 @@
         {
             ApiUrl = "https://api.bullet-train.io/api/v1/";
             EnvironmentKey = string.Empty;
+            UseLegacyIdentities = true;
         }
 
         public string ApiUrl { get; set; }
         public string EnvironmentKey { get; set; }
-        public bool UseLegacyIdentities { get; set; } = true;
+        public bool UseLegacyIdentities { get; set; }
 
         public bool IsValid()
         {
