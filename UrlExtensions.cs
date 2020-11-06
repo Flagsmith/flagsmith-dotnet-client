@@ -6,6 +6,11 @@ namespace BulletTrain
     {
         public static string AppendPath(this string url, params string[] urlSegments)
         {
+            return url.AppendToUrl(true, urlSegments);
+        }
+
+        public static string AppendToUrl(this string url, bool trailingSlash, params string[] urlSegments)
+        {
             var builder = new StringBuilder(url);
             if (!url.EndsWith("/"))
             {
@@ -21,7 +26,7 @@ namespace BulletTrain
                 }
             }
 
-            return builder.ToString();
+            return trailingSlash ? builder.ToString() : builder.ToString(0, builder.Length - 1);
         }
     }
 }

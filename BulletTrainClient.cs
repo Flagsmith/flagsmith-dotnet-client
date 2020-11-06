@@ -54,7 +54,7 @@ namespace BulletTrain
             }
             else
             {
-                url = $"{configuration.ApiUrl}identities/{identity}/";
+                url = GetIdentitiesUrl(identity);
             }
 
             try
@@ -119,7 +119,7 @@ namespace BulletTrain
         {
             try
             {
-                string url = configuration.ApiUrl.AppendPath("identities", identity);
+                string url = GetIdentitiesUrl(identity);
                 string json = await GetJSON(HttpMethod.Get, url);
 
                 List<Trait> traits = JsonConvert.DeserializeObject<Identity>(json).traits;
@@ -260,7 +260,7 @@ namespace BulletTrain
         {
             try
             {
-                string url = configuration.ApiUrl.AppendPath("identities", identity);
+                string url = GetIdentitiesUrl(identity); 
                 string json = await GetJSON(HttpMethod.Get, url);
 
                 return JsonConvert.DeserializeObject<Identity>(json);
@@ -297,6 +297,16 @@ namespace BulletTrain
                 Console.WriteLine("Message :{0} ", e.Message);
                 return null;
             }
+        }
+
+        private string GetIdentitiesUrl(string identity)
+        {
+            if (configuration.UseLegacyIdentities)
+            {
+                return configuration.ApiUrl.AppendPath("identities", identity);
+            }
+
+            return configuration.ApiUrl.AppendToUrl(trailingSlash: false, "identities", $"?identifier={identity}");
         }
     }
 }
