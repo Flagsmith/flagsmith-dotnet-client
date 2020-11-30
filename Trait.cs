@@ -17,6 +17,10 @@ namespace BulletTrain
         [JsonProperty("bool_value")]
         private bool boolValue = false;
 
+        // Support for legacy non-typed value (only support string)
+        [JsonProperty("trait_value")]
+        private string traitValue = null;
+
         public string GetKey()
         {
             return key;
@@ -24,11 +28,17 @@ namespace BulletTrain
 
         public string GetValue()
         {
+            if (traitValue != null) {
+                return traitValue;
+            }
             return strValue;
         }
 
         public string GetStringValue()
         {
+            if (traitValue != null) {
+                return traitValue;
+            }
             return strValue;
         }
 
