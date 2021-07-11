@@ -295,7 +295,7 @@ namespace BulletTrain
             {
                 Console.WriteLine("\nHTTP Request Exception Caught!");
                 Console.WriteLine("Message :{0} ", e.Message);
-                return null;
+                return string.Empty;
             }
         }
 
