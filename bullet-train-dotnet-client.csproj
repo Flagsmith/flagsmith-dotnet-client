@@ -12,7 +12,7 @@
     <PackageDescription>Client SDK for Flagsmith. Ship features with confidence using feature flags and remote config. Host yourself or use our hosted version at https://flagsmith.com/</PackageDescription>
     <Copyright>Copyright © 2020 Bullet Train Ltd</Copyright>
     <PackageProjectUrl>https://flagsmith.com/</PackageProjectUrl>
-    <PackageIcon>icon-2.png</PackageIcon>
+    <PackageIcon>icon.png</PackageIcon>
     <PackageReleaseNotes>Singleton HTTP client</PackageReleaseNotes>
     <PackageTags>feature flags remote config toggles</PackageTags>
     <RepositoryUrl>https://github.com/Flagsmith/flagsmith-dotnet-client</RepositoryUrl>
