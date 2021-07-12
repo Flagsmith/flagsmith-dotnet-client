@@ -67,7 +67,7 @@ namespace BulletTrain
                 }
                 else
                 {
-                    return JsonConvert.DeserializeObject<Identity>(json).flags;
+                    return JsonConvert.DeserializeObject<Identity>(json)?.flags;
                 }
             }
             catch (JsonException e)
@@ -122,7 +122,11 @@ namespace BulletTrain
                 string url = GetIdentitiesUrl(identity);
                 string json = await GetJSON(HttpMethod.Get, url);
 
-                List<Trait> traits = JsonConvert.DeserializeObject<Identity>(json).traits;
+                List<Trait> traits = JsonConvert.DeserializeObject<Identity>(json)?.traits;
+                if (traits == null)
+                {
+                    return null;
+                }
                 if (keys == null)
                 {
                     return traits;
@@ -295,7 +299,7 @@ namespace BulletTrain
             {
                 Console.WriteLine("\nHTTP Request Exception Caught!");
                 Console.WriteLine("Message :{0} ", e.Message);
-                return null;
+                return string.Empty;
             }
         }
 
