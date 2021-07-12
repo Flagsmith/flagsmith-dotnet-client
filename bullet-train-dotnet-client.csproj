@@ -6,16 +6,16 @@
     <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
     <PackageId>BulletTrain</PackageId>
     <Title>Bullet Train</Title>
-    <Version>2.1.4</Version>
+    <Version>2.1.6</Version>
     <Authors>ssg-luke</Authors>
     <Company>Bullet Train Ltd</Company>
-    <PackageDescription>Client SDK for Bullet Train. Ship features with confidence using feature flags and remote config. Host yourself or use our hosted version at https://bullet-train.io/</PackageDescription>
+    <PackageDescription>Client SDK for Flagsmith. Ship features with confidence using feature flags and remote config. Host yourself or use our hosted version at https://flagsmith.com/</PackageDescription>
     <Copyright>Copyright © 2020 Bullet Train Ltd</Copyright>
-    <PackageProjectUrl>https://bullet-train.io/</PackageProjectUrl>
+    <PackageProjectUrl>https://flagsmith.com/</PackageProjectUrl>
     <PackageIcon>icon-2.png</PackageIcon>
     <PackageReleaseNotes>Singleton HTTP client</PackageReleaseNotes>
     <PackageTags>feature flags remote config toggles</PackageTags>
-    <RepositoryUrl>https://github.com/BulletTrainHQ/bullet-train-dotnet-client</RepositoryUrl>
+    <RepositoryUrl>https://github.com/Flagsmith/flagsmith-dotnet-client</RepositoryUrl>
     <NeutralLanguage>en-GB</NeutralLanguage>
     <PackageLicenseFile>LICENSE.txt</PackageLicenseFile>
   </PropertyGroup>
@@ -23,7 +23,7 @@
   <ItemGroup>
     <PackageReference Include="Newtonsoft.Json" Version="12.0.1" />
     <None Include="LICENSE.txt" Pack="true" Visible="false" PackagePath="" />
-    <None Include="icon-2.png" Pack="true" PackagePath="\"/>
+    <None Include="icon.png" Pack="true" PackagePath="\"/>
   </ItemGroup>
 
 </Project>
