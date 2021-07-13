@@ -84,6 +84,11 @@ namespace BulletTrain
         public async Task<bool> HasFeatureFlag(string featureId, string identity = null)
         {
             List<Flag> flags = await GetFeatureFlags(identity);
+            if (flags == null)
+            {
+                return false;
+            }
+
             foreach (Flag flag in flags)
             {
                 if (flag.GetFeature().GetName().Equals(featureId) && flag.IsEnabled())
@@ -101,6 +106,11 @@ namespace BulletTrain
         public async Task<string> GetFeatureValue(string featureId, string identity = null)
         {
             List<Flag> flags = await GetFeatureFlags(identity);
+            if (flags == null)
+            {
+                return null;
+            }
+
             foreach (Flag flag in flags)
             {
                 if (flag.GetFeature().GetName().Equals(featureId))
@@ -157,6 +167,10 @@ namespace BulletTrain
         public async Task<string> GetTrait(string identity, string key)
         {
             List<Trait> traits = await GetTraits(identity);
+            if (traits == null)
+            {
+                return null;
+            }
 
             foreach (Trait trait in traits)
             {
@@ -175,6 +189,10 @@ namespace BulletTrain
         public async Task<bool> GetBoolTrait(string identity, string key)
         {
             List<Trait> traits = await GetTraits(identity);
+            if (traits == null)
+            {
+                return false;
+            }
 
             foreach (Trait trait in traits)
             {
@@ -193,6 +211,10 @@ namespace BulletTrain
         public async Task<int> GetIntegerTrait(string identity, string key)
         {
             List<Trait> traits = await GetTraits(identity);
+            if (traits == null)
+            {
+                return 0;
+            }
 
             foreach (Trait trait in traits)
             {
