@@ -81,12 +81,13 @@ namespace BulletTrain
         /// <summary>
         /// Check feature exists and is enabled optionally for a specific identity
         /// </summary>
-        public async Task<bool> HasFeatureFlag(string featureId, string identity = null)
+        /// <returns>Null if Bullet Train is unaccessible</returns>
+        public async Task<bool?> HasFeatureFlag(string featureId, string identity = null)
         {
             List<Flag> flags = await GetFeatureFlags(identity);
             if (flags == null)
             {
-                return false;
+                return null;
             }
 
             foreach (Flag flag in flags)
@@ -186,12 +187,13 @@ namespace BulletTrain
         /// <summary>
         /// Get boolean user trait for provided identity and trait key.
         /// </summary>
-        public async Task<bool> GetBoolTrait(string identity, string key)
+        /// <returns>Null if Bullet Train is unaccessible</returns>
+        public async Task<bool?> GetBoolTrait(string identity, string key)
         {
             List<Trait> traits = await GetTraits(identity);
             if (traits == null)
             {
-                return false;
+                return null;
             }
 
             foreach (Trait trait in traits)
@@ -208,12 +210,13 @@ namespace BulletTrain
         /// <summary>
         /// Get integer user trait for provided identity and trait key.
         /// </summary>
-        public async Task<int> GetIntegerTrait(string identity, string key)
+        /// <returns>Null if Bullet Train is unaccessible</returns>
+        public async Task<int?> GetIntegerTrait(string identity, string key)
         {
             List<Trait> traits = await GetTraits(identity);
             if (traits == null)
             {
-                return 0;
+                return null;
             }
 
             foreach (Trait trait in traits)
