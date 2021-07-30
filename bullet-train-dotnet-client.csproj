@@ -6,7 +6,7 @@
     <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
     <PackageId>BulletTrain</PackageId>
     <Title>Bullet Train</Title>
-    <Version>2.1.7</Version>
+    <Version>2.2.0</Version>
     <Authors>ssg-luke</Authors>
     <Company>Bullet Train Ltd</Company>
     <PackageDescription>Client SDK for Flagsmith. Ship features with confidence using feature flags and remote config. Host yourself or use our hosted version at https://flagsmith.com/</PackageDescription>
