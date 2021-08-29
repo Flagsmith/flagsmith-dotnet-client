@@ -6,8 +6,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Reference Include="BulletTrain">
-      <HintPath>../bin/Debug/netstandard2.0/bullet-train-dotnet-client.dll</HintPath>
+    <Reference Include="Flagsmith">
+      <HintPath>../bin/Debug/netstandard2.0/flagsmith-dotnet-client.dll</HintPath>
     </Reference>
     <PackageReference Include="Newtonsoft.Json" Version="12.0.1" />
   </ItemGroup>

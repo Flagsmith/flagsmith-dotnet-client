@@ -1,10 +1,10 @@
-﻿namespace BulletTrain
+﻿namespace Flagsmith
 {
-    public class BulletTrainConfiguration
+    public class FlagsmithConfiguration
     {
-        public BulletTrainConfiguration()
+        public FlagsmithConfiguration()
         {
-            ApiUrl = "https://api.bullet-train.io/api/v1/";
+            ApiUrl = "https://api.flagsmith.com/api/v1/";
             EnvironmentKey = string.Empty;
             UseLegacyIdentities = true;
         }

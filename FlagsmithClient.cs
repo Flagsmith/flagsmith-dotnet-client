@@ -6,31 +6,31 @@ using System.Threading.Tasks;
 using System.Text;
 using Newtonsoft.Json;
 
-namespace BulletTrain
+namespace Flagsmith
 {
-    public class BulletTrainClient
+    public class FlagsmithClient
     {
-        public static BulletTrainClient instance;
+        public static FlagsmithClient instance;
 
-        private readonly BulletTrainConfiguration configuration;
+        private readonly FlagsmithConfiguration configuration;
         private static HttpClient httpClient;
 
-        public BulletTrainClient(BulletTrainConfiguration bulletTrainConfiguration)
+        public FlagsmithClient(FlagsmithConfiguration flagsmithConfiguration)
         {
-            if (bulletTrainConfiguration == null)
+            if (flagsmithConfiguration == null)
             {
-                throw new ArgumentNullException(nameof(bulletTrainConfiguration),
+                throw new ArgumentNullException(nameof(flagsmithConfiguration),
                     "Parameter must be provided when constructing an instance of the client.");
             }
 
-            if (!bulletTrainConfiguration.IsValid())
+            if (!flagsmithConfiguration.IsValid())
             {
-                throw new ArgumentException("The provided configuration is not valid. An API Url and Environment Key must be provided.", nameof(bulletTrainConfiguration));
+                throw new ArgumentException("The provided configuration is not valid. An API Url and Environment Key must be provided.", nameof(flagsmithConfiguration));
             }
 
             if (instance == null)
             {
-                configuration = bulletTrainConfiguration;
+                configuration = flagsmithConfiguration;
                 var sp = ServicePointManager.FindServicePoint(new Uri(configuration.ApiUrl));
                 sp.ConnectionLeaseTimeout = 60 * 1000 * 5;
                 httpClient = new HttpClient();
@@ -38,7 +38,7 @@ namespace BulletTrain
             }
             else
             {
-                throw new NotSupportedException("BulletTrainClient should only be initialised once. Use BulletTrainClient.instance after successful initialisation");
+                throw new NotSupportedException("FlagsmithClient should only be initialised once. Use FlagsmithClient.instance after successful initialisation");
             }
         }
 
@@ -81,7 +81,7 @@ namespace BulletTrain
         /// <summary>
         /// Check feature exists and is enabled optionally for a specific identity
         /// </summary>
-        /// <returns>Null if Bullet Train is unaccessible</returns>
+        /// <returns>Null if Flagsmith is unaccessible</returns>
         public async Task<bool?> HasFeatureFlag(string featureId, string identity = null)
         {
             List<Flag> flags = await GetFeatureFlags(identity);
@@ -187,7 +187,7 @@ namespace BulletTrain
         /// <summary>
         /// Get boolean user trait for provided identity and trait key.
         /// </summary>
-        /// <returns>Null if Bullet Train is unaccessible</returns>
+        /// <returns>Null if Flagsmith is unaccessible</returns>
         public async Task<bool?> GetBoolTrait(string identity, string key)
         {
             List<Trait> traits = await GetTraits(identity);
@@ -210,7 +210,7 @@ namespace BulletTrain
         /// <summary>
         /// Get integer user trait for provided identity and trait key.
         /// </summary>
-        /// <returns>Null if Bullet Train is unaccessible</returns>
+        /// <returns>Null if Flagsmith is unaccessible</returns>
         public async Task<int?> GetIntegerTrait(string identity, string key)
         {
             List<Trait> traits = await GetTraits(identity);
