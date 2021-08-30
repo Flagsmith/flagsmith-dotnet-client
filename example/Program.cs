@@ -10,8 +10,8 @@ namespace example
         {
             FlagsmithConfiguration configuration = new FlagsmithConfiguration()
             {
-                ApiUrl = "http://localhost:8000/api/v1/",
-                EnvironmentKey = "EFB8G8jY5hYHjYS3xHz56K"
+                ApiUrl = "https://api.flagsmith.com/api/v1/",
+                EnvironmentKey = "env-key-goes-here"
             };
 
             FlagsmithClient client = new FlagsmithClient(configuration);
@@ -35,7 +35,7 @@ namespace example
             Console.WriteLine("");
 
             // Check if feature flag is enabled
-            bool enabled = (bool)FlagsmithClient.instance.HasFeatureFlag("simulate_project_has_1_collection").GetAwaiter().GetResult();
+            enabled = (bool)FlagsmithClient.instance.HasFeatureFlag("simulate_project_has_1_collection").GetAwaiter().GetResult();
 
             Console.WriteLine("Flag 'simulate_project_has_1_collection' enabled");
             Console.WriteLine(enabled.ToString() + "\n");
