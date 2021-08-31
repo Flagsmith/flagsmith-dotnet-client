@@ -6,6 +6,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="BulletTrain" Version="2.2.0" />
     <Reference Include="BulletTrain">
       <HintPath>../bin/Debug/netstandard2.0/bullet-train-dotnet-client.dll</HintPath>
     </Reference>
