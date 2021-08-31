@@ -35,13 +35,13 @@ namespace example
             Console.WriteLine("");
 
             // Check if feature flag is enabled
-            enabled = (bool)FlagsmithClient.instance.HasFeatureFlag("simulate_project_has_1_collection").GetAwaiter().GetResult();
+            enabled = FlagsmithClient.instance.HasFeatureFlag("simulate_project_has_1_collection").GetAwaiter().GetResult() ?? false;
 
             Console.WriteLine("Flag 'simulate_project_has_1_collection' enabled");
             Console.WriteLine(enabled.ToString() + "\n");
 
             // Check if feature flag is enabled for specific user
-            enabled = (bool)FlagsmithClient.instance.HasFeatureFlag("simulate_project_has_1_collection", "flagsmith_sample_user").GetAwaiter().GetResult();
+            enabled = FlagsmithClient.instance.HasFeatureFlag("simulate_project_has_1_collection", "flagsmith_sample_user").GetAwaiter().GetResult() ?? false;
 
             Console.WriteLine("Flag 'simulate_project_has_1_collection' enabled for specific user");
             Console.WriteLine(enabled.ToString() + "\n");
