@@ -1,6 +1,6 @@
 using Newtonsoft.Json;
 
-namespace BulletTrain
+namespace Flagsmith
 {
     [JsonObject(MemberSerialization.OptIn)]
     public class Trait

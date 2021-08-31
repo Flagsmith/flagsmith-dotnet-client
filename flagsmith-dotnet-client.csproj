@@ -4,13 +4,13 @@
     <TargetFramework>netstandard2.0</TargetFramework>
     <DefaultItemExcludes>$(DefaultItemExcludes);example/**;</DefaultItemExcludes>
     <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
-    <PackageId>BulletTrain</PackageId>
-    <Title>Bullet Train</Title>
-    <Version>2.2.0</Version>
+    <PackageId>Flagsmith</PackageId>
+    <Title>Flagsmith</Title>
+    <Version>3.0.0</Version>
     <Authors>ssg-luke</Authors>
-    <Company>Bullet Train Ltd</Company>
+    <Company>Flagsmith</Company>
     <PackageDescription>Client SDK for Flagsmith. Ship features with confidence using feature flags and remote config. Host yourself or use our hosted version at https://flagsmith.com/</PackageDescription>
-    <Copyright>Copyright © 2020 Bullet Train Ltd</Copyright>
+    <Copyright>Copyright © 2021 Bullet Train Ltd</Copyright>
     <PackageProjectUrl>https://flagsmith.com/</PackageProjectUrl>
     <PackageIcon>icon.png</PackageIcon>
     <PackageReleaseNotes>Singleton HTTP client</PackageReleaseNotes>
