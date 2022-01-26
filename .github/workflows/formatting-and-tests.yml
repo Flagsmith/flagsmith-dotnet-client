@@ -4,7 +4,7 @@ on:
     - pull_request
 
 jobs:
-    test:
+    formatting_and_test:
         runs-on: ubuntu-latest
         name: Formatting & Tests
 
@@ -25,7 +25,13 @@ jobs:
                   dotnet-version: ${{ matrix.dotnet-version }}
 
             - name: Install dependencies
-              run: dotnet tool install -g dotnet-format --version 5.1.225507
+              if: ${{ !startsWith(matrix.dotnet-version, 6) }}
+              run: dotnet tool install -g dotnet-format
 
             - name: Check Formatting
+              if: ${{ startsWith(matrix.dotnet-version, 6) }}
               run: dotnet format --verify-no-changes
+            
+            - name: Check Formatting
+              if: ${{ !startsWith(matrix.dotnet-version, 6) }}
+              run: dotnet-format --verify-no-changes
