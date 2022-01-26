@@ -28,7 +28,8 @@ namespace Flagsmith
 
         public string GetValue()
         {
-            if (traitValue != null) {
+            if (traitValue != null)
+            {
                 return traitValue;
             }
             return strValue;
@@ -36,7 +37,8 @@ namespace Flagsmith
 
         public string GetStringValue()
         {
-            if (traitValue != null) {
+            if (traitValue != null)
+            {
                 return traitValue;
             }
             return strValue;
