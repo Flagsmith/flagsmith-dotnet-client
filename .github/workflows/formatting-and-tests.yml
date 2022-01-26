@@ -4,9 +4,9 @@ on:
     - pull_request
 
 jobs:
-    formatting_and_test:
+    formatting:
         runs-on: ubuntu-latest
-        name: Formatting & Tests
+        name: Check formatting
 
         steps:
             - name: Cloning repo
@@ -21,3 +21,26 @@ jobs:
 
             - name: Check Formatting
               run: dotnet format --verify-no-changes
+    
+    test: 
+        runs-on: ubuntu-latest
+        name: Test
+
+        strategy:
+            max-parallel: 4
+            matrix:
+                dotnet-version: ["3.1", "5.0", "6.0"]
+        
+        steps:
+          - name: Cloning repo
+            uses: actions/checkout@v2
+            with:
+                fetch-depth: 0
+
+          - name: Set up Dotnet ${{ matrix.dotnet-version }}
+            uses: actions/setup-dotnet@v1
+            with:
+                dotnet-version: ${{ matrix.dotnet-version }}
+
+          - name: Run Tests
+            run: dotnet test
