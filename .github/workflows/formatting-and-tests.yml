@@ -8,30 +8,16 @@ jobs:
         runs-on: ubuntu-latest
         name: Formatting & Tests
 
-        strategy:
-            max-parallel: 4
-            matrix:
-                dotnet-version: ["3.1", "5.0", "6.0"]
-
         steps:
             - name: Cloning repo
               uses: actions/checkout@v2
               with:
                   fetch-depth: 0
 
-            - name: Set up Dotnet ${{ matrix.dotnet-version }}
+            - name: Set up Dotnet
               uses: actions/setup-dotnet@v1
               with:
-                  dotnet-version: ${{ matrix.dotnet-version }}
-
-            - name: Install dependencies
-              if: ${{ !startsWith(matrix.dotnet-version, 6) }}
-              run: dotnet tool install -g dotnet-format
+                  dotnet-version: 6.0
 
             - name: Check Formatting
-              if: ${{ startsWith(matrix.dotnet-version, 6) }}
               run: dotnet format --verify-no-changes
-            
-            - name: Check Formatting
-              if: ${{ !startsWith(matrix.dotnet-version, 6) }}
-              run: dotnet-format --verify-no-changes
