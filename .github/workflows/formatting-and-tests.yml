@@ -6,7 +6,7 @@ on:
 jobs:
     test:
         runs-on: ubuntu-latest
-        name: Pytest and Black formatting
+        name: Formatting & Tests
 
         strategy:
             max-parallel: 4
