@@ -24,5 +24,8 @@ jobs:
               with:
                   dotnet-version: ${{ matrix.dotnet-version }}
 
+            - name: Install dependencies
+              run: dotnet tool install -g dotnet-format
+
             - name: Check Formatting
               run: dotnet format --verify-no-changes
