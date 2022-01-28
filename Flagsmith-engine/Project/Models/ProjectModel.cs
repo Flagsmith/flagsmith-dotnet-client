@@ -2,9 +2,9 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
-using Flagsmith_engine.Segment.Models;
-using Flagsmith_engine.Organization.Models;
-namespace Flagsmith_engine.Project.Models
+using FlagsmithEngine.Segment.Models;
+using FlagsmithEngine.Organization.Models;
+namespace FlagsmithEngine.Project.Models
 {
     public class ProjectModel
     {

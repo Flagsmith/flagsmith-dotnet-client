@@ -1,13 +1,13 @@
-using Flagsmith_engine.Models;
-using Flagsmith_engine.Environment.Models;
-using Flagsmith_engine.Identity.Models;
+using FlagsmithEngine.Models;
+using FlagsmithEngine.Environment.Models;
+using FlagsmithEngine.Identity.Models;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using Xunit;
-using Flagsmith_engine.Interfaces;
+using FlagsmithEngine.Interfaces;
 using System.Linq;
 
 namespace EngineTest
@@ -17,7 +17,7 @@ namespace EngineTest
         private IEngine _iengine;
         public EngineTest()
         {
-            _iengine = new Flagsmith_engine.Engine();
+            _iengine = new FlagsmithEngine.Engine();
         }
         [Theory]
         [MemberData(nameof(ExtractTestCases), parameters: @"\TestEngineData\Data\environment_n9fbf9h3v4fFgH3U3ngWhb.json")]
@@ -31,8 +31,8 @@ namespace EngineTest
             Assert.Equal(sortedApiFlags.Count(), sortedEngineflags.Count());
             for (int i = 0; i < sortedEngineflags.Count(); i++)
             {
-                Assert.Equal(sortedEngineflags[i].GetValue().ToString(), sortedApiFlags[i].feature_state_value.ToString());
-                Assert.Equal(sortedEngineflags[i].Enabled, sortedApiFlags[i].enabled);
+                Assert.Equal(sortedApiFlags[i].feature_state_value?.ToString() ?? "", sortedEngineflags[i].GetValue(IdentityModel.DjangoId.ToString())?.ToString() ?? "");
+                Assert.Equal(sortedApiFlags[i].enabled, sortedEngineflags[i].Enabled);
             }
         }
         public static JObject LoadData(string path)
@@ -46,9 +46,9 @@ namespace EngineTest
         public static IEnumerable<object[]> ExtractTestCases(string path)
         {
             var testCases = new List<object[]>();
-            var test_data = LoadData(path);
-            var environment_model = test_data["environment"].ToObject<EnvironmentModel>();
-            foreach (var item in test_data["identities_and_responses"])
+            var testData = LoadData(path);
+            var environment_model = testData["environment"].ToObject<EnvironmentModel>();
+            foreach (var item in testData["identities_and_responses"])
             {
                 var identity_model = item["identity"].ToObject<IdentityModel>();
                 var response = item["response"].ToObject<Response>();

@@ -1,5 +1,5 @@
 ﻿using Newtonsoft.Json;
-namespace Flagsmith_engine.Organization.Models
+namespace FlagsmithEngine.Organization.Models
 {
     public class OrganizationModel
     {
@@ -13,5 +13,6 @@ namespace Flagsmith_engine.Organization.Models
         public bool StopServingFlags { get; set; }
         [JsonProperty("id")]
         public int Id { get; set; }
+        public string UniqueSlug => $"{Id}-{Name}";
     }
 }

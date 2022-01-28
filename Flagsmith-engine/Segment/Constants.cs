@@ -2,9 +2,9 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace Flagsmith_engine.Segment
+namespace FlagsmithEngine.Segment
 {
-    internal static class Constants
+    public static class Constants
     {
         public const string AllRule = "ALL";
         public const string AnyRule = "ANY";

@@ -1,6 +1,6 @@
 ﻿using System.Text.RegularExpressions;
 using Newtonsoft.Json;
-namespace Flagsmith_engine.Segment.Models
+namespace FlagsmithEngine.Segment.Models
 {
     public class SegmentConditionModel
     {

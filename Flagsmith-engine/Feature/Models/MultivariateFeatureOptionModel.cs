@@ -1,12 +1,14 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace Flagsmith_engine.Feature.Models
+namespace FlagsmithEngine.Feature.Models
 {
     public class MultivariateFeatureOptionModel
     {
         public int Id { get; set; }
-        public string Value { get; set; }
+        [JsonProperty("value")]
+        public object Value { get; set; }
     }
 }

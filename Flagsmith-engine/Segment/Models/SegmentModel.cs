@@ -1,9 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
-using Flagsmith_engine.Feature.Models;
+using FlagsmithEngine.Feature.Models;
 using Newtonsoft.Json;
-namespace Flagsmith_engine.Segment.Models
+namespace FlagsmithEngine.Segment.Models
 {
     public class SegmentModel
     {

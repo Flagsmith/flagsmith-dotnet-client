@@ -1,15 +1,15 @@
 ﻿using System.Linq;
 using System.Collections.Generic;
-using Flagsmith_engine.Exceptions;
+using FlagsmithEngine.Exceptions;
 using System;
-using Flagsmith_engine.Interfaces;
-using Flagsmith_engine.Segment;
-using Flagsmith_engine.Environment.Models;
-using Flagsmith_engine.Feature.Models;
-using Flagsmith_engine.Identity.Models;
-using Flagsmith_engine.Trait.Models;
+using FlagsmithEngine.Interfaces;
+using FlagsmithEngine.Segment;
+using FlagsmithEngine.Environment.Models;
+using FlagsmithEngine.Feature.Models;
+using FlagsmithEngine.Identity.Models;
+using FlagsmithEngine.Trait.Models;
 
-namespace Flagsmith_engine
+namespace FlagsmithEngine
 {
     public class Engine : IEngine
     {
@@ -36,7 +36,7 @@ namespace Flagsmith_engine
         }
         public List<FeatureStateModel> GetIdentityFeatureStates(EnvironmentModel environmentModel, IdentityModel identity, List<TraitModel> overrideTraits)
         {
-            var featureStates = GetIdentityFeatureStatesDict(environmentModel, identity, overrideTraits).Values.ToList();
+            var featureStates = GetIdentityFeatureStatesMapping(environmentModel, identity, overrideTraits).Values.ToList();
 
             if (environmentModel.Project.HideDisabledFlags)
                 return featureStates.Where(fs => fs.Enabled).ToList();
@@ -45,7 +45,7 @@ namespace Flagsmith_engine
         }
         public FeatureStateModel GetIdentityFeatureState(EnvironmentModel environmentModel, IdentityModel identity, string featureName, List<TraitModel> overrideTraits)
         {
-            var featureStates = GetIdentityFeatureStatesDict(environmentModel, identity, overrideTraits);
+            var featureStates = GetIdentityFeatureStatesMapping(environmentModel, identity, overrideTraits);
             var matchingFeature = featureStates.FirstOrDefault(x => x.Key.Name == featureName);
 
             if (!matchingFeature.Equals(default(KeyValuePair<FeatureModel, FeatureStateModel>)))
@@ -54,7 +54,7 @@ namespace Flagsmith_engine
             throw new FeatureStateNotFound();
         }
 
-        public Dictionary<FeatureModel, FeatureStateModel> GetIdentityFeatureStatesDict(EnvironmentModel environmentModel, IdentityModel identity, List<TraitModel> overrideTraits)
+        public Dictionary<FeatureModel, FeatureStateModel> GetIdentityFeatureStatesMapping(EnvironmentModel environmentModel, IdentityModel identity, List<TraitModel> overrideTraits)
         {
             var featureStates = environmentModel.FeatureStates.ToDictionary(key => key.Feature, val => val);
             var identitySegments = Evaluator.GetIdentitySegments(environmentModel, identity, overrideTraits);

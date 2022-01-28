@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using Newtonsoft.Json;
-namespace Flagsmith_engine.Segment.Models
+namespace FlagsmithEngine.Segment.Models
 {
     public class SegmentRuleModel
     {

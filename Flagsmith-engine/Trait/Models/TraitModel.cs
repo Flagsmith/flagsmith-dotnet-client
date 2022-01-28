@@ -1,6 +1,6 @@
 ﻿using Newtonsoft.Json;
 
-namespace Flagsmith_engine.Trait.Models
+namespace FlagsmithEngine.Trait.Models
 {
     public class TraitModel
     {

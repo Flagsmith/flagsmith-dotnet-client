@@ -7,7 +7,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "flagsmith-dotnet-client", "
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Flagsmith-engine", "Flagsmith-engine", "{28F7ADEC-83A8-438D-BA32-E43D143AB02E}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Flagsmith-engine", "..\Flagsmith-engine\Flagsmith-engine.csproj", "{A190D4D9-C189-40C7-B3FA-0A8A6DD61C85}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FlagsmithEngine", "..\Flagsmith-engine\FlagsmithEngine.csproj", "{A190D4D9-C189-40C7-B3FA-0A8A6DD61C85}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EngineTest", "..\EngineTest\EngineTest.csproj", "{F15867D9-1EC9-4C82-B731-DE6665AA3FB7}"
 EndProject

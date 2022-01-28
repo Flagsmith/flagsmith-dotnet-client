@@ -1,22 +1,21 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Numerics;
 using System.Security.Cryptography;
 using System.Text;
-namespace Flagsmith_engine.Utils
+namespace FlagsmithEngine.Utils
 {
-    internal static class Hashing
+    public class Hashing
     {
-        public static float GetHashedPercentageForObjectIds(List<string> objectIds, int iteration = 1)
+        public float GetHashedPercentageForObjectIds(List<string> objectIds, int iteration = 1)
         {
             var toHash = String.Join(",", repeatIdsList(objectIds, iteration));
-            var hashedValueAsInt = BitConverter.ToInt64(CreateMD5(toHash),0);
-            var SS = hashedValueAsInt % 9999;
-            float SSS = SS / 9998;
-            var value = ((hashedValueAsInt % 9999) / 9998) * 100;
+            var hashedValueAsInt = CreateMD5AsInt(toHash);
+            var value = ((float)(hashedValueAsInt % 9999) / 9998) * 100;
             return value == 100 ? GetHashedPercentageForObjectIds(objectIds, ++iteration) : value;
         }
-        private static List<string> repeatIdsList(List<string> objectIds, int iteration)
+        public List<string> repeatIdsList(List<string> objectIds, int iteration)
         {
             var list = new List<string>();
             foreach (var _ in Enumerable.Range(1, iteration))
@@ -25,13 +24,31 @@ namespace Flagsmith_engine.Utils
             }
             return list;
         }
-        public static byte[] CreateMD5(string input)
+        public BigInteger CreateMD5AsInt(string input)
         {
             using (System.Security.Cryptography.MD5 md5 = System.Security.Cryptography.MD5.Create())
             {
-                byte[] hashBytes = md5.ComputeHash(Encoding.UTF8.GetBytes(input));
-                return hashBytes;
+                byte[] hashBytes = ComputeHash(input);
+                var sb = HashBytesToString(hashBytes);
+                //return a negative number if the first digit is between 8-F.so prepend a 0 to the string.
+                return BigInteger.Parse("0" + sb.ToString(), System.Globalization.NumberStyles.AllowHexSpecifier);
             }
+        }
+        public virtual byte[] ComputeHash(string input)
+        {
+            using (System.Security.Cryptography.MD5 md5 = System.Security.Cryptography.MD5.Create())
+            {
+                return md5.ComputeHash(Encoding.UTF8.GetBytes(input));
+            }
+        }
+        public virtual string HashBytesToString(byte[] hashBytes)
+        {
+            StringBuilder sb = new StringBuilder();
+            foreach (var hashByte in hashBytes)
+            {
+                sb.Append(hashByte.ToString("X2"));
+            }
+            return sb.ToString();
         }
     }
 }

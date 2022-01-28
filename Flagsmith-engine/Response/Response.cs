@@ -1,9 +1,9 @@
-﻿using Flagsmith_engine.Feature.Models;
+﻿using FlagsmithEngine.Feature.Models;
 using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace Flagsmith_engine.Models
+namespace FlagsmithEngine.Models
 {
     public class Trait
     {
