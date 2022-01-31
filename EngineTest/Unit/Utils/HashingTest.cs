@@ -70,7 +70,7 @@ namespace EngineTest.Unit.Utils
             var hashStringToReturn0 = "270f";
             var objectIDs = new List<string>() { "12", "93" };
             var HasingMock = new Mock<Hashing>();
-
+            HasingMock.CallBase = true;
             var mockSetup = HasingMock.SetupSequence(p => p.HashBytesToString(It.IsAny<byte[]>()))
                 .Returns(hashStringToReturn1)
                 .Returns(hashStringToReturn0);

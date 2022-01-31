@@ -8,7 +8,7 @@ namespace FlagsmithEngine.Utils
 {
     public class Hashing
     {
-        public float GetHashedPercentageForObjectIds(List<string> objectIds, int iteration = 1)
+        public virtual float GetHashedPercentageForObjectIds(List<string> objectIds, int iteration = 1)
         {
             var toHash = String.Join(",", repeatIdsList(objectIds, iteration));
             var hashedValueAsInt = CreateMD5AsInt(toHash);

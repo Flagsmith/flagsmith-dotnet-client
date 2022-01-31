@@ -6,6 +6,8 @@ using FlagsmithEngine.Segment;
 using FlagsmithEngine.Segment.Models;
 using FlagsmithEngine.Trait.Models;
 using FlagsmithEngine.Identity.Models;
+using FlagsmithEngine.Utils;
+using Moq;
 
 namespace EngineTest.Unit.Segments
 {
@@ -121,6 +123,27 @@ namespace EngineTest.Unit.Segments
                                     }, true
                 },
             };
+        [Theory]
+        [InlineData(10, 1, true)]
+        [InlineData(100, 50, true)]
+        [InlineData(0, 1, false)]
+        [InlineData(10, 20, false)]
+        public void TestIdentityInSegmentPercentageSplit(int segmentSplitValue, int identityHashedPercentage, bool expectedResult)
+        {
+            var percentage_split_condition = new SegmentConditionModel
+            {
+                Operator = Constants.PercentageSplit,
+                Value = segmentSplitValue.ToString()
+            };
+            var rule = new SegmentRuleModel { Type = Constants.AllRule, Conditions = new List<SegmentConditionModel> { percentage_split_condition } };
+            var segment = new SegmentModel { Id = 1, Name = "% split", Rules = new List<SegmentRuleModel> { rule } };
+            var HasingMock = new Mock<Hashing>();
+            var mockSetup = HasingMock.SetupSequence(p => p.GetHashedPercentageForObjectIds(It.IsAny<List<string>>(), It.IsAny<int>()))
+             .Returns(identityHashedPercentage);
+            Evaluator.Hashing = HasingMock.Object;
+            var result = Evaluator.EvaluateIdentityInSegment(ConfTest.Identity(), segment, null);
+            Assert.Equal(expectedResult, result);
+        }
 
     }
 }

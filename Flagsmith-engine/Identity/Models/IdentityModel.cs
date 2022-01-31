@@ -21,7 +21,7 @@ namespace FlagsmithEngine.Identity.Models
         [JsonProperty("identity_traits")]
         public List<TraitModel> IdentityTraits { get; set; }
         [JsonProperty("identity_features")]
-        public List<FeatureStateModel> IdentityFeatures { get; set; }
+        public IdentityFeaturesList IdentityFeatures { get; set; }
         [JsonProperty("django_id")]
         public int? DjangoId { get; set; }
         public string CompositeKey => GenerateCompositeKey(EnvironmentApiKey, Identifier);

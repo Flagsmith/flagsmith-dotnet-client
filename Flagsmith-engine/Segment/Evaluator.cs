@@ -12,7 +12,7 @@ namespace FlagsmithEngine.Segment
 {
     public static class Evaluator
     {
-
+        public static Hashing Hashing = new Hashing();
         public static List<SegmentModel> GetIdentitySegments(EnvironmentModel environmentModel, IdentityModel identity, List<TraitModel> overrideTraits)
             => environmentModel.Project.Segments.Where(s => EvaluateIdentityInSegment(identity, s, overrideTraits)).ToList();
 
@@ -32,9 +32,9 @@ namespace FlagsmithEngine.Segment
         static bool TraitsMatchSegmentCondition(List<TraitModel> identityTraits, SegmentConditionModel condition, string segemntId, string identityId)
         {
             if (condition.Operator == Constants.PercentageSplit)
-                return new Hashing().GetHashedPercentageForObjectIds(new List<string>() { segemntId, identityId }) <= float.Parse(condition.Value);
+                return Hashing.GetHashedPercentageForObjectIds(new List<string>() { segemntId, identityId }) <= float.Parse(condition.Value);
 
-            var trait = identityTraits.FirstOrDefault(t => t.TraitKey == condition.Property);
+            var trait = identityTraits?.FirstOrDefault(t => t.TraitKey == condition.Property);
             if (trait != null)
                 return MatchesTraitValue(trait.TraitValue, condition);
             return false;

@@ -16,14 +16,23 @@ namespace EngineTest.Unit
 {
     public class EngineTest
     {
-        IEngine _engine = new Engine();
-        public void TestIdentityGetFeatureStateWithoutAnyOverride(EnvironmentModel environment, IdentityModel identity, FeatureModel feature)
+        readonly IEngine _engine = new Engine();
+        [Fact]
+        public void TestIdentityGetFeatureStateWithoutAnyOverride()
         {
-            var featureState = _engine.GetIdentityFeatureState(environment, identity, feature.Name, null);
-            Assert.Equal(featureState.Feature, feature);
+            EnvironmentModel environment = ConfTest.Environment();
+            IdentityModel identity = ConfTest.Identity();
+            FeatureModel feature1 = ConfTest.Feature1;
+            var featureState = _engine.GetIdentityFeatureState(environment, identity, feature1.Name, null);
+            Assert.Equal(featureState.Feature, feature1);
         }
-        public void TestIdentityGetAllFeatureStatesNoSegments(FeatureModel feature1, FeatureModel feature2, EnvironmentModel environment, IdentityModel identity)
+        [Fact]
+        public void TestIdentityGetAllFeatureStatesNoSegments()
         {
+            FeatureModel feature1 = ConfTest.Feature1;
+            FeatureModel feature2 = ConfTest.Feature2;
+            EnvironmentModel environment = ConfTest.Environment();
+            IdentityModel identity = ConfTest.Identity();
             var overriddenFeature = new FeatureModel { Id = 3, Name = "overridden_feature", Type = Constants.STANDARD };
             environment.FeatureStates.Add(new FeatureStateModel { DjangoId = 3, Feature = overriddenFeature, Enabled = false });
             identity.IdentityFeatures = new IdentityFeaturesList()
@@ -35,33 +44,43 @@ namespace EngineTest.Unit
             allFeatureStates.ForEach(f =>
             {
                 var envFeature = environment.FeatureStates.Where(fs => fs.Feature == f.Feature);
-                var expected = f.Feature == overriddenFeature ? true : f.Enabled;
+                var expected = f.Feature == overriddenFeature || f.Enabled;
                 Assert.Equal(expected, f.Enabled);
             });
         }
-        public void TestGetIdentityFeatureStatesHidesDisabledFlagsIfEnabled(EnvironmentModel environment, IdentityModel identity)
+        [Fact]
+        public void TestGetIdentityFeatureStatesHidesDisabledFlagsIfEnabled()
         {
+            EnvironmentModel environment = ConfTest.Environment();
+            IdentityModel identity = ConfTest.Identity();
             environment.Project.HideDisabledFlags = true;
             var featureStates = _engine.GetIdentityFeatureStates(environment, identity);
             Assert.Empty(featureStates.Where(f => !f.Enabled));
         }
-        public void TestIdentityGetAllFeatureStatesSegmentsOnly(EnvironmentModel environment, SegmentModel segment, IdentityModel identityInSegment)
+        [Fact]
+        public void TestIdentityGetAllFeatureStatesSegmentsOnly()
         {
+            EnvironmentModel environment = ConfTest.Environment();
+            IdentityModel identityInSegment = ConfTest.IdentityInSegment();
+            SegmentModel segment = ConfTest.Segment;
             var overriddenFeature = new FeatureModel { Id = 3, Name = "overridden_feature", Type = Constants.STANDARD };
 
             environment.FeatureStates.Add(new FeatureStateModel { DjangoId = 3, Feature = overriddenFeature, Enabled = false });
-            segment.FeatureStates.Add(new FeatureStateModel { DjangoId = 4, Feature = overriddenFeature, Enabled = true });
+            segment.FeatureStates = new List<FeatureStateModel> { new FeatureStateModel { DjangoId = 4, Feature = overriddenFeature, Enabled = true } };
             var AllFeatureStates = _engine.GetIdentityFeatureStates(environment, identityInSegment);
             Assert.Equal(3, AllFeatureStates.Count);
             AllFeatureStates.ForEach(f =>
             {
                 var environmentFeatureState = environment.FeatureStates.FirstOrDefault(fs => fs.Feature == f.Feature);
-                var expected = f.Feature == overriddenFeature ? true : environmentFeatureState.Enabled;
+                var expected = f.Feature == overriddenFeature || environmentFeatureState.Enabled;
                 Assert.Equal(expected, f.Enabled);
             });
         }
-        public void TestIdentityGetAllFeatureStatesWithTraits(EnvironmentModel environmentWithSegmentOverride, IdentityModel identityInSegment)
+        [Fact]
+        public void TestIdentityGetAllFeatureStatesWithTraits()
         {
+            EnvironmentModel environmentWithSegmentOverride = ConfTest.EnvironmentWithSegmentOverride();
+            IdentityModel identityInSegment = ConfTest.IdentityInSegment();
             var traitModels = new TraitModel
             {
                 TraitKey = ConfTest.SegmentConditionProperty,
@@ -70,25 +89,34 @@ namespace EngineTest.Unit
             var allFeatureStates = _engine.GetIdentityFeatureStates(environmentWithSegmentOverride, identityInSegment, new List<TraitModel> { traitModels });
             Assert.Equal("segment_override", allFeatureStates[0].GetValue());
         }
-        public void TestEnvironmentGetAllFeatureStates(EnvironmentModel environment)
+        [Fact]
+        public void TestEnvironmentGetAllFeatureStates()
         {
+            EnvironmentModel environment = ConfTest.Environment();
             var featureStates = _engine.GetEnvironmentFeatureStates(environment);
             Assert.Equal(featureStates, environment.FeatureStates);
         }
-        public void TestEnvironmentGetFeatureStatesHidesDisabledFlagsIfEnabled(EnvironmentModel environment)
+        [Fact]
+        public void TestEnvironmentGetFeatureStatesHidesDisabledFlagsIfEnabled()
         {
+            EnvironmentModel environment = ConfTest.Environment();
             environment.Project.HideDisabledFlags = true;
             var featureStates = _engine.GetEnvironmentFeatureStates(environment);
-            Assert.NotEqual(featureStates, environment.FeatureStates);
+            Assert.False(environment.FeatureStates == featureStates);
             Assert.Empty(featureStates.Where(f => !f.Enabled));
         }
-        public void TestEnvironmentGetFeatureState(EnvironmentModel environment, FeatureModel feature1)
+        [Fact]
+        public void TestEnvironmentGetFeatureState()
         {
+            EnvironmentModel environment = ConfTest.Environment();
+            FeatureModel feature1 = ConfTest.Feature1;
             var featureState = _engine.GetEnvironmentFeatureState(environment, feature1.Name);
             Assert.Equal(feature1, featureState.Feature);
         }
-        public void TestEnvironmentGetFeatureStateRaisesFeatureStateNotFound(EnvironmentModel environment)
+        [Fact]
+        public void TestEnvironmentGetFeatureStateRaisesFeatureStateNotFound()
         {
+            EnvironmentModel environment = ConfTest.Environment();
             Assert.Throws<FeatureStateNotFound>(() => _engine.GetEnvironmentFeatureState(environment, "not_a_feature_name"));
         }
     }

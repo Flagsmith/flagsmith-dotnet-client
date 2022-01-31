@@ -11,6 +11,8 @@ namespace FlagsmithEngine.Feature.Models
 {
     public class FeatureStateModel
     {
+        public Hashing Hashing = new Hashing();
+
         [JsonProperty(PropertyName = "feature")]
         public FeatureModel Feature { get; set; }
         [JsonProperty(PropertyName = "enabled")]
@@ -21,13 +23,13 @@ namespace FlagsmithEngine.Feature.Models
         public List<MultivariateFeatureStateValueModel> MultivariateFeatureStateValues { get; set; }
         [JsonProperty(PropertyName = "django_id")]
         public int DjangoId { get; set; }
-        public string FeatureStateUUID { get; set; }
+        public string FeatureStateUUID { get; set; } = new Guid().ToString();
         public object GetValue(string identityId = null) =>
-            identityId!=null && MultivariateFeatureStateValues.Count > 0 ? GetMultivariateValue(identityId.ToString()) : Value;
+            identityId!=null && MultivariateFeatureStateValues?.Count > 0 ? GetMultivariateValue(identityId.ToString()) : Value;
 
         public object GetMultivariateValue(string identityId)
         {
-            var percentageValue = new Hashing().GetHashedPercentageForObjectIds(new List<string>
+            var percentageValue = Hashing.GetHashedPercentageForObjectIds(new List<string>
             {
               DjangoId != 0 ? DjangoId.ToString() : FeatureStateUUID,
               identityId.ToString()
