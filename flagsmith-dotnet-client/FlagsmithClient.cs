@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Net;
 using System.Net.Http;
@@ -289,7 +289,7 @@ namespace Flagsmith
         {
             try
             {
-                string url = GetIdentitiesUrl(identity); 
+                string url = GetIdentitiesUrl(identity);
                 string json = await GetJSON(HttpMethod.Get, url);
 
                 return JsonConvert.DeserializeObject<Identity>(json);
