@@ -9,6 +9,11 @@ jobs:
         runs-on: ubuntu-latest
         name: Check formatting
 
+        strategy:
+          max-parallel: 2
+          matrix:
+            working-directory: ["flagsmith-dotnet-client", "Flagsmith-engine"]
+
         steps:
             - name: Cloning repo
               uses: actions/checkout@v2
@@ -22,6 +27,7 @@ jobs:
 
             - name: Check Formatting
               run: dotnet format --verify-no-changes
+              working-directory: ${{ matrix.working-directory }}
     
     test: 
         runs-on: ubuntu-latest
@@ -31,6 +37,7 @@ jobs:
             max-parallel: 4
             matrix:
                 dotnet-version: ["3.1", "5.0", "6.0"]
+                working-directory: ["flagsmith-dotnet-client", "Flagsmith-engine"]
         
         steps:
           - name: Cloning repo
@@ -45,3 +52,4 @@ jobs:
 
           - name: Run Tests
             run: dotnet test
+            working-directory: ${{ matrix.working-directory }}
