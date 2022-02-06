@@ -4,6 +4,8 @@
     <TargetFramework>netcoreapp3.1</TargetFramework>
 
     <IsPackable>false</IsPackable>
+
+    <OutputType>Exe</OutputType>
   </PropertyGroup>
 
   <ItemGroup>
@@ -15,7 +17,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Flagsmith-engine\FlagsmithEngine.csproj" />
+    <ProjectReference Include="..\Flagsmith.Engine\Flagsmith.Engine.csproj" />
   </ItemGroup>
 
 </Project>

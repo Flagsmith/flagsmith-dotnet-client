@@ -20,7 +20,7 @@ namespace EngineTest
             _iengine = new FlagsmithEngine.Engine();
         }
         [Theory]
-        [MemberData(nameof(ExtractTestCases), parameters: @"\TestEngineData\Data\environment_n9fbf9h3v4fFgH3U3ngWhb.json")]
+        [MemberData(nameof(ExtractTestCases), parameters: @"/TestEngineData/Data/environment_n9fbf9h3v4fFgH3U3ngWhb.json")]
         public void Test_Engine(EnvironmentModel environmentModel, IdentityModel IdentityModel, Response response)
         {
             var engineResponse = _iengine.GetIdentityFeatureStates(environmentModel, IdentityModel);

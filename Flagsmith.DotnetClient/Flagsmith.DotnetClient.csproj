@@ -21,9 +21,13 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Newtonsoft.Json" Version="12.0.1" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
     <None Include="LICENSE.txt" Pack="true" Visible="false" PackagePath="" />
-    <None Include="icon.png" Pack="true" PackagePath="\"/>
+    <None Include="icon.png" Pack="true" PackagePath="\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Flagsmith.Engine\Flagsmith.Engine.csproj" />
   </ItemGroup>
 
 </Project>

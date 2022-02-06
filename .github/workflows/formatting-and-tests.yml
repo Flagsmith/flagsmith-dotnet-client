@@ -12,7 +12,7 @@ jobs:
         strategy:
           max-parallel: 2
           matrix:
-            working-directory: ["flagsmith-dotnet-client", "Flagsmith-engine"]
+            working-directory: ["Flagsmith.DotnetClient", "Flagsmith.Engine"]
 
         steps:
             - name: Cloning repo
@@ -37,7 +37,7 @@ jobs:
             max-parallel: 4
             matrix:
                 dotnet-version: ["3.1", "5.0", "6.0"]
-                working-directory: ["flagsmith-dotnet-client", "Flagsmith-engine"]
+                working-directory: ["Flagsmith.DotnetClient", "Flagsmith.Engine"]
         
         steps:
           - name: Cloning repo
