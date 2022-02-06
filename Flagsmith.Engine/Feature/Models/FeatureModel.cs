@@ -5,7 +5,7 @@ using System.Text;
 
 namespace FlagsmithEngine.Feature.Models
 {
-   public class FeatureModel
+    public class FeatureModel
     {
         [JsonProperty(PropertyName = "id")]
         public int Id { get; set; }
