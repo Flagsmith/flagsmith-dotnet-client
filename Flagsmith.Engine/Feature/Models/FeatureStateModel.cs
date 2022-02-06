@@ -25,7 +25,7 @@ namespace FlagsmithEngine.Feature.Models
         public int DjangoId { get; set; }
         public string FeatureStateUUID { get; set; } = new Guid().ToString();
         public object GetValue(string identityId = null) =>
-            identityId!=null && MultivariateFeatureStateValues?.Count > 0 ? GetMultivariateValue(identityId.ToString()) : Value;
+            identityId != null && MultivariateFeatureStateValues?.Count > 0 ? GetMultivariateValue(identityId.ToString()) : Value;
 
         public object GetMultivariateValue(string identityId)
         {
