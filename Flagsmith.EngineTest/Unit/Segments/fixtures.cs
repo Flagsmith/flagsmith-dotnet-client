@@ -104,13 +104,13 @@ namespace EngineTest.Unit.Segments
                     },
                     Rules = new List<SegmentRuleModel>
                     {
-                        new SegmentRuleModel {  
+                        new SegmentRuleModel {
                             Type = Constants.AllRule,
                             Conditions=new List<SegmentConditionModel>{
                                  new SegmentConditionModel { Operator = Constants.Equal, Property = TraitKey2, Value = TraitValue2 }
                             }
                         },
-                        new SegmentRuleModel {  
+                        new SegmentRuleModel {
                             Type = Constants.AllRule,
                             Conditions=new List<SegmentConditionModel>{
                                  new SegmentConditionModel { Operator = Constants.Equal, Property = TraitKey3, Value = TraitValue3 }
