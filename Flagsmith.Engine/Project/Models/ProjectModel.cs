@@ -17,6 +17,6 @@ namespace FlagsmithEngine.Project.Models
         [JsonProperty(PropertyName = "id")]
         public int Id { get; set; }
         [JsonProperty(PropertyName = "organisation")]
-        public OrganizationModel Organization { get; set; }
+        public OrganisationModel Organisation { get; set; }
     }
 }

@@ -31,7 +31,7 @@ namespace EngineTest
             Assert.Equal(sortedApiFlags.Count(), sortedEngineflags.Count());
             for (int i = 0; i < sortedEngineflags.Count(); i++)
             {
-                Assert.Equal(sortedApiFlags[i].feature_state_value?.ToString() ?? "", sortedEngineflags[i].GetValue(IdentityModel.DjangoId.ToString())?.ToString() ?? "");
+                Assert.Equal(sortedApiFlags[i].feature_state_value , sortedEngineflags[i].GetValue(IdentityModel.DjangoId.ToString()));
                 Assert.Equal(sortedApiFlags[i].enabled, sortedEngineflags[i].Enabled);
             }
         }

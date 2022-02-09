@@ -23,9 +23,9 @@ namespace EngineTest.Unit
         public static SegmentConditionModel SegmentCondition() => new SegmentConditionModel { Operator = Constants.Equal, Property = SegmentConditionProperty, Value = SegmentConditionStringValue };
         public static SegmentRuleModel SegmentRule() =>
                 new SegmentRuleModel { Type = Constants.AllRule, Conditions = new List<SegmentConditionModel> { SegmentCondition() } };
-        public static OrganizationModel Organization() =>
-            new OrganizationModel { Id = 1, Name = "test Org", StopServingFlags = false, PersistTraitData = true, FeatureAnalytics = true, };
-        public static ProjectModel Project() => new ProjectModel { Id = 1, Name = "Test Project", Organization = Organization(), HideDisabledFlags = false, Segments = new List<SegmentModel> { Segment } };
+        public static OrganisationModel Organisation() =>
+            new OrganisationModel { Id = 1, Name = "test Org", StopServingFlags = false, PersistTraitData = true, FeatureAnalytics = true, };
+        public static ProjectModel Project() => new ProjectModel { Id = 1, Name = "Test Project", Organisation = Organisation(), HideDisabledFlags = false, Segments = new List<SegmentModel> { Segment } };
         public static EnvironmentModel Environment() => new EnvironmentModel
         {
             ID = 1,

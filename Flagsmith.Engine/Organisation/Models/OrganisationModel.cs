@@ -1,7 +1,7 @@
 ﻿using Newtonsoft.Json;
 namespace FlagsmithEngine.Organization.Models
 {
-    public class OrganizationModel
+    public class OrganisationModel
     {
         [JsonProperty("persist_trait_data")]
         public bool PersistTraitData { get; set; }

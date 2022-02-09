@@ -5,7 +5,7 @@ using System.Collections.Generic;
 using System.Text;
 namespace EngineTest.Unit.Segments
 {
-    public class fixtures
+    public class Fixtures
     {
         public static string TraitKey1 => "email";
         public static string TraitValue1 => "user@example.com";
@@ -15,7 +15,7 @@ namespace EngineTest.Unit.Segments
 
         public static string TraitKey3 => "date_joined";
         public static string TraitValue3 => "2021-01-01";
-        public static SegmentModel emptySegment => new SegmentModel() { Id = 1, Name = "empty_segment" };
+        public static SegmentModel EmptySegment => new SegmentModel() { Id = 1, Name = "empty_segment" };
         public static SegmentModel SegmentSingleCondition => new SegmentModel()
         {
             Id = 2,

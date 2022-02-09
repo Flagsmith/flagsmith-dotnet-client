@@ -13,7 +13,6 @@ namespace EngineTest.Unit.Features
         public void TestCanLoadMultivariateFeatureOptionDictWithoutIdField()
         {
             new MultivariateFeatureOptionModel { Value = "" };
-            Assert.True(true);
         }
         [Fact]
         public void TestCanLoadMultivariateFeatureStateValueWithoutIdField()
@@ -22,7 +21,6 @@ namespace EngineTest.Unit.Features
             'multivariate_feature_option': {'value': 1},
             'percentage_allocation': 10,
         }").ToObject<MultivariateFeatureStateValueModel>();
-            Assert.True(true);
         }
         [Fact]
         public void TestDumpingFsSchemaRaisesInvalidPercentageAllocationForInvalidAllocation()
@@ -66,7 +64,6 @@ namespace EngineTest.Unit.Features
                 }
             };
             JObject.FromObject(feature).ToString();
-            Assert.True(true);
         }
     }
 }

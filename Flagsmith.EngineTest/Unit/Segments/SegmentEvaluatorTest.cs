@@ -88,38 +88,38 @@ namespace EngineTest.Unit.Segments
         }
         public static IEnumerable<object[]> TestCasesIdentityInSegment() =>
             new List<object[]> {
-                new object[] { fixtures.emptySegment, new List<TraitModel>(), false },
-                new object[] { fixtures.SegmentSingleCondition, new List<TraitModel>(), false },
-                new object[] { fixtures.SegmentSingleCondition, new List<TraitModel> { new TraitModel { TraitKey = fixtures.TraitKey1, TraitValue = fixtures.TraitValue1 } }, true },
-                new object[] { fixtures.SegmentMultipleConditionsAll, new List<TraitModel>(), false },
-                new object[] { fixtures.SegmentMultipleConditionsAll, new List<TraitModel> { new TraitModel { TraitKey = fixtures.TraitKey1, TraitValue = fixtures.TraitValue1 } }, false },
-                new object[] { fixtures.SegmentMultipleConditionsAll, new List<TraitModel> {
-                                    new TraitModel { TraitKey = fixtures.TraitKey1, TraitValue = fixtures.TraitValue1 },
-                                    new TraitModel { TraitKey = fixtures.TraitKey2, TraitValue = fixtures.TraitValue2 }
+                new object[] { Fixtures.EmptySegment, new List<TraitModel>(), false },
+                new object[] { Fixtures.SegmentSingleCondition, new List<TraitModel>(), false },
+                new object[] { Fixtures.SegmentSingleCondition, new List<TraitModel> { new TraitModel { TraitKey = Fixtures.TraitKey1, TraitValue = Fixtures.TraitValue1 } }, true },
+                new object[] { Fixtures.SegmentMultipleConditionsAll, new List<TraitModel>(), false },
+                new object[] { Fixtures.SegmentMultipleConditionsAll, new List<TraitModel> { new TraitModel { TraitKey = Fixtures.TraitKey1, TraitValue = Fixtures.TraitValue1 } }, false },
+                new object[] { Fixtures.SegmentMultipleConditionsAll, new List<TraitModel> {
+                                    new TraitModel { TraitKey = Fixtures.TraitKey1, TraitValue = Fixtures.TraitValue1 },
+                                    new TraitModel { TraitKey = Fixtures.TraitKey2, TraitValue = Fixtures.TraitValue2 }
                                 }, true
                 },
-                new object[] { fixtures.SegmentMultipleConditionsAny, new List<TraitModel>(), false },
-                new object[] { fixtures.SegmentMultipleConditionsAny, new List<TraitModel> { new TraitModel { TraitKey = fixtures.TraitKey1, TraitValue = fixtures.TraitValue1 } }, true },
-                new object[] { fixtures.SegmentMultipleConditionsAny, new List<TraitModel> { new TraitModel { TraitKey = fixtures.TraitKey2, TraitValue = fixtures.TraitValue2 } }, true },
-                new object[] { fixtures.SegmentMultipleConditionsAny, new List<TraitModel> {
-                                    new TraitModel { TraitKey = fixtures.TraitKey1, TraitValue = fixtures.TraitValue1 },
-                                    new TraitModel { TraitKey = fixtures.TraitKey2, TraitValue = fixtures.TraitValue2 }
+                new object[] { Fixtures.SegmentMultipleConditionsAny, new List<TraitModel>(), false },
+                new object[] { Fixtures.SegmentMultipleConditionsAny, new List<TraitModel> { new TraitModel { TraitKey = Fixtures.TraitKey1, TraitValue = Fixtures.TraitValue1 } }, true },
+                new object[] { Fixtures.SegmentMultipleConditionsAny, new List<TraitModel> { new TraitModel { TraitKey = Fixtures.TraitKey2, TraitValue = Fixtures.TraitValue2 } }, true },
+                new object[] { Fixtures.SegmentMultipleConditionsAny, new List<TraitModel> {
+                                    new TraitModel { TraitKey = Fixtures.TraitKey1, TraitValue = Fixtures.TraitValue1 },
+                                    new TraitModel { TraitKey = Fixtures.TraitKey2, TraitValue = Fixtures.TraitValue2 }
                                     }, true
                 },
-                new object[] { fixtures.SegmentNestedRules, new List<TraitModel>(), false },
-                new object[] { fixtures.SegmentNestedRules, new List<TraitModel> { new TraitModel { TraitKey = fixtures.TraitKey1, TraitValue = fixtures.TraitValue1 } }, false },
-                new object[] { fixtures.SegmentNestedRules, new List<TraitModel> {
-                                    new TraitModel { TraitKey = fixtures.TraitKey1, TraitValue = fixtures.TraitValue1 },
-                                    new TraitModel { TraitKey = fixtures.TraitKey2, TraitValue = fixtures.TraitValue2 },
-                                    new TraitModel { TraitKey = fixtures.TraitKey3, TraitValue = fixtures.TraitValue3 }
+                new object[] { Fixtures.SegmentNestedRules, new List<TraitModel>(), false },
+                new object[] { Fixtures.SegmentNestedRules, new List<TraitModel> { new TraitModel { TraitKey = Fixtures.TraitKey1, TraitValue = Fixtures.TraitValue1 } }, false },
+                new object[] { Fixtures.SegmentNestedRules, new List<TraitModel> {
+                                    new TraitModel { TraitKey = Fixtures.TraitKey1, TraitValue = Fixtures.TraitValue1 },
+                                    new TraitModel { TraitKey = Fixtures.TraitKey2, TraitValue = Fixtures.TraitValue2 },
+                                    new TraitModel { TraitKey = Fixtures.TraitKey3, TraitValue = Fixtures.TraitValue3 }
                                     }, true
                 },
-                new object[] { fixtures.SegmentConditionsAndNestedRules, new List<TraitModel>(), false },
-                new object[] { fixtures.SegmentConditionsAndNestedRules, new List<TraitModel> { new TraitModel { TraitKey = fixtures.TraitKey1, TraitValue = fixtures.TraitValue1 } }, false },
-                new object[] { fixtures.SegmentConditionsAndNestedRules, new List<TraitModel> {
-                                    new TraitModel { TraitKey = fixtures.TraitKey1, TraitValue = fixtures.TraitValue1 },
-                                    new TraitModel { TraitKey = fixtures.TraitKey2, TraitValue = fixtures.TraitValue2 },
-                                    new TraitModel { TraitKey = fixtures.TraitKey3, TraitValue = fixtures.TraitValue3 }
+                new object[] { Fixtures.SegmentConditionsAndNestedRules, new List<TraitModel>(), false },
+                new object[] { Fixtures.SegmentConditionsAndNestedRules, new List<TraitModel> { new TraitModel { TraitKey = Fixtures.TraitKey1, TraitValue = Fixtures.TraitValue1 } }, false },
+                new object[] { Fixtures.SegmentConditionsAndNestedRules, new List<TraitModel> {
+                                    new TraitModel { TraitKey = Fixtures.TraitKey1, TraitValue = Fixtures.TraitValue1 },
+                                    new TraitModel { TraitKey = Fixtures.TraitKey2, TraitValue = Fixtures.TraitValue2 },
+                                    new TraitModel { TraitKey = Fixtures.TraitKey3, TraitValue = Fixtures.TraitValue3 }
                                     }, true
                 },
             };
@@ -137,10 +137,10 @@ namespace EngineTest.Unit.Segments
             };
             var rule = new SegmentRuleModel { Type = Constants.AllRule, Conditions = new List<SegmentConditionModel> { percentage_split_condition } };
             var segment = new SegmentModel { Id = 1, Name = "% split", Rules = new List<SegmentRuleModel> { rule } };
-            var HasingMock = new Mock<Hashing>();
-            var mockSetup = HasingMock.SetupSequence(p => p.GetHashedPercentageForObjectIds(It.IsAny<List<string>>(), It.IsAny<int>()))
+            var hashingMock = new Mock<Hashing>();
+            var mockSetup = hashingMock.SetupSequence(p => p.GetHashedPercentageForObjectIds(It.IsAny<List<string>>(), It.IsAny<int>()))
              .Returns(identityHashedPercentage);
-            Evaluator.Hashing = HasingMock.Object;
+            Evaluator.Hashing = hashingMock.Object;
             var result = Evaluator.EvaluateIdentityInSegment(ConfTest.Identity(), segment, null);
             Assert.Equal(expectedResult, result);
         }
