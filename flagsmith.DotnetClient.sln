@@ -7,9 +7,11 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Flagsmith.Test", "Flagsmith
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Flagsmith.Engine", "Flagsmith.Engine\Flagsmith.Engine.csproj", "{90C5784B-A811-44BB-B8CF-B2D704B9BC95}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Flagsmith.DotnetClient", "Flagsmith.DotnetClient\Flagsmith.DotnetClient.csproj", "{86F60371-C2BE-4FB5-86E0-412F5286DCBE}"
-EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EngineTest", "Flagsmith.EngineTest\EngineTest.csproj", "{2F55E63A-512C-4B9D-9A6B-8B4F50A23CA2}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ClientTest", "Flagsmith.Clent.Test\ClientTest.csproj", "{F61937F4-97A4-4137-BF7B-F61E81D7A9F0}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Flagsmith.FlagsmithClient", "Flagsmith.FlagsmithClient\Flagsmith.FlagsmithClient.csproj", "{D7198225-16C2-45B8-91C3-F7237EEF6D4F}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -21,20 +23,25 @@ Global
 		{90C5784B-A811-44BB-B8CF-B2D704B9BC95}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{90C5784B-A811-44BB-B8CF-B2D704B9BC95}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{90C5784B-A811-44BB-B8CF-B2D704B9BC95}.Release|Any CPU.Build.0 = Release|Any CPU
-		{86F60371-C2BE-4FB5-86E0-412F5286DCBE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{86F60371-C2BE-4FB5-86E0-412F5286DCBE}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{86F60371-C2BE-4FB5-86E0-412F5286DCBE}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{86F60371-C2BE-4FB5-86E0-412F5286DCBE}.Release|Any CPU.Build.0 = Release|Any CPU
 		{2F55E63A-512C-4B9D-9A6B-8B4F50A23CA2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{2F55E63A-512C-4B9D-9A6B-8B4F50A23CA2}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{2F55E63A-512C-4B9D-9A6B-8B4F50A23CA2}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{2F55E63A-512C-4B9D-9A6B-8B4F50A23CA2}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F61937F4-97A4-4137-BF7B-F61E81D7A9F0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F61937F4-97A4-4137-BF7B-F61E81D7A9F0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F61937F4-97A4-4137-BF7B-F61E81D7A9F0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F61937F4-97A4-4137-BF7B-F61E81D7A9F0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D7198225-16C2-45B8-91C3-F7237EEF6D4F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D7198225-16C2-45B8-91C3-F7237EEF6D4F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D7198225-16C2-45B8-91C3-F7237EEF6D4F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D7198225-16C2-45B8-91C3-F7237EEF6D4F}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{2F55E63A-512C-4B9D-9A6B-8B4F50A23CA2} = {28F7ADEC-83A8-438D-BA32-E43D143AB02E}
+		{F61937F4-97A4-4137-BF7B-F61E81D7A9F0} = {28F7ADEC-83A8-438D-BA32-E43D143AB02E}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {4970AB8B-879D-4EE9-86BC-33649DB7277D}

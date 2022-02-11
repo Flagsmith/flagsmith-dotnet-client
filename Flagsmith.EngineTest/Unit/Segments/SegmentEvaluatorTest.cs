@@ -141,7 +141,7 @@ namespace EngineTest.Unit.Segments
             var mockSetup = hashingMock.SetupSequence(p => p.GetHashedPercentageForObjectIds(It.IsAny<List<string>>(), It.IsAny<int>()))
              .Returns(identityHashedPercentage);
             Evaluator.Hashing = hashingMock.Object;
-            var result = Evaluator.EvaluateIdentityInSegment(ConfTest.Identity(), segment, null);
+            var result = Evaluator.EvaluateIdentityInSegment(Unit.Fixtures.Identity(), segment, null);
             Assert.Equal(expectedResult, result);
         }
 
