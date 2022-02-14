@@ -94,7 +94,7 @@ namespace Flagsmith.DotnetClient.Test
         [Fact]
         public void TestNon200ResponseRaisesFlagsmithApiError()
         {
-            
+
         }
         [Fact]
         public void TestDefaultFlagIsUsedWhenNoEnvironmentFlagsReturned()
