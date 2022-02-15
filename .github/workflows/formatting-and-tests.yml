@@ -36,7 +36,7 @@ jobs:
         strategy:
             max-parallel: 4
             matrix:
-                working-directory: ["Flagsmith.FlagsmithClient", "Flagsmith.Engine","Flagsmith.EngineTest","Flagsmith.Clent.Test"]
+                working-directory: ["Flagsmith.Engine","Flagsmith.EngineTest"]
         
         steps:
           - name: Cloning repo
