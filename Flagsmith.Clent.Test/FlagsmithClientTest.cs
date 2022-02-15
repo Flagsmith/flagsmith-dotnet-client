@@ -9,7 +9,7 @@ using System.Threading;
 using Newtonsoft.Json;
 using FlagsmithEngine.Trait.Models;
 
-namespace Flagsmith.DotnetClient.Test
+namespace Flagsmith.FlagsmithClientTest
 {
     internal class FlagsmithClientTest : FlagsmithClient
     {

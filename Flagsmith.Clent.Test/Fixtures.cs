@@ -5,7 +5,7 @@ using System.Text;
 using FlagsmithEngine.Environment.Models;
 using Newtonsoft.Json.Linq;
 
-namespace Flagsmith.DotnetClient.Test
+namespace Flagsmith.FlagsmithClientTest
 {
     internal class Fixtures
     {
