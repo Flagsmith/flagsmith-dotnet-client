@@ -7,7 +7,7 @@ using Xunit;
 using Newtonsoft.Json.Linq;
 using System.Threading;
 
-namespace Flagsmith.DotnetClient.Test
+namespace Flagsmith.FlagsmithClientTest
 {
     public class AnalyticsTests
     {

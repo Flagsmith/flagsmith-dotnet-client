@@ -6,7 +6,7 @@ using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Flagsmith.DotnetClient.Test
+namespace Flagsmith.FlagsmithClientTest
 {
     internal class AnalyticsProcessorTest : AnalyticsProcessor
     {

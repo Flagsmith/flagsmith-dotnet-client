@@ -5,7 +5,7 @@ using Xunit;
 using Moq;
 using System.Threading.Tasks;
 
-namespace Flagsmith.DotnetClient.Test
+namespace Flagsmith.FlagsmithClientTest
 {
     public class PollingManagerTest
     {
