@@ -12,7 +12,7 @@ using System.Text;
 
 namespace EngineTest.Unit
 {
-    public class ConfTest
+    public class Fixtures
     {
         public const string SegmentConditionProperty = "foo";
         public const string SegmentConditionStringValue = "bar";

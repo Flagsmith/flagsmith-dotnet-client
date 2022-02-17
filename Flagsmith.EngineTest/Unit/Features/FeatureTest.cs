@@ -15,7 +15,7 @@ namespace EngineTest.Unit.Features
         [Fact]
         public void TestInitializingFeatureStateCreatesDefaultFeatureStateUUID()
         {
-            var featureState = new FeatureStateModel { DjangoId = 1, Feature = ConfTest.Feature1, Enabled = true };
+            var featureState = new FeatureStateModel { DjangoId = 1, Feature = Unit.Fixtures.Feature1, Enabled = true };
             Assert.NotNull(featureState.FeatureStateUUID);
         }
         [Fact]
@@ -33,7 +33,7 @@ namespace EngineTest.Unit.Features
         public void TestFeatureStateGetValueNoMvValues()
         {
             var value = "foo";
-            var featureState = new FeatureStateModel { DjangoId = 1, Feature = ConfTest.Feature1, Enabled = true };
+            var featureState = new FeatureStateModel { DjangoId = 1, Feature = Unit.Fixtures.Feature1, Enabled = true };
             featureState.Value = value;
             Assert.Equal(featureState.GetValue(), featureState.GetValue("1"));
             Assert.Equal(featureState.GetValue("1"), value);
@@ -83,9 +83,9 @@ namespace EngineTest.Unit.Features
             var featureState = new FeatureStateModel
             {
                 DjangoId = 1,
-                Feature = ConfTest.Feature1,
+                Feature = Unit.Fixtures.Feature1,
                 Enabled = true,
-                MultivariateFeatureStateValues = new List<MultivariateFeatureStateValueModel> { ConfTest.MvFeatureStateValue() },
+                MultivariateFeatureStateValues = new List<MultivariateFeatureStateValueModel> { Unit.Fixtures.MvFeatureStateValue() },
             };
             featureState.Hashing = HasingMock.Object;
             featureState.GetValue(identityID.ToString());
@@ -98,14 +98,14 @@ namespace EngineTest.Unit.Features
             var HasingMock = new Mock<Hashing>();
             var mockSetup = HasingMock.SetupSequence(p => p.GetHashedPercentageForObjectIds(It.IsAny<List<string>>(), It.IsAny<int>()))
              .Returns(10);
-            var feature1 = ConfTest.Feature1;
-            var mVFeatureStateValue = ConfTest.MvFeatureStateValue();
+            var feature1 = Unit.Fixtures.Feature1;
+            var mVFeatureStateValue = Unit.Fixtures.MvFeatureStateValue();
             var identityID = 1;
             var featureState = new FeatureStateModel
             {
-                Feature = ConfTest.Feature1,
+                Feature = Unit.Fixtures.Feature1,
                 Enabled = true,
-                MultivariateFeatureStateValues = new List<MultivariateFeatureStateValueModel> { ConfTest.MvFeatureStateValue() },
+                MultivariateFeatureStateValues = new List<MultivariateFeatureStateValueModel> { Unit.Fixtures.MvFeatureStateValue() },
             };
             featureState.Hashing = HasingMock.Object;
             featureState.GetValue(identityID.ToString());
