@@ -38,8 +38,8 @@ namespace EngineTest.Unit.Segments
                 }
             };
             var jobject = JObject.FromObject(segment);
-            Assert.Equal(1, ((JArray)jobject["feature_states"]).Count);
-            Assert.Equal(1, ((JArray)jobject["rules"]).Count);
+            Assert.Single(((JArray)jobject["feature_states"]));
+            Assert.Single(((JArray)jobject["rules"]));
         }
         [Fact]
         public void TestJobjectToSegmentModel()
@@ -68,8 +68,8 @@ namespace EngineTest.Unit.Segments
     }");
             var segment = jObject.ToObject<SegmentModel>();
             Assert.Equal(jObject["id"].Value<int>(), segment.Id);
-            Assert.Equal(1, segment.Rules.Count);
-            Assert.Equal(1, segment.FeatureStates.Count);
+            Assert.Single(segment.Rules);
+            Assert.Single(segment.FeatureStates);
         }
         [Fact]
         public void TestSegmentConditionSchemaLoadWhenPropertyIsNull()

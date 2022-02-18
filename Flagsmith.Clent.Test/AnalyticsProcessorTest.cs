@@ -13,7 +13,7 @@ namespace Flagsmith.FlagsmithClientTest
         Dictionary<string, int> _totalFucntionCalls;
         public bool IsFlushEarlyReturn { get; private set; } = false;
         public AnalyticsProcessorTest(HttpClient httpClient, string environmentKey, string baseApiUrl, int timeOut = 3)
-            : base(httpClient, environmentKey, baseApiUrl, timeOut)
+            : base(httpClient, environmentKey, baseApiUrl, timeOut: timeOut)
         {
             _totalFucntionCalls = new Dictionary<string, int>();
         }
