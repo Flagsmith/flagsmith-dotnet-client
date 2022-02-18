@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 16
-VisualStudioVersion = 16.0.31205.134
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31919.166
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Flagsmith.Test", "Flagsmith.Test", "{28F7ADEC-83A8-438D-BA32-E43D143AB02E}"
 EndProject
@@ -12,6 +12,8 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ClientTest", "Flagsmith.Clent.Test\ClientTest.csproj", "{F61937F4-97A4-4137-BF7B-F61E81D7A9F0}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Flagsmith.FlagsmithClient", "Flagsmith.FlagsmithClient\Flagsmith.FlagsmithClient.csproj", "{D7198225-16C2-45B8-91C3-F7237EEF6D4F}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Example", "Example\Example.csproj", "{3C82759D-2525-468F-8A95-E3CA8AE6ECCA}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -35,6 +37,10 @@ Global
 		{D7198225-16C2-45B8-91C3-F7237EEF6D4F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D7198225-16C2-45B8-91C3-F7237EEF6D4F}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{D7198225-16C2-45B8-91C3-F7237EEF6D4F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3C82759D-2525-468F-8A95-E3CA8AE6ECCA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3C82759D-2525-468F-8A95-E3CA8AE6ECCA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3C82759D-2525-468F-8A95-E3CA8AE6ECCA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3C82759D-2525-468F-8A95-E3CA8AE6ECCA}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

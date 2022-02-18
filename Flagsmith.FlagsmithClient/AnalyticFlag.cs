@@ -28,16 +28,17 @@ namespace Flagsmith
         public static List<AnalyticFlag> FromApiFlag(AnalyticsProcessor analyticsProcessor, List<Flag> flags)
         => flags.Select(flag => ToAnalyticFlag(analyticsProcessor, flag)).ToList();
         private static AnalyticFlag ToAnalyticFlag(AnalyticsProcessor analyticsProcessor, Flag flag)
-          => new AnalyticFlag(analyticsProcessor)
-          {
-              Enabled = flag.IsEnabled(),
-              Value = flag.GetValue(),
-              Feature = flag.GetFeature()
-          };
+         => new AnalyticFlag(analyticsProcessor)
+         {
+             Enabled = flag.IsEnabled(),
+             Value = flag.GetValue().Result,
+             Feature = flag.GetFeature()
+         };
 
-        public override string GetValue()
+        public override async Task<string> GetValue()
         {
-            _ = _AnalyticsProcessor.TrackFeature(FeatureId);
+            if (_AnalyticsProcessor != null)
+                await _AnalyticsProcessor.TrackFeature(Feature.GetId());
             return Value;
         }
     }

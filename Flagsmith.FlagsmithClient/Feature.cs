@@ -20,6 +20,7 @@ namespace Flagsmith
         {
             return Name;
         }
+        public int GetId() { return Id; }
 
         public override string ToString()
         {

@@ -5,6 +5,12 @@ namespace Flagsmith
     [JsonObject(MemberSerialization.OptIn)]
     public class Trait
     {
+        public Trait() { }
+        public Trait(string traitKey, string traitValue)
+        {
+            this.key = traitKey;
+            this.traitValue = traitValue;
+        }
         [JsonProperty("trait_key")]
         private string key = null;
 

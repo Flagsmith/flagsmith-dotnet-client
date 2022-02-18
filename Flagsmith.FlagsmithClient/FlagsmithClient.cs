@@ -8,9 +8,12 @@ using Newtonsoft.Json;
 using FlagsmithEngine.Environment.Models;
 using FlagsmithEngine;
 using FlagsmithEngine.Interfaces;
-using System.Linq;
 using FlagsmithEngine.Identity.Models;
 using FlagsmithEngine.Trait.Models;
+using Microsoft.Extensions.Logging;
+using System.Threading;
+using Flagsmith.Extensions;
+using System.Linq;
 
 namespace Flagsmith
 {
@@ -19,7 +22,7 @@ namespace Flagsmith
         public static FlagsmithClient instance;
 
         private readonly FlagsmithConfiguration configuration;
-        static HttpClient httpClient;
+        protected static HttpClient httpClient;
         protected EnvironmentModel Environment { get; set; }
         private readonly PollingManager _PollingManager;
         private readonly IEngine _Engine;
@@ -47,7 +50,8 @@ namespace Flagsmith
                 instance = this;
                 _PollingManager = new PollingManager(GetAndUpdateEnvironmentFromApi, configuration.EnvironmentRefreshIntervalSeconds);
                 _Engine = new Engine();
-                _AnalyticsProcessor = new AnalyticsProcessor(httpClient, configuration.EnvironmentKey, configuration.ApiUrl);
+                if (configuration.EnableAnalytics)
+                    _AnalyticsProcessor = new AnalyticsProcessor(httpClient, configuration.EnvironmentKey, configuration.ApiUrl, configuration.Logger, configuration.CustomHeaders);
                 if (configuration.EnableClientSideEvaluation)
                     _ = _PollingManager.StartPoll();
 
@@ -64,16 +68,16 @@ namespace Flagsmith
         public async Task<List<Flag>> GetFeatureFlags()
             => Environment != null ? GetFeatureFlagsFromDocuments() : await GetFeatureFlagsFromApi();
 
-        public async Task<List<Flag>> GetFeatureFlags(string identity, List<TraitModel> traits = null)
+        public async Task<List<Flag>> GetFeatureFlags(string identity, List<Trait> traits = null)
              => Environment != null ? GetIdentityFlagsFromDocuments(identity, traits) : await GetIdentityFlagsFromApi(identity);
 
         /// <summary>
         /// Check feature exists and is enabled optionally for a specific identity
         /// </summary>
         /// <returns>Null if Flagsmith is unaccessible</returns>
-        public async Task<bool?> HasFeatureFlag(string featureName, string identity = null)
+        public async Task<bool?> HasFeatureFlag(string featureName, string identity = null, List<Trait> traits = null)
         {
-            List<Flag> flags = identity == null ? await GetFeatureFlags() : await GetFeatureFlags(identity);
+            List<Flag> flags = identity == null ? await GetFeatureFlags() : await GetFeatureFlags(identity, traits);
             if (flags == null)
             {
                 return null;
@@ -93,23 +97,61 @@ namespace Flagsmith
         /// <summary>
         /// Get remote config value optionally for a specific identity
         /// </summary>
-        public async Task<string> GetFeatureValue(string featureName, string identity = null)
+        public async Task<string> GetFeatureValue(string featureName, string identity = null, List<Trait> traits = null)
         {
-            List<Flag> flags = identity == null ? await GetFeatureFlags() : await GetFeatureFlags(identity);
-            if (flags == null)
+            List<Flag> flags = null;
+            try
             {
-                return null;
+                flags = identity == null ? await GetFeatureFlags() : await GetFeatureFlags(identity, traits);
+            }
+            catch (FlagsmithAPIError)
+            {
+                var val = await configuration.DefaultFlagHandler?.Invoke(featureName)?.GetValue();
+                if (val != null)
+                    return val;
+                throw;
             }
 
-            foreach (Flag flag in flags)
+            if (flags != null)
             {
-                if (flag.GetFeature().GetName().Equals(featureName))
+                foreach (Flag flag in flags)
                 {
-                    return flag.GetValue();
+                    if (flag.GetFeature().GetName().Equals(featureName))
+                    {
+                        return await flag.GetValue();
+                    }
                 }
             }
-            var value = configuration.DefaultFlagHandler.Invoke(featureName)?.GetValue();
-            return value != null ? value : throw new FlagsmithClientError("Feature does not exist: " + featureName);
+            var value = await configuration.DefaultFlagHandler?.Invoke(featureName)?.GetValue();
+            return value ?? throw new FlagsmithClientError("Feature does not exist: " + featureName);
+        }
+        public async Task<Flag> GetFeatureFlag(string featureName, string identity = null, List<Trait> traits = null)
+        {
+            List<Flag> flags = null;
+            try
+            {
+                flags = identity == null ? await GetFeatureFlags() : await GetFeatureFlags(identity, traits);
+            }
+            catch (FlagsmithAPIError)
+            {
+                var val = configuration.DefaultFlagHandler?.Invoke(featureName);
+                if (val != null)
+                    return val;
+                throw;
+            }
+
+            if (flags != null)
+            {
+                foreach (Flag flag in flags)
+                {
+                    if (flag.GetFeature().GetName().Equals(featureName))
+                    {
+                        return flag;
+                    }
+                }
+            }
+            var value = configuration.DefaultFlagHandler?.Invoke(featureName);
+            return value ?? throw new FlagsmithClientError("Feature does not exist: " + featureName);
         }
 
         /// <summary>
@@ -291,29 +333,38 @@ namespace Flagsmith
             }
         }
 
-        private async Task<string> GetJSON(HttpMethod method, string url, string body = null)
+        protected virtual async Task<string> GetJSON(HttpMethod method, string url, string body = null)
         {
             try
             {
-                HttpRequestMessage request = new HttpRequestMessage(method, url)
+                var policy = HttpPolicies.GetRetryPolicyAwaitable(configuration.Retries);
+                return await (await policy.ExecuteAsync(async () =>
                 {
-                    Headers = {
-                        { "X-Environment-Key", configuration.EnvironmentKey }
+                    HttpRequestMessage request = new HttpRequestMessage(method, url)
+                    {
+                        Headers = {
+                            { "X-Environment-Key", configuration.EnvironmentKey }
+                        }
+                    };
+                    configuration.CustomHeaders?.ForEach(kvp => request.Headers.Add(kvp.Key, kvp.Value));
+                    if (body != null)
+                    {
+                        request.Content = new StringContent(body, Encoding.UTF8, "application/json");
                     }
-                };
-                if (body != null)
-                {
-                    request.Content = new StringContent(body, Encoding.UTF8, "application/json");
-                }
-                HttpResponseMessage response = await httpClient.SendAsync(request);
-                response.EnsureSuccessStatusCode();
-                return await response.Content.ReadAsStringAsync();
+                    var cancellationTokenSource = new CancellationTokenSource(TimeSpan.FromSeconds(configuration.RequestTimeout ?? 100));
+                    HttpResponseMessage response = await httpClient.SendAsync(request, cancellationTokenSource.Token);
+                    return response.EnsureSuccessStatusCode();
+                })).Content.ReadAsStringAsync();
             }
             catch (HttpRequestException e)
             {
                 Console.WriteLine("\nHTTP Request Exception Caught!");
                 Console.WriteLine("Message :{0} ", e.Message);
                 throw new FlagsmithAPIError("Unable to get valid response from Flagsmith API");
+            }
+            catch (TaskCanceledException)
+            {
+                throw new FlagsmithAPIError("Request cancelled: Api server takes too long to respond");
             }
         }
 
@@ -328,49 +379,39 @@ namespace Flagsmith
         }
         protected async virtual Task GetAndUpdateEnvironmentFromApi()
         {
-            var json = await GetJSON(HttpMethod.Get, configuration.ApiUrl + "environment");
-            Environment = JsonConvert.DeserializeObject<EnvironmentModel>(json);
+            try
+            {
+                var json = await GetJSON(HttpMethod.Get, configuration.ApiUrl + "environment-document/");
+                Environment = JsonConvert.DeserializeObject<EnvironmentModel>(json);
+                this.configuration.Logger?.LogInformation("Local Environment updated: " + json);
+            }
+            catch (FlagsmithAPIError ex)
+            {
+                this.configuration.Logger?.LogError(ex.Message);
+            }
         }
         protected async virtual Task<List<Flag>> GetFeatureFlagsFromApi()
         {
             string url = configuration.ApiUrl.AppendPath("flags");
-            try
-            {
-                string json = await GetJSON(HttpMethod.Get, url);
-                var flags = JsonConvert.DeserializeObject<List<Flag>>(json);
-                return new List<Flag>(AnalyticFlag.FromApiFlag(_AnalyticsProcessor, flags));
-            }
-            catch (JsonException e)
-            {
-                Console.WriteLine("\nJSON Exception Caught!");
-                Console.WriteLine("Message :{0} ", e.Message);
-                return null;
-            }
+            string json = await GetJSON(HttpMethod.Get, url);
+            var flags = JsonConvert.DeserializeObject<List<Flag>>(json);
+            return new List<Flag>(AnalyticFlag.FromApiFlag(_AnalyticsProcessor, flags));
         }
         protected async virtual Task<List<Flag>> GetIdentityFlagsFromApi(string identity)
         {
-            try
-            {
-                string url = GetIdentitiesUrl(identity);
-                string json = await GetJSON(HttpMethod.Get, url);
-                var flags = JsonConvert.DeserializeObject<Identity>(json)?.flags;
-                return new List<Flag>(AnalyticFlag.FromApiFlag(_AnalyticsProcessor, flags));
-            }
-            catch (JsonException e)
-            {
-                Console.WriteLine("\nJSON Exception Caught!");
-                Console.WriteLine("Message :{0} ", e.Message);
-                return null;
-            }
+            string url = GetIdentitiesUrl(identity);
+            string json = await GetJSON(HttpMethod.Get, url);
+            var flags = JsonConvert.DeserializeObject<Identity>(json)?.flags;
+            return new List<Flag>(AnalyticFlag.FromApiFlag(_AnalyticsProcessor, flags));
         }
-        private List<Flag> GetFeatureFlagsFromDocuments()
+        protected virtual List<Flag> GetFeatureFlagsFromDocuments()
         {
             var analyticFlag = AnalyticFlag.FromFeatureStateModel(_AnalyticsProcessor, _Engine.GetEnvironmentFeatureStates(Environment));
             return new List<Flag>(analyticFlag);
         }
-        protected virtual List<Flag> GetIdentityFlagsFromDocuments(string identifier, List<TraitModel> traits)
+        protected virtual List<Flag> GetIdentityFlagsFromDocuments(string identifier, List<Trait> traits)
         {
-            var identity = new IdentityModel { Identifier = identifier, IdentityTraits = traits };
+            var identity = new IdentityModel { Identifier = identifier, IdentityTraits = traits?.Select(t => new TraitModel { TraitKey = t.GetKey(), TraitValue = t.GetIntValue() }).ToList() };
             var analyticFlag = AnalyticFlag.FromFeatureStateModel(_AnalyticsProcessor, _Engine.GetIdentityFeatureStates(Environment, identity), identity.CompositeKey);
             return new List<Flag>(analyticFlag);
         }
