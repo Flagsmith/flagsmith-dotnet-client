@@ -16,7 +16,16 @@ using Flagsmith.Extensions;
 using System.Linq;
 
 namespace Flagsmith
-{
+{   /// <summary>
+    /// A Flagsmith client.
+    /// Provides an interface for interacting with the Flagsmith http API.
+    /// </summary>
+    /// <exception cref="FlagsmithAPIError">
+    /// Thrown when error occurs during any http request to Flagsmith api.Not applicable for polling or ananlytics.
+    /// </exception>
+    /// <exception cref="FlagsmithClientError">
+    /// A general exception with a error message. Example: Feature not found, etc.
+    /// </exception>
     public class FlagsmithClient
     {
         public static FlagsmithClient instance;
@@ -63,10 +72,14 @@ namespace Flagsmith
         }
 
         /// <summary>
-        /// Get all feature flags (flags and remote config) optionally for a specific identity.
+        /// Get all the default for flags for the current environment.
         /// </summary>
         public async Task<List<Flag>> GetFeatureFlags()
             => Environment != null ? GetFeatureFlagsFromDocuments() : await GetFeatureFlagsFromApi();
+
+        /// <summary>
+        /// Get all the flags for the current environment for a given identity.
+        /// </summary>
 
         public async Task<List<Flag>> GetFeatureFlags(string identity, List<Trait> traits = null)
              => Environment != null ? GetIdentityFlagsFromDocuments(identity, traits) : await GetIdentityFlagsFromApi(identity);
@@ -95,7 +108,7 @@ namespace Flagsmith
         }
 
         /// <summary>
-        /// Get remote config value optionally for a specific identity
+        /// Get remote config value optionally for a specific identity.
         /// </summary>
         public async Task<string> GetFeatureValue(string featureName, string identity = null, List<Trait> traits = null)
         {
@@ -125,6 +138,9 @@ namespace Flagsmith
             var value = await configuration.DefaultFlagHandler?.Invoke(featureName)?.GetValue();
             return value ?? throw new FlagsmithClientError("Feature does not exist: " + featureName);
         }
+        /// <summary>
+        /// Get feature flag optionally for a specific identity.
+        /// </summary>
         public async Task<Flag> GetFeatureFlag(string featureName, string identity = null, List<Trait> traits = null)
         {
             List<Flag> flags = null;
@@ -187,8 +203,8 @@ namespace Flagsmith
             }
             catch (JsonException e)
             {
-                Console.WriteLine("\nJSON Exception Caught!");
-                Console.WriteLine("Message :{0} ", e.Message);
+                this.configuration.Logger?.LogError("\nJSON Exception Caught!");
+                this.configuration.Logger?.LogError("Message :{0} ", e.Message);
                 return null;
             }
         }
@@ -280,14 +296,14 @@ namespace Flagsmith
             }
             catch (JsonException e)
             {
-                Console.WriteLine("\nJSON Exception Caught!");
-                Console.WriteLine("Message :{0} ", e.Message);
+                this.configuration.Logger?.LogError("\nJSON Exception Caught!");
+                this.configuration.Logger?.LogError("Message :{0} ", e.Message);
                 return null;
             }
             catch (ArgumentException e)
             {
-                Console.WriteLine("\nArgument Exception Caught!");
-                Console.WriteLine("Message :{0} ", e.Message);
+                this.configuration.Logger?.LogError("\nArgument Exception Caught!");
+                this.configuration.Logger?.LogError("Message :{0} ", e.Message);
                 return null;
             }
         }
@@ -307,8 +323,8 @@ namespace Flagsmith
             }
             catch (JsonException e)
             {
-                Console.WriteLine("\nJSON Exception Caught!");
-                Console.WriteLine("Message :{0} ", e.Message);
+                this.configuration.Logger?.LogError("\nJSON Exception Caught!");
+                this.configuration.Logger?.LogError("Message :{0} ", e.Message);
                 return null;
             }
         }
@@ -327,8 +343,8 @@ namespace Flagsmith
             }
             catch (JsonException e)
             {
-                Console.WriteLine("\nJSON Exception Caught!");
-                Console.WriteLine("Message :{0} ", e.Message);
+                this.configuration.Logger?.LogError("\nJSON Exception Caught!");
+                this.configuration.Logger?.LogError("Message :{0} ", e.Message);
                 return null;
             }
         }
@@ -358,8 +374,8 @@ namespace Flagsmith
             }
             catch (HttpRequestException e)
             {
-                Console.WriteLine("\nHTTP Request Exception Caught!");
-                Console.WriteLine("Message :{0} ", e.Message);
+                this.configuration.Logger?.LogError("\nHTTP Request Exception Caught!");
+                this.configuration.Logger?.LogError("Message :{0} ", e.Message);
                 throw new FlagsmithAPIError("Unable to get valid response from Flagsmith API");
             }
             catch (TaskCanceledException)
