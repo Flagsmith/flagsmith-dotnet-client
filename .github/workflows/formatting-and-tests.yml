@@ -12,7 +12,7 @@ jobs:
         strategy:
           max-parallel: 2
           matrix:
-            working-directory: ["Flagsmith.FlagsmithClient", "Flagsmith.Engine","Flagsmith.EngineTest","Flagsmith.Clent.Test"]
+            working-directory: ["Flagsmith.FlagsmithClient", "Flagsmith.Engine","Flagsmith.EngineTest","Flagsmith.Client.Test"]
 
         steps:
             - name: Cloning repo
@@ -42,23 +42,13 @@ jobs:
         strategy:
             max-parallel: 4
             matrix:
-                working-directory: ["Flagsmith.EngineTest","Flagsmith.Clent.Test"]
+                working-directory: ["Flagsmith.EngineTest","Flagsmith.Client.Test"]
         
         steps:
           - name: Cloning repo
             uses: actions/checkout@v2
             with:
                 fetch-depth: 0
-
-          - name: Set up Dotnet 3.1
-            uses: actions/setup-dotnet@v1
-            with:
-                dotnet-version: 3.1.x
-                
-          - name: Set up Dotnet 5.0
-            uses: actions/setup-dotnet@v1
-            with:
-                dotnet-version: 5.0.x
                 
           - name: Set up Dotnet 6.0
             uses: actions/setup-dotnet@v1
