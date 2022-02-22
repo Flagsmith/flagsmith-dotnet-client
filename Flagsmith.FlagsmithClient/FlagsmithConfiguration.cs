@@ -9,7 +9,6 @@ namespace Flagsmith
         {
             ApiUrl = "https://api.flagsmith.com/api/v1/";
             EnvironmentKey = string.Empty;
-            UseLegacyIdentities = true;
             EnvironmentRefreshIntervalSeconds = 60;
         }
         /// <summary>
@@ -20,7 +19,6 @@ namespace Flagsmith
         /// The environment key obtained from Flagsmith interface.
         /// </summary>
         public string EnvironmentKey { get; set; }
-        public bool UseLegacyIdentities { get; set; }
         /// <summary>
         /// Enables local evaluation of flags.
         /// </summary>

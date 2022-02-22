@@ -1,6 +1,6 @@
 ﻿namespace Example.Model
 {
-    public class search
+    public class Search
     {
         public string? Identifier { get; set; }
         public string? TraitKey { get; set; }

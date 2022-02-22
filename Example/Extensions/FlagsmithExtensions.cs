@@ -15,7 +15,6 @@ namespace Example.Extensions
         {
             EnvironmentKey = settings.EnvironmentKey,
             EnableClientSideEvaluation = settings.EnableClientSideEvaluation,
-            UseLegacyIdentities = settings.UseLegacyIdentities,
             RequestTimeout = settings.RequestTimeout,
             Retries = settings.Retries,
             EnableAnalytics = settings.EnableAnalytics,

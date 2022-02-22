@@ -53,17 +53,16 @@ namespace Flagsmith
             if (instance == null)
             {
                 configuration = flagsmithConfiguration;
-                var sp = ServicePointManager.FindServicePoint(new Uri(configuration.ApiUrl));
-                sp.ConnectionLeaseTimeout = 60 * 1000 * 5;
                 httpClient = new HttpClient();
                 instance = this;
-                _PollingManager = new PollingManager(GetAndUpdateEnvironmentFromApi, configuration.EnvironmentRefreshIntervalSeconds);
                 _Engine = new Engine();
                 if (configuration.EnableAnalytics)
                     _AnalyticsProcessor = new AnalyticsProcessor(httpClient, configuration.EnvironmentKey, configuration.ApiUrl, configuration.Logger, configuration.CustomHeaders);
                 if (configuration.EnableClientSideEvaluation)
+                {
+                    _PollingManager = new PollingManager(GetAndUpdateEnvironmentFromApi, configuration.EnvironmentRefreshIntervalSeconds);
                     _ = _PollingManager.StartPoll();
-
+                }
             }
             else
             {
@@ -386,12 +385,7 @@ namespace Flagsmith
 
         private string GetIdentitiesUrl(string identity)
         {
-            if (configuration.UseLegacyIdentities)
-            {
-                return configuration.ApiUrl.AppendPath("identities", identity);
-            }
-
-            return configuration.ApiUrl.AppendToUrl(trailingSlash: false, "identities", $"?identifier={identity}");
+            return configuration.ApiUrl.AppendPath("identities", identity);
         }
         protected async virtual Task GetAndUpdateEnvironmentFromApi()
         {
