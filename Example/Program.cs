@@ -21,7 +21,7 @@ app.MapGet("/", async (FlagsmithClient flagsmithClient) =>
     }
     return list;
 });
-app.MapPost("/", async (FlagsmithClient flagsmithClient, Example.Model.search search) =>
+app.MapPost("/", async (FlagsmithClient flagsmithClient, Example.Model.Search search) =>
  {
      var traitList = new List<Trait> { new Trait(search.TraitKey, search.TraitValue) };
      var flag = await flagsmithClient.GetFeatureFlag("is_light", search.Identifier, traitList);
