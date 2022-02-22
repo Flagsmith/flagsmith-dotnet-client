@@ -119,7 +119,7 @@ namespace EngineTest.Unit.Environments
         ]
     }}");
             var environment = payload.ToObject<EnvironmentModel>();
-            Assert.Equal(1, environment.FeatureStates.Count);
+            Assert.Single(environment.FeatureStates);
             Assert.Equal(2, environment.FeatureStates[0].MultivariateFeatureStateValues.Count);
         }
     }
