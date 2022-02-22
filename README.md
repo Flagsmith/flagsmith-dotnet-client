@@ -4,6 +4,14 @@
 
 The SDK for .NET Core, .NET Framework, Mono, Xamarin and Universal Windows Platform applications for [https://www.flagsmith.com/](https://www.flagsmith.com/).
 
+# Flagsmith .NET Engine
+
+This Project powers the core Flagsmith API flag evaluations engine.
+
+# Flagsmith .NET Engine-Test
+
+This Project contains all the Test Cases to evaluate the Engine functionality.
+
 ## Adding to your project
 
 For full documentation visit [https://docs.flagsmith.com/clients/dotnet/](https://docs.flagsmith.com/clients/dotnet/)
