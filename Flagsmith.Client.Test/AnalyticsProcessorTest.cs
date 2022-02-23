@@ -10,12 +10,12 @@ namespace Flagsmith.FlagsmithClientTest
 {
     internal class AnalyticsProcessorTest : AnalyticsProcessor
     {
-        Dictionary<string, int> _totalFucntionCalls;
+        Dictionary<string, int> _totalFunctionCalls;
         public bool IsFlushEarlyReturn { get; private set; } = false;
         public AnalyticsProcessorTest(HttpClient httpClient, string environmentKey, string baseApiUrl, int timeOut = 3)
             : base(httpClient, environmentKey, baseApiUrl, timeOut: timeOut)
         {
-            _totalFucntionCalls = new Dictionary<string, int>();
+            _totalFunctionCalls = new Dictionary<string, int>();
         }
 
         public override async Task Flush()
@@ -38,12 +38,12 @@ namespace Flagsmith.FlagsmithClientTest
         /// <param name="featureId"></param>
         /// <returns></returns>
         public int this[int featureId] => AnalyticsData[featureId];
-        public int this[string functionName] => _totalFucntionCalls.GetValueOrDefault(functionName);
+        public int this[string functionName] => _totalFunctionCalls.GetValueOrDefault(functionName);
         public bool HasTrackingItemsInCache() => AnalyticsData.Any();
         public override string ToString() => JsonConvert.SerializeObject(AnalyticsData);
         private void _LogFunctionCall(string functionName)
         {
-            _totalFucntionCalls[functionName] = _totalFucntionCalls.TryGetValue(functionName, out int i) ? i + 1 : 1;
+            _totalFunctionCalls[functionName] = _totalFunctionCalls.TryGetValue(functionName, out int i) ? i + 1 : 1;
         }
     }
 }
