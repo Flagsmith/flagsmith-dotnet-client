@@ -20,9 +20,9 @@ namespace Flagsmith
             _AnalyticsProcessor = analyticsProcessor;
             _DefaultFlagHandler = defaultFlagHandler;
         }
-        public async Task<string> GetFeatureValue(string featureName) => (await GetFeatureFlag(featureName)).GetValue();
-        public async Task<bool> IsFeatureEnabled(string featureName) => (await GetFeatureFlag(featureName)).IsEnabled();
-        public async Task<Flag> GetFeatureFlag(string featureName)
+        public async Task<string> GetFeatureValue(string featureName) => (await GetFlag(featureName)).GetValue();
+        public async Task<bool> IsFeatureEnabled(string featureName) => (await GetFlag(featureName)).IsEnabled();
+        public async Task<Flag> GetFlag(string featureName)
         {
             var flag = _Flags?.FirstOrDefault(f => f.GetFeature().GetName().Equals(featureName));
             if (flag == null)

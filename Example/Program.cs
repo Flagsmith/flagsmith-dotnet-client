@@ -9,12 +9,12 @@ var app = builder.Build();
 
 static Flag defaultFlagHandler(string featureName)
 {
-    if (featureName == "is_light")
-        return new Flag() { Value = JsonConvert.SerializeObject("'colour': '#b8b8b8'").ToString(), Enabled = false };
+    if (featureName == "secret_button")
+        return new Flag(feature:null,enabled:false,value: JsonConvert.SerializeObject("'colour': '#ababab'").ToString());
     else return new Flag() { };
 }
 
-app.MapGet("/", async (HttpContext req) =>
+app.Map("/", async (HttpContext req) =>
 {
     if (req.Request.Query.Count > 0)
     {
@@ -22,9 +22,9 @@ app.MapGet("/", async (HttpContext req) =>
         var traitKey = req.Request.Query["trait-key"].ToString();
         var traitValue = req.Request.Query["trait-value"].ToString();
         var traitList = new List<Trait> { new Trait(traitKey, traitValue) };
-        var flags = await flagsmithClient.GetFeatureFlags(Identifier, traitList);
-        var showButton = await flags.IsFeatureEnabled("is_light");
-        var buttonData = flags.GetFeatureValue("is_light").Result;
+        var flags = await flagsmithClient.GetIdentityFlags(Identifier, traitList);
+        var showButton = await flags.IsFeatureEnabled("secret_button");
+        var buttonData = flags.GetFeatureValue("secret_button").Result;
 
 
         return new
@@ -37,9 +37,9 @@ app.MapGet("/", async (HttpContext req) =>
     else
     {
 
-        var flag = await flagsmithClient.GetFeatureFlags();
-        var showButton = await flag.IsFeatureEnabled("is_light");
-        var buttonData = flag.GetFeatureValue("is_light").Result;
+        var flag = await flagsmithClient.GetEnvironmentFlags();
+        var showButton = await flag.IsFeatureEnabled("secret_button");
+        var buttonData = flag.GetFeatureValue("secret_button").Result;
         return new
         {
             showButton = showButton,

@@ -24,7 +24,11 @@ namespace Flagsmith.FlagsmithClientTest
         [Fact]
         public async Task TestAnalyticsProcessorFlushClearsAnalyticsData()
         {
-            var analyticsProcessor = Fixtures.GetAnalyticalProcessorTest();
+            var mockHttpClient = HttpMocker.MockHttpResponse(new HttpResponseMessage
+            {
+                StatusCode = System.Net.HttpStatusCode.OK,
+            });
+            var analyticsProcessor = new AnalyticsProcessorTest(mockHttpClient.Object, null, null);
             await analyticsProcessor.TrackFeature(1);
             await analyticsProcessor.Flush();
             Assert.False(analyticsProcessor.HasTrackingItemsInCache());
@@ -32,29 +36,41 @@ namespace Flagsmith.FlagsmithClientTest
         [Fact]
         public async void TestAnalyticsProcessorFlushPostRequestDataMatchAnanlyticsData()
         {
-            var analyticsProcessor = Fixtures.GetAnalyticalProcessorTest();
+            var mockHttpClient = HttpMocker.MockHttpResponse(new HttpResponseMessage
+            {
+                StatusCode = System.Net.HttpStatusCode.OK,
+            });
+            var analyticsProcessor = new AnalyticsProcessorTest(mockHttpClient.Object, null, null);
             await analyticsProcessor.TrackFeature(1);
             await analyticsProcessor.TrackFeature(2);
             var jObject = JObject.Parse(analyticsProcessor.ToString());
             await analyticsProcessor.Flush();
-            Assert.Equal(1, analyticsProcessor["Flush"]);
+            mockHttpClient.Verify(x => x.SendAsync(It.IsAny<HttpRequestMessage>(), It.IsAny<CancellationToken>()), Times.Once);
             Assert.Equal(1, jObject["1"].Value<int>());
             Assert.Equal(1, jObject["2"].Value<int>());
         }
         [Fact]
         public async Task TestAnalyticsProcessorFlushEarlyExitIfAnalyticsDataIsEmpty()
         {
-            var analyticsProcessor = Fixtures.GetAnalyticalProcessorTest();
+            var mockHttpClient = HttpMocker.MockHttpResponse(new HttpResponseMessage
+            {
+                StatusCode = System.Net.HttpStatusCode.OK,
+            });
+            var analyticsProcessor = new AnalyticsProcessorTest(mockHttpClient.Object, null, null);
             await analyticsProcessor.Flush();
-            Assert.True(analyticsProcessor.IsFlushEarlyReturn);
+            mockHttpClient.Verify(x => x.SendAsync(It.IsAny<HttpRequestMessage>(), It.IsAny<CancellationToken>()), Times.Never);
         }
         [Fact]
         public async Task TestAnalyticsProcessorCallingTrackFeatureCallsFlushWhenTimerRunsOut()
         {
-            var analyticsProcessor = Fixtures.GetAnalyticalProcessorTest();
+            var mockHttpClient = HttpMocker.MockHttpResponse(new HttpResponseMessage
+            {
+                StatusCode = System.Net.HttpStatusCode.OK,
+            });
+            var analyticsProcessor = new AnalyticsProcessorTest(mockHttpClient.Object, null, null);
             await Task.Delay(12 * 1000);
             await analyticsProcessor.TrackFeature(1);
-            Assert.Equal(1, analyticsProcessor["Flush"]);
+            mockHttpClient.Verify(x => x.SendAsync(It.IsAny<HttpRequestMessage>(), It.IsAny<CancellationToken>()), Times.Once);
         }
     }
 }

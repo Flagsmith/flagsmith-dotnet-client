@@ -19,14 +19,15 @@ namespace Flagsmith
         }
         [JsonProperty("featureId")]
         private int FeatureId;
+
         [JsonProperty("feature")]
         private Feature Feature = null;
 
         [JsonProperty("enabled")]
-        public bool Enabled = false;
+        private bool Enabled = false;
 
         [JsonProperty("feature_state_value")]
-        public string Value = null;
+        private string Value = null;
         public override string ToString()
         {
             return JsonConvert.SerializeObject(this);
@@ -49,4 +50,6 @@ namespace Flagsmith
 
 
     }
+
+
 }

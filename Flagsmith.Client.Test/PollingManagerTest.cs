@@ -12,15 +12,31 @@ namespace Flagsmith.FlagsmithClientTest
         [Fact]
         public void TestPollingManagerCallsUpdateEnvironmentOnStart()
         {
-            var x = new FlagsmithClientTest(Fixtures.ApiKey, enableClientSideEvaluation: true);
-            Assert.Equal(1, x["GetAndUpdateEnvironmentFromApi"]);
+            bool isCalled = false;
+            Func<Task> callback = delegate ()
+            {
+                isCalled = true;
+                return Task.CompletedTask;
+            };
+            var x = new PollingManager(callback);
+            _ = x.StartPoll();
+            Assert.True(isCalled);
+            x.StopPoll();
         }
         [Fact]
         public async Task TestPollingManagerCallsUpdateEnvironmentOnEachRefresh()
         {
-            var x = new FlagsmithClientTest(Fixtures.ApiKey, environmentRefreshIntervalSeconds: 1, enableClientSideEvaluation: true);
-            await Task.Delay(2500);
-            Assert.Equal(3, x["GetAndUpdateEnvironmentFromApi"]);
+            int calledCount = 0;
+            Func<Task> callback = delegate ()
+            {
+                calledCount += 1;
+                return Task.CompletedTask;
+            };
+            var x = new PollingManager(callback, 1);
+            _ = x.StartPoll();
+            await Task.Delay(3000);
+            Assert.Equal(3, calledCount);
+            x.StopPoll();
         }
     }
 }
