@@ -23,10 +23,10 @@ namespace Flagsmith
         private Feature Feature = null;
 
         [JsonProperty("enabled")]
-        private bool Enabled = false;
+        public bool Enabled = false;
 
         [JsonProperty("feature_state_value")]
-        private string Value = null;
+        public string Value = null;
         public override string ToString()
         {
             return JsonConvert.SerializeObject(this);

@@ -1,21 +1,53 @@
-using Example.Extensions;
+using Example.Settings;
 using Flagsmith;
+using Newtonsoft.Json;
+
 var builder = WebApplication.CreateBuilder(args);
-builder.Services.RegisterFlagsmithClientAsSingleton(builder.Configuration);
+var settings = builder.Configuration.GetSection("FlagsmithConfiguration").Get<FlagsmithSettings>();
+var flagsmithClient = new FlagsmithClient(settings.EnvironmentKey, defaultFlagHandler: defaultFlagHandler);
 var app = builder.Build();
 
-
-app.MapPost("/", async (FlagsmithClient flagsmithClient, Example.Model.Search search) =>
+static Flag defaultFlagHandler(string featureName)
 {
-    var traitList = new List<Trait> { new Trait(search.TraitKey, search.TraitValue) };
-    var flags = await flagsmithClient.GetFeatureFlags(search.Identifier, traitList);
-    var flag = await flags.GetFeatureFlag("is_light");
-    return new
+    if (featureName == "is_light")
+        return new Flag() { Value = JsonConvert.SerializeObject("'colour': '#b8b8b8'").ToString(), Enabled = false };
+    else return new Flag() { };
+}
+
+app.MapGet("/", async (HttpContext req) =>
+{
+    if (req.Request.Query.Count > 0)
     {
-        name = flag.GetFeature().GetName(),
-        isEnabled = flag.IsEnabled(),
-        value = flag.GetValue()
-    };
+        var Identifier = req.Request.Query["identifier"].ToString();
+        var traitKey = req.Request.Query["trait-key"].ToString();
+        var traitValue = req.Request.Query["trait-value"].ToString();
+        var traitList = new List<Trait> { new Trait(traitKey, traitValue) };
+        var flags = await flagsmithClient.GetFeatureFlags(Identifier, traitList);
+        var showButton = await flags.IsFeatureEnabled("is_light");
+        var buttonData = flags.GetFeatureValue("is_light").Result;
+
+
+        return new
+        {
+            showButton = showButton,
+            buttonColour = buttonData,
+            identifier = Identifier
+        };
+    }
+    else
+    {
+
+        var flag = await flagsmithClient.GetFeatureFlags();
+        var showButton = await flag.IsFeatureEnabled("is_light");
+        var buttonData = flag.GetFeatureValue("is_light").Result;
+        return new
+        {
+            showButton = showButton,
+            buttonColour = buttonData,
+            identifier = ""
+        };
+
+    }
 });
 
 app.Run();
