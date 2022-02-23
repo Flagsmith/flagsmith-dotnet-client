@@ -7,18 +7,8 @@ namespace Example.Extensions
         public static void RegisterFlagsmithClientAsSingleton(this IServiceCollection services, IConfiguration configuration)
         {
             var settings = configuration.GetSection("FlagsmithConfiguration").Get<FlagsmithSettings>();
-            var flagsmithClient = new FlagsmithClient(MapFlagsmithConfiguration(settings));
+            var flagsmithClient = new FlagsmithClient(settings.EnvironmentKey);
             services.AddSingleton<FlagsmithClient>(flagsmithClient);
         }
-        private static FlagsmithConfiguration MapFlagsmithConfiguration(FlagsmithSettings settings)
-        => new FlagsmithConfiguration
-        {
-            EnvironmentKey = settings.EnvironmentKey,
-            EnableClientSideEvaluation = settings.EnableClientSideEvaluation,
-            RequestTimeout = settings.RequestTimeout,
-            Retries = settings.Retries,
-            EnableAnalytics = settings.EnableAnalytics,
-            EnvironmentRefreshIntervalSeconds = settings.EnvironmentRefreshIntervalSeconds,
-        };
     }
 }

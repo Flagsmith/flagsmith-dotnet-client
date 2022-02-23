@@ -12,7 +12,6 @@ namespace Flagsmith.FlagsmithClientTest
         public static string ApiKey => "text_key";
         public static string ApiUrl => "http://test_url/";
         public static AnalyticsProcessorTest GetAnalyticalProcessorTest() => new(new HttpClient(), ApiKey, ApiUrl);
-        public static FlagsmithConfiguration FlagsmithConfiguration() => new() { EnableClientSideEvaluation = true, EnvironmentKey = ApiKey };
         public static JObject JsonObject = JObject.Parse(@"{
  'api_key': '8KzETdDeMY7xkqkSkY3Gsg',
  'heap_config': {

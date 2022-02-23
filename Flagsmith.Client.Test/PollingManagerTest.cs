@@ -12,17 +12,13 @@ namespace Flagsmith.FlagsmithClientTest
         [Fact]
         public void TestPollingManagerCallsUpdateEnvironmentOnStart()
         {
-            FlagsmithClientTest.instance = null;
-            var x = new FlagsmithClientTest(Fixtures.FlagsmithConfiguration());
+            var x = new FlagsmithClientTest(Fixtures.ApiKey, enableClientSideEvaluation: true);
             Assert.Equal(1, x["GetAndUpdateEnvironmentFromApi"]);
         }
         [Fact]
         public async Task TestPollingManagerCallsUpdateEnvironmentOnEachRefresh()
         {
-            FlagsmithClientTest.instance = null;
-            var config = Fixtures.FlagsmithConfiguration();
-            config.EnvironmentRefreshIntervalSeconds = 1;
-            var x = new FlagsmithClientTest(config);
+            var x = new FlagsmithClientTest(Fixtures.ApiKey, environmentRefreshIntervalSeconds: 1, enableClientSideEvaluation: true);
             await Task.Delay(2500);
             Assert.Equal(3, x["GetAndUpdateEnvironmentFromApi"]);
         }

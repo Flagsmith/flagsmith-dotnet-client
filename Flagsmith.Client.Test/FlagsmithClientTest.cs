@@ -6,14 +6,24 @@ using Moq;
 using System.Net.Http;
 using System.Threading;
 using Newtonsoft.Json;
-using System.Linq;
+using Microsoft.Extensions.Logging;
 
 namespace Flagsmith.FlagsmithClientTest
 {
     internal class FlagsmithClientTest : FlagsmithClient
     {
         Dictionary<string, int> totalFucntionCalls;
-        public FlagsmithClientTest(FlagsmithConfiguration flagsmithConfiguration) : base(flagsmithConfiguration)
+
+        public FlagsmithClientTest(string environmentKey,
+            string apiUrl = "",
+            ILogger logger = null,
+            Func<string, Flag> defaultFlagHandler = null,
+            bool enableAnalytics = false,
+            bool enableClientSideEvaluation = false,
+            int environmentRefreshIntervalSeconds = 60,
+            Dictionary<string, string> customHeaders = null,
+            int retries = 3,
+            double? requestTimeout = null) : base(environmentKey, apiUrl, logger, defaultFlagHandler, enableAnalytics, enableClientSideEvaluation, environmentRefreshIntervalSeconds, customHeaders, retries, requestTimeout)
         {
             _initDict();
         }
@@ -29,30 +39,31 @@ namespace Flagsmith.FlagsmithClientTest
             _initDict();
             totalFucntionCalls[nameof(GetAndUpdateEnvironmentFromApi)] = totalFucntionCalls.TryGetValue(nameof(GetAndUpdateEnvironmentFromApi), out int i) ? i + 1 : 1;
         }
-        protected override async Task<List<Flag>> GetFeatureFlagsFromApi()
+        protected override async Task<Flags> GetFeatureFlagsFromApi()
         {
-            var flags = JsonConvert.DeserializeObject<List<Flag>>(await GetJSON(HttpMethod.Get, Fixtures.ApiUrl));
+            var flags = await base.GetFeatureFlagsFromApi();
             totalFucntionCalls[nameof(GetFeatureFlagsFromApi)] = totalFucntionCalls.TryGetValue(nameof(GetFeatureFlagsFromApi), out int i) ? i + 1 : 1;
             return flags;
         }
         public async Task TriggerEnvironmentUpdate() => await this.GetAndUpdateEnvironmentFromApi();
-        protected override async Task<List<Flag>> GetIdentityFlagsFromApi(string identity)
+        protected override async Task<Flags> GetIdentityFlagsFromApi(string identity)
         {
-            var identityResponse = JsonConvert.DeserializeObject<Identity>(await GetJSON(HttpMethod.Get, Fixtures.ApiUrl));
+            var flags = await base.GetIdentityFlagsFromApi(identity);
             totalFucntionCalls[nameof(GetIdentityFlagsFromApi)] = totalFucntionCalls.TryGetValue(nameof(GetIdentityFlagsFromApi), out int i) ? i + 1 : 1;
-            return identityResponse.flags;
-
+            return flags;
         }
-        protected override List<Flag> GetIdentityFlagsFromDocuments(string identifier, List<Trait> traits)
+        protected override Flags GetIdentityFlagsFromDocuments(string identifier, List<Trait> traits)
         {
-            var flags = new List<Flag> { new Flag(new Feature(1, "some_feature"), true, "some_value") };
+            //var flags = new List<Flag> { new Flag(new Feature(1, "some_feature"), true, "some_value") };
+            var flags = base.GetIdentityFlagsFromDocuments(identifier, traits);
             totalFucntionCalls[nameof(GetIdentityFlagsFromDocuments)] = totalFucntionCalls.TryGetValue(nameof(GetIdentityFlagsFromDocuments), out int i) ? i + 1 : 1;
             return flags;
         }
-        protected override List<Flag> GetFeatureFlagsFromDocuments()
+        protected override Flags GetFeatureFlagsFromDocuments()
         {
+            var flags = base.GetFeatureFlagsFromDocuments();
             totalFucntionCalls[nameof(GetFeatureFlagsFromDocuments)] = totalFucntionCalls.TryGetValue(nameof(GetFeatureFlagsFromDocuments), out int i) ? i + 1 : 1;
-            return Fixtures.Environment.FeatureStates.Select(x => new Flag(new Feature(x.Feature.Id, x.Feature.Name), x.Enabled, x.GetValue()?.ToString())).ToList();
+            return flags;
         }
         public void MockHttpResponse(HttpResponseMessage httpResponseMessage)
         {
