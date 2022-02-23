@@ -38,7 +38,7 @@ namespace Flagsmith
         /// Post the features on the provided endpoint and clear the cached data.
         /// </summary>
         /// <returns></returns>
-        public  async Task Flush()
+        public async Task Flush()
         {
             if (AnalyticsData?.Any() == false)
                 return;
