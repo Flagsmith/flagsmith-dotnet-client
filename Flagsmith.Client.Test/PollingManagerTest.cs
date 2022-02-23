@@ -35,7 +35,7 @@ namespace Flagsmith.FlagsmithClientTest
             var x = new PollingManager(callback, 1);
             _ = x.StartPoll();
             await Task.Delay(3000);
-            Assert.Equal(3, calledCount);
+            Assert.True(calledCount >= 3); // check pollingmanager polls atlease 3 times.
             x.StopPoll();
         }
     }
