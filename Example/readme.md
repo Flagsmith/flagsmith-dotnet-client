@@ -14,7 +14,7 @@ need to go through the following steps:
 4. Create a appsettings.json file as per given template , update the EnvironmentKey with yours.  
 in flagsmith (This can be found on the 'settings' page accessed from the menu on the left under the chosen environment.)
 6. Run the app using `dotnet run`
-7. Browse to http://localhost:5239
+7. Browse to http://localhost:5003
 
 Now you can play around with the 'secret_button' feature in flagsmith, turn it on to show it and edit the colour in the
 json value to edit the colour of the button. You can also identify as a given user and then update the settings for the

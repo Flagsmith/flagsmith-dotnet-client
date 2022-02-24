@@ -42,6 +42,10 @@ namespace Flagsmith
             return JsonConvert.SerializeObject(this);
         }
     }
+
+    /// <summary>
+    /// For derserializing flag response from api to plain flag object.
+    /// </summary>
     internal class FlagJsonConverter : JsonConverter
     {
         public override object ReadJson(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer)

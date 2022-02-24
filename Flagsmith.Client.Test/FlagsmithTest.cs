@@ -21,7 +21,6 @@ namespace Flagsmith.FlagsmithClientTest
         [Fact]
         public async void TestUpdateEnvironmentSetsEnvironment()
         {
-            var ss = Times.Once;
             var mockHttpClient = HttpMocker.MockHttpResponse(new HttpResponseMessage
             {
                 StatusCode = System.Net.HttpStatusCode.OK,
@@ -31,6 +30,7 @@ namespace Flagsmith.FlagsmithClientTest
             mockHttpClient.verifyHttpRequest(HttpMethod.Get, "/api/v1/environment-document/", Times.Once);
             await flagsmithClientTest.GetEnvironmentFlags();
             mockHttpClient.verifyHttpRequest(HttpMethod.Get, "/api/v1/environment-document/", Times.Once);
+            mockHttpClient.verifyHttpRequest(HttpMethod.Get, "/api/v1/flags/", Times.Never);
         }
         [Fact]
         public async Task TestGetEnvironmentFlagsCallsApiWhenNoLocalEnvironment()
