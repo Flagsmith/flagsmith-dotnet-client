@@ -29,5 +29,13 @@ namespace Flagsmith.FlagsmithClientTest
                 .ThrowsAsync(new HttpRequestException());
             return httpClientMock;
         }
+
+
+        public static void verifyHttpRequest(this Mock<HttpClient> mockHttpClient, HttpMethod httpMethod, string url, System.Func<Moq.Times> times)
+        {
+            mockHttpClient.Verify(x => x.SendAsync(It.Is<HttpRequestMessage>(req =>
+          req.Method == httpMethod &&
+          req.RequestUri.AbsolutePath == url), It.IsAny<CancellationToken>()), times);
+        }
     }
 }

@@ -11,7 +11,7 @@ namespace Flagsmith.FlagsmithClientTest
 {
     public class AnalyticsTests
     {
-
+        const string _defaultApiUrl = "https://api.flagsmith.com/api/v1/";
         [Fact]
         public void TestAnalyticsProcessorTrackFeatureUpdatesAnalyticsData()
         {
@@ -40,12 +40,12 @@ namespace Flagsmith.FlagsmithClientTest
             {
                 StatusCode = System.Net.HttpStatusCode.OK,
             });
-            var analyticsProcessor = new AnalyticsProcessorTest(mockHttpClient.Object, null, null);
+            var analyticsProcessor = new AnalyticsProcessorTest(mockHttpClient.Object, null, baseApiUrl: _defaultApiUrl);
             await analyticsProcessor.TrackFeature(1);
             await analyticsProcessor.TrackFeature(2);
             var jObject = JObject.Parse(analyticsProcessor.ToString());
             await analyticsProcessor.Flush();
-            mockHttpClient.Verify(x => x.SendAsync(It.IsAny<HttpRequestMessage>(), It.IsAny<CancellationToken>()), Times.Once);
+            mockHttpClient.verifyHttpRequest(HttpMethod.Post, "/api/v1/analytics/flags/", Times.Once);
             Assert.Equal(1, jObject["1"].Value<int>());
             Assert.Equal(1, jObject["2"].Value<int>());
         }
@@ -56,7 +56,7 @@ namespace Flagsmith.FlagsmithClientTest
             {
                 StatusCode = System.Net.HttpStatusCode.OK,
             });
-            var analyticsProcessor = new AnalyticsProcessorTest(mockHttpClient.Object, null, null);
+            var analyticsProcessor = new AnalyticsProcessorTest(mockHttpClient.Object, null, baseApiUrl: _defaultApiUrl);
             await analyticsProcessor.Flush();
             mockHttpClient.Verify(x => x.SendAsync(It.IsAny<HttpRequestMessage>(), It.IsAny<CancellationToken>()), Times.Never);
         }
@@ -67,10 +67,10 @@ namespace Flagsmith.FlagsmithClientTest
             {
                 StatusCode = System.Net.HttpStatusCode.OK,
             });
-            var analyticsProcessor = new AnalyticsProcessorTest(mockHttpClient.Object, null, null);
+            var analyticsProcessor = new AnalyticsProcessorTest(mockHttpClient.Object, null, baseApiUrl: _defaultApiUrl);
             await Task.Delay(12 * 1000);
             await analyticsProcessor.TrackFeature(1);
-            mockHttpClient.Verify(x => x.SendAsync(It.IsAny<HttpRequestMessage>(), It.IsAny<CancellationToken>()), Times.Once);
+            mockHttpClient.verifyHttpRequest(HttpMethod.Post, "/api/v1/analytics/flags/", Times.Once);
         }
     }
 }

@@ -10,7 +10,6 @@ namespace Flagsmith.FlagsmithClientTest
 {
     internal class AnalyticsProcessorTest : AnalyticsProcessor
     {
-        public bool IsFlushEarlyReturn { get; private set; } = false;
         public AnalyticsProcessorTest(HttpClient httpClient, string environmentKey, string baseApiUrl, int timeOut = 3)
             : base(httpClient, environmentKey, baseApiUrl, timeOut: timeOut)
         {
