@@ -10,7 +10,7 @@ var app = builder.Build();
 static Flag defaultFlagHandler(string featureName)
 {
     if (featureName == "secret_button")
-        return new Flag(feature:null,enabled:false,value: JsonConvert.SerializeObject("'colour': '#ababab'").ToString());
+        return new Flag(name:null,enabled:false,value: JsonConvert.SerializeObject("'colour': '#ababab'").ToString());
     else return new Flag() { };
 }
 

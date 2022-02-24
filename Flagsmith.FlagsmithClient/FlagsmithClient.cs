@@ -84,7 +84,7 @@ namespace Flagsmith
             this.httpClient = httpClient ?? new HttpClient();
             _Engine = new Engine();
             if (EnableAnalytics)
-                _AnalyticsProcessor = new AnalyticsProcessor(httpClient, EnvironmentKey, ApiUrl, Logger, CustomHeaders);
+                _AnalyticsProcessor = new AnalyticsProcessor(this.httpClient, EnvironmentKey, ApiUrl, Logger, CustomHeaders);
             if (EnableClientSideEvaluation)
             {
                 _PollingManager = new PollingManager(GetAndUpdateEnvironmentFromApi, EnvironmentRefreshIntervalSeconds);
