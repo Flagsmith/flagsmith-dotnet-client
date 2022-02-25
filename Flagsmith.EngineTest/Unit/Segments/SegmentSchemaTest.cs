@@ -38,8 +38,8 @@ namespace EngineTest.Unit.Segments
                 }
             };
             var jobject = JObject.FromObject(segment);
-            Assert.Single((JArray)jobject["feature_states"]);
-            Assert.Single((JArray)jobject["rules"]);
+            Assert.Single(((JArray)jobject["feature_states"]));
+            Assert.Single(((JArray)jobject["rules"]));
         }
         [Fact]
         public void TestJobjectToSegmentModel()
