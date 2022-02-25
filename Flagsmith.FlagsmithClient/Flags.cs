@@ -24,14 +24,14 @@ namespace Flagsmith
         public async Task<bool> IsFeatureEnabled(string featureName) => (await GetFlag(featureName)).Enabled;
         public async Task<Flag> GetFlag(string featureName)
         {
-            var flag = _Flags?.FirstOrDefault(f => f.Feature.Name.Equals(featureName));
+            var flag = _Flags?.FirstOrDefault(f => f.GetFeatureName().Equals(featureName));
             if (flag == null)
             {
                 return _DefaultFlagHandler?.Invoke(featureName) ?? throw new FlagsmithClientError("Feature does not exist: " + featureName);
 
             }
             if (_AnalyticsProcessor != null)
-                await _AnalyticsProcessor.TrackFeature(flag.Feature.Id);
+                await _AnalyticsProcessor.TrackFeature(flag.getFeatureId());
             return flag;
         }
         public List<Flag> AllFlags() => _Flags;

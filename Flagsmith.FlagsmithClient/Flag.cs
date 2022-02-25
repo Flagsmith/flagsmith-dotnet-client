@@ -18,7 +18,7 @@ namespace Flagsmith
         [JsonProperty("id")]
         public int Id { get; private set; }
         [JsonProperty("feature")]
-        public Feature Feature { get; private set; }
+        private Feature Feature { get; set; }
 
         [JsonProperty("enabled")]
         public bool Enabled { get; private set; }
@@ -26,6 +26,14 @@ namespace Flagsmith
         [JsonProperty("feature_state_value")]
         public string Value { get; private set; }
 
+        public int getFeatureId()
+        {
+            return this.Feature.Id;
+        }
+        public string GetFeatureName()
+        {
+            return this.Feature.Name;
+        }
         public override string ToString()
         {
             return JsonConvert.SerializeObject(this);
