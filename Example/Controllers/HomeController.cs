@@ -16,7 +16,7 @@ namespace Example.Controllers
             static Flag defaultFlagHandler(string featureName)
             {
                 if (featureName == "secret_button")
-                    return new Flag(name: null, enabled: true, value: JsonConvert.SerializeObject(new { colour = "#b8b8b8" }).ToString());
+                    return new Flag(new Feature("secret_button"), enabled: false, value: JsonConvert.SerializeObject(new { colour = "#b8b8b8" }).ToString());
                 else return new Flag() { };
             }
         }
