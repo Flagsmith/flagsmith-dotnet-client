@@ -44,23 +44,34 @@ namespace Flagsmith
     }
 
     /// <summary>
-    /// For derserializing flag response from api to plain flag object.
+    /// To Flatten Feature object on deserialization of Flag Class, Using Newtonsoft JsonConverter to Custom Deserialize Feature ojbect to 
+    /// FeatureId and Name.
+    /// See: https://www.newtonsoft.com/json/help/html/CustomJsonConverter.htm
     /// </summary>
     internal class FlagJsonConverter : JsonConverter
     {
         public override object ReadJson(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer)
         {
             JObject jo = JObject.Load(reader);
+
+            //create instance of the type which use this attribute i.e  [JsonConverter(typeof(FlagJsonConverter))]
             object targetObj = Activator.CreateInstance(objectType);
+
+            //using reflection retrieve all the properties from the type.
             foreach (PropertyInfo prop in objectType.GetProperties().Where(p => p.CanRead && p.CanWrite))
             {
+                // from each property retrieve json property attribute i.e  [JsonProperty("id")]
                 JsonPropertyAttribute att = prop.GetCustomAttributes(true)
                                                 .OfType<JsonPropertyAttribute>()
                                                 .FirstOrDefault();
 
+                //if there is json property attribute defined then the relative value used otherwise the original property name will be used.
                 string jsonPath = (att != null ? att.PropertyName : prop.Name);
+
+                //SelectToken is a method on JToken and takes a string path to a child token. i.e feature.name
                 JToken token = jo.SelectToken(jsonPath);
 
+                // convert the token to object and set the proprty.
                 if (token != null && token.Type != JTokenType.Null)
                 {
                     object value = token.ToObject(prop.PropertyType, serializer);
@@ -68,6 +79,7 @@ namespace Flagsmith
                 }
             }
 
+            //return the fully mapped object.
             return targetObj;
         }
 
