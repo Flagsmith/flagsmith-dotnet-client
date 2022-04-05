@@ -237,9 +237,9 @@ namespace Flagsmith
         {
             try
             {
-                if (!(value is bool) && !(value is int) && !(value is string))
+                if (!(value is bool) && !(value is int) && !(value is string) && value != null)
                 {
-                    throw new ArgumentException("Value parameter must be string, int or boolean");
+                    throw new ArgumentException("Value parameter must be string, int, boolean or null");
                 }
 
                 string url = configuration.ApiUrl.AppendPath("traits");
