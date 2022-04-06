@@ -4,6 +4,7 @@ using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
 using System.Text;
+using System.Collections;
 using Newtonsoft.Json;
 
 namespace Flagsmith
@@ -232,8 +233,6 @@ namespace Flagsmith
 
         /// <summary>
         /// Set user trait value for provided identity and trait key.
-        ///
-        /// Note: use a value of null to delete the trait from the identity.
         /// </summary>
         public async Task<Trait> SetTrait(string identity, string key, object value)
         {
@@ -261,6 +260,18 @@ namespace Flagsmith
                 Console.WriteLine("Message :{0} ", e.Message);
                 return null;
             }
+        }
+
+        public async Task SetTraits(string identity, Dictionary<string, object> traits)
+        {
+            ArrayList traitDataObjects = new ArrayList();
+
+            foreach (KeyValuePair<string, object> trait in traits) {
+                traitDataObjects.Add(new {identity = new { identifier = identity }, trait_key = trait.Key, trait_value = trait.Value});
+            }
+
+            string url = configuration.ApiUrl.AppendPath("traits/bulk");
+            string jsonResponse = await GetJSON(HttpMethod.Post, url, JsonConvert.SerializeObject(traitDataObjects));
         }
 
         /// <summary>

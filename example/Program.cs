@@ -115,11 +115,27 @@ namespace example
             Trait floatTrait = FlagsmithClient.instance.SetTrait(identifier, "dotnet_float_test", 3.14f).GetAwaiter().GetResult();
             Console.WriteLine(newTrait.ToString() + "\n");
 
-            // Create and delete trait for user
-            Console.WriteLine("Create and delete trait 'trait_to_delete'");
-            Trait traitToDelete = FlagsmithClient.instance.SetTrait(identifier, "trait_to_delete", "value").GetAwaiter().GetResult();
-            Trait deletedTrait = FlagsmithClient.instance.SetTrait(identifier, "trait_to_delete", null).GetAwaiter().GetResult();
-            Console.WriteLine(deletedTrait.ToString() + "\n");
+            // Bulk create traits
+            Console.WriteLine("Bulk create traits");
+            var traits = new Dictionary<string, object>()
+            {
+                {"bulk_trait_1", "bulk_trait_1"},
+                {"bulk_trait_2", "bulk_trait_2"},
+                {"bulk_trait_3", "bulk_trait_3"},
+                {"bulk_trait_to_delete", "to_delete"},
+            };
+            await FlagsmithClient.instance.SetTraits(identifier, traits).GetAwaiter();
+            Console.WriteLine("Bulk created traits");
+
+            // Bulk create traits
+            Console.WriteLine("Bulk delete traits");
+            var traits = new Dictionary<string, object>()
+            {
+                {"bulk_trait_to_delete", null},
+            };
+            await FlagsmithClient.instance.SetTraits(identifier, traits).GetAwaiter();
+            Console.WriteLine("Bulk deleted traits");
+
         }
     }
 }
