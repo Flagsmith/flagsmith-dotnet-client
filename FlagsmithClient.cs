@@ -266,8 +266,9 @@ namespace Flagsmith
         {
             ArrayList traitDataObjects = new ArrayList();
 
-            foreach (KeyValuePair<string, object> trait in traits) {
-                traitDataObjects.Add(new {identity = new { identifier = identity }, trait_key = trait.Key, trait_value = trait.Value});
+            foreach (KeyValuePair<string, object> trait in traits)
+            {
+                traitDataObjects.Add(new { identity = new { identifier = identity }, trait_key = trait.Key, trait_value = trait.Value });
             }
 
             string url = configuration.ApiUrl.AppendPath("traits/bulk");
