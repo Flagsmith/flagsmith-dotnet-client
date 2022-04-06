@@ -117,23 +117,23 @@ namespace example
 
             // Bulk create traits
             Console.WriteLine("Bulk create traits");
-            var traits = new Dictionary<string, object>()
+            var bulkCreateTraits = new Dictionary<string, object>()
             {
                 {"bulk_trait_1", "bulk_trait_1"},
                 {"bulk_trait_2", "bulk_trait_2"},
                 {"bulk_trait_3", "bulk_trait_3"},
                 {"bulk_trait_to_delete", "to_delete"},
             };
-            await FlagsmithClient.instance.SetTraits(identifier, traits).GetAwaiter();
+            FlagsmithClient.instance.SetTraits(identifier, bulkCreateTraits).GetAwaiter().GetResult();
             Console.WriteLine("Bulk created traits");
 
             // Bulk create traits
             Console.WriteLine("Bulk delete traits");
-            var traits = new Dictionary<string, object>()
+            var bulkDeleteTraits = new Dictionary<string, object>()
             {
                 {"bulk_trait_to_delete", null},
             };
-            await FlagsmithClient.instance.SetTraits(identifier, traits).GetAwaiter();
+	    FlagsmithClient.instance.SetTraits(identifier, bulkDeleteTraits).GetAwaiter().GetResult();
             Console.WriteLine("Bulk deleted traits");
 
         }

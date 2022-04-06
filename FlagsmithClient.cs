@@ -271,7 +271,7 @@ namespace Flagsmith
             }
 
             string url = configuration.ApiUrl.AppendPath("traits/bulk");
-            string jsonResponse = await GetJSON(HttpMethod.Post, url, JsonConvert.SerializeObject(traitDataObjects));
+            string jsonResponse = await GetJSON(HttpMethod.Put, url, JsonConvert.SerializeObject(traitDataObjects));
         }
 
         /// <summary>
