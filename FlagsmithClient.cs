@@ -232,14 +232,16 @@ namespace Flagsmith
 
         /// <summary>
         /// Set user trait value for provided identity and trait key.
+        ///
+        /// Note: use a value of null to delete the trait from the identity.
         /// </summary>
         public async Task<Trait> SetTrait(string identity, string key, object value)
         {
             try
             {
-                if (!(value is bool) && !(value is int) && !(value is string) && value != null)
+                if (!(value is bool) && !(value is int) && !(value is string) && !(value is float) && value != null)
                 {
-                    throw new ArgumentException("Value parameter must be string, int, boolean or null");
+                    throw new ArgumentException("Value parameter must be string, int, boolean, float or null.");
                 }
 
                 string url = configuration.ApiUrl.AppendPath("traits");
