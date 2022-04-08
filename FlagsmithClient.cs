@@ -4,6 +4,7 @@ using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
 using System.Text;
+using System.Collections;
 using Newtonsoft.Json;
 
 namespace Flagsmith
@@ -237,9 +238,9 @@ namespace Flagsmith
         {
             try
             {
-                if (!(value is bool) && !(value is int) && !(value is string))
+                if (!(value is bool) && !(value is int) && !(value is string) && !(value is float))
                 {
-                    throw new ArgumentException("Value parameter must be string, int or boolean");
+                    throw new ArgumentException("Value parameter must be string, int, boolean or float.");
                 }
 
                 string url = configuration.ApiUrl.AppendPath("traits");
@@ -259,6 +260,19 @@ namespace Flagsmith
                 Console.WriteLine("Message :{0} ", e.Message);
                 return null;
             }
+        }
+
+        public async Task SetTraits(string identity, Dictionary<string, object> traits)
+        {
+            ArrayList traitDataObjects = new ArrayList();
+
+            foreach (KeyValuePair<string, object> trait in traits)
+            {
+                traitDataObjects.Add(new { identity = new { identifier = identity }, trait_key = trait.Key, trait_value = trait.Value });
+            }
+
+            string url = configuration.ApiUrl.AppendPath("traits/bulk");
+            string jsonResponse = await GetJSON(HttpMethod.Put, url, JsonConvert.SerializeObject(traitDataObjects));
         }
 
         /// <summary>
