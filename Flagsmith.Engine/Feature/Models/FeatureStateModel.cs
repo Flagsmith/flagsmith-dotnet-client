@@ -24,6 +24,8 @@ namespace FlagsmithEngine.Feature.Models
         [JsonProperty(PropertyName = "django_id")]
         public int DjangoId { get; set; }
         public string FeatureStateUUID { get; set; } = new Guid().ToString();
+        [JsonProperty(PropertyName = "feature_segment")]
+        public FeatureSegmentModel FeatureSegment { get; set; } = null;
         public object GetValue(string identityId = null) =>
             identityId != null && MultivariateFeatureStateValues?.Count > 0 ? GetMultivariateValue(identityId.ToString()) : Value;
 
@@ -43,6 +45,15 @@ namespace FlagsmithEngine.Feature.Models
                 startPercentage = limit;
             }
             return Value;
+        }
+        public bool IsHigherPriority(FeatureStateModel other) {
+            if (this.FeatureSegment == null) {
+                return false;
+            } else if (other.FeatureSegment == null) {
+                return this.FeatureSegment != null;
+            }
+
+            return this.FeatureSegment.Priority < other.FeatureSegment.Priority;
         }
         [OnSerialized()]
         private void ValidatePercentageAllocations(StreamingContext _)

@@ -13,5 +13,20 @@ namespace FlagsmithEngine.Feature.Models
         public string Type { get; set; }
         [JsonProperty(PropertyName = "name")]
         public string Name { get; set; }
+
+        public override bool Equals(object obj)
+        {
+            if ((obj == null) || ! this.GetType().Equals(obj.GetType()))
+            {
+                return false;
+            }
+            FeatureModel featureModel = (FeatureModel) obj;
+            return this.Id.Equals(featureModel.Id);
+        }
+
+        public override int GetHashCode()
+        {
+            return this.Id;
+        }
     }
 }
