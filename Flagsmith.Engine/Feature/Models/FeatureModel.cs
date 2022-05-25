@@ -16,11 +16,11 @@ namespace FlagsmithEngine.Feature.Models
 
         public override bool Equals(object obj)
         {
-            if ((obj == null) || ! this.GetType().Equals(obj.GetType()))
+            if ((obj == null) || !this.GetType().Equals(obj.GetType()))
             {
                 return false;
             }
-            FeatureModel featureModel = (FeatureModel) obj;
+            FeatureModel featureModel = (FeatureModel)obj;
             return this.Id.Equals(featureModel.Id);
         }
 

@@ -46,10 +46,14 @@ namespace FlagsmithEngine.Feature.Models
             }
             return Value;
         }
-        public bool IsHigherPriority(FeatureStateModel other) {
-            if (this.FeatureSegment == null) {
+        public bool IsHigherPriority(FeatureStateModel other)
+        {
+            if (this.FeatureSegment == null)
+            {
                 return false;
-            } else if (other.FeatureSegment == null) {
+            }
+            else if (other.FeatureSegment == null)
+            {
                 return this.FeatureSegment != null;
             }
 

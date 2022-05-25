@@ -64,7 +64,8 @@ namespace FlagsmithEngine
                 {
                     FeatureModel feature = featureState.Feature;
                     var existing = featureStates.FirstOrDefault(x => x.Key.Id == feature.Id);
-                    if (!existing.Equals(default) && existing.Value.IsHigherPriority(featureState)) {
+                    if (!existing.Equals(default) && existing.Value.IsHigherPriority(featureState))
+                    {
                         continue;
                     }
 
