@@ -17,7 +17,7 @@ namespace EngineTest.Unit
         public const string SegmentConditionProperty = "foo";
         public const string SegmentConditionStringValue = "bar";
         public static FeatureModel Feature1 { get; } = new FeatureModel { Id = 1, Name = "feature_1", Type = FlagsmithEngine.Feature.Constants.STANDARD };
-        public static FeatureModel Feature2 { get; } = new FeatureModel { Id = 1, Name = "feature_2", Type = FlagsmithEngine.Feature.Constants.STANDARD };
+        public static FeatureModel Feature2 { get; } = new FeatureModel { Id = 2, Name = "feature_2", Type = FlagsmithEngine.Feature.Constants.STANDARD };
         public static SegmentModel Segment { get; } = new SegmentModel { Id = 1, Name = "my_segment", Rules = new List<SegmentRuleModel> { SegmentRule() } };
 
         public static SegmentConditionModel SegmentCondition() => new SegmentConditionModel { Operator = Constants.Equal, Property = SegmentConditionProperty, Value = SegmentConditionStringValue };
