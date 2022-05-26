@@ -60,11 +60,17 @@ namespace FlagsmithEngine
             var identitySegments = Evaluator.GetIdentitySegments(environmentModel, identity, overrideTraits);
             foreach (var matchingSegment in identitySegments)
             {
-                matchingSegment.FeatureStates?.ForEach(featureState =>
+                foreach (var featureState in matchingSegment.FeatureStates)
                 {
-                    var item = featureStates.First(x => x.Key.Id == featureState.Feature.Id);
-                    featureStates[item.Key] = featureState;
-                });
+                    FeatureModel feature = featureState.Feature;
+                    var existing = featureStates.FirstOrDefault(x => x.Key.Id == feature.Id);
+                    if (!existing.Equals(default) && existing.Value.IsHigherPriority(featureState))
+                    {
+                        continue;
+                    }
+
+                    featureStates[feature] = featureState;
+                };
             }
             identity.IdentityFeatures?.ForEach(x =>
             {

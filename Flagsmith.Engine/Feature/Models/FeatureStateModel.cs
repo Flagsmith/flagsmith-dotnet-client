@@ -24,6 +24,8 @@ namespace FlagsmithEngine.Feature.Models
         [JsonProperty(PropertyName = "django_id")]
         public int DjangoId { get; set; }
         public string FeatureStateUUID { get; set; } = new Guid().ToString();
+        [JsonProperty(PropertyName = "feature_segment")]
+        public FeatureSegmentModel FeatureSegment { get; set; } = null;
         public object GetValue(string identityId = null) =>
             identityId != null && MultivariateFeatureStateValues?.Count > 0 ? GetMultivariateValue(identityId.ToString()) : Value;
 
@@ -43,6 +45,22 @@ namespace FlagsmithEngine.Feature.Models
                 startPercentage = limit;
             }
             return Value;
+        }
+
+        /// <summary>
+        /// Another FeatureStateModel is deemed to be higher priority if and only if 
+        /// it has a FeatureSegment and either this.FeatureSegment is null or the 
+        /// value of other.FeatureSegment.priority is lower than that of 
+        /// this.FeatureSegment.priority. 
+        /// </summary>
+        public bool IsHigherPriority(FeatureStateModel other)
+        {
+            if (this.FeatureSegment == null || other.FeatureSegment == null)
+            {
+                return this.FeatureSegment != null && other.FeatureSegment == null;
+            }
+
+            return this.FeatureSegment.Priority < other.FeatureSegment.Priority;
         }
         [OnSerialized()]
         private void ValidatePercentageAllocations(StreamingContext _)
