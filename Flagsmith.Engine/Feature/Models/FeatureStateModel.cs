@@ -46,15 +46,17 @@ namespace FlagsmithEngine.Feature.Models
             }
             return Value;
         }
+        /*
+         * Another FeatureStateModel is deemed to be higher priority if and only if 
+         * it has a FeatureSegment and either this.FeatureSegment is null or the 
+         * value of other.FeatureSegment.priority is lower than that of 
+         * this.FeatureSegment.priority. 
+         */
         public bool IsHigherPriority(FeatureStateModel other)
         {
-            if (this.FeatureSegment == null)
+            if (this.FeatureSegment == null || other.FeatureSegment == null)
             {
-                return false;
-            }
-            else if (other.FeatureSegment == null)
-            {
-                return this.FeatureSegment != null;
+                return this.FeatureSegment != null && other.FeatureSegment == null;
             }
 
             return this.FeatureSegment.Priority < other.FeatureSegment.Priority;
