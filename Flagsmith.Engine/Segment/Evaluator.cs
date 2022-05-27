@@ -70,7 +70,8 @@ namespace FlagsmithEngine.Segment
         {
             var currentValue = condition.Value;
 
-            if (currentValue.EndsWith(":semver")) {
+            if (currentValue.EndsWith(":semver"))
+            {
                 return semVerOperations(traitValue, condition);
             }
 
@@ -137,7 +138,7 @@ namespace FlagsmithEngine.Segment
 
         static bool semVerOperations(string traitValue, SegmentConditionModel condition)
         {
-            try 
+            try
             {
                 string conditionValue = condition.Value.Substring(0, condition.Value.Length - 7);
                 SemVersion conditionValueAsVersion = SemVersion.Parse(conditionValue, SemVersionStyles.Strict);
@@ -153,7 +154,8 @@ namespace FlagsmithEngine.Segment
                     case Constants.LessThanInclusive: return traitValueAsVersion <= conditionValueAsVersion;
                     default: throw new ArgumentException("Invalid Operator");
                 }
-            } catch (FormatException)
+            }
+            catch (FormatException)
             {
                 return false;
             }
