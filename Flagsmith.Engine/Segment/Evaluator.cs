@@ -3,6 +3,7 @@ using FlagsmithEngine.Identity.Models;
 using FlagsmithEngine.Segment.Models;
 using FlagsmithEngine.Trait.Models;
 using FlagsmithEngine.Utils;
+using Semver;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -68,6 +69,11 @@ namespace FlagsmithEngine.Segment
         static bool stringOperations(string traitValue, SegmentConditionModel condition)
         {
             var currentValue = condition.Value;
+
+            if (currentValue.EndsWith(":semver")) {
+                return semVerOperations(traitValue, condition);
+            }
+
             switch (condition.Operator)
             {
                 case Constants.Equal: return traitValue == currentValue;
@@ -126,6 +132,30 @@ namespace FlagsmithEngine.Segment
                 case Constants.Equal: return traitValue == currentValue;
                 case Constants.NotEqual: return traitValue != currentValue;
                 default: throw new ArgumentException("Invalid Operator");
+            }
+        }
+
+        static bool semVerOperations(string traitValue, SegmentConditionModel condition)
+        {
+            try 
+            {
+                string conditionValue = condition.Value.Substring(0, condition.Value.Length - 7);
+                SemVersion conditionValueAsVersion = SemVersion.Parse(conditionValue, SemVersionStyles.Strict);
+                SemVersion traitValueAsVersion = SemVersion.Parse(traitValue, SemVersionStyles.Strict);
+
+                switch (condition.Operator)
+                {
+                    case Constants.Equal: return traitValueAsVersion == conditionValueAsVersion;
+                    case Constants.NotEqual: return traitValueAsVersion != conditionValueAsVersion;
+                    case Constants.GreaterThan: return traitValueAsVersion > conditionValueAsVersion;
+                    case Constants.GreaterThanInclusive: return traitValueAsVersion >= conditionValueAsVersion;
+                    case Constants.LessThan: return traitValueAsVersion < conditionValueAsVersion;
+                    case Constants.LessThanInclusive: return traitValueAsVersion <= conditionValueAsVersion;
+                    default: throw new ArgumentException("Invalid Operator");
+                }
+            } catch (FormatException)
+            {
+                return false;
             }
         }
 
