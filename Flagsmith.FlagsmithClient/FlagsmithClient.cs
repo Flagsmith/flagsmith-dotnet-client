@@ -38,7 +38,7 @@ namespace Flagsmith
         private double? RequestTimeout { get; set; }
         private int? Retries { get; set; }
         private Dictionary<string, string> CustomHeaders { get; set; }
-        const string _defaultApiUrl = "https://api.flagsmith.com/api/v1/";
+        const string _defaultApiUrl = "https://edge.api.flagsmith.com/api/v1/";
         private HttpClient httpClient;
         private EnvironmentModel Environment { get; set; }
         private readonly PollingManager _PollingManager;
