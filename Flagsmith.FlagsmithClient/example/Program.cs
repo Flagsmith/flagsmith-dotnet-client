@@ -10,7 +10,7 @@ namespace example
         {
             FlagsmithConfiguration configuration = new FlagsmithConfiguration()
             {
-                ApiUrl = "https://api.flagsmith.com/api/v1/",
+                ApiUrl = "https://edge.api.flagsmith.com/api/v1/",
                 EnvironmentKey = "env-key-goes-here"
             };
 

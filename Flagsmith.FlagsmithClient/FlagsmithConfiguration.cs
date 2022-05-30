@@ -7,7 +7,7 @@ namespace Flagsmith
     {
         public FlagsmithConfiguration()
         {
-            ApiUrl = "https://api.flagsmith.com/api/v1/";
+            ApiUrl = "https://edge.api.flagsmith.com/api/v1/";
             EnvironmentKey = string.Empty;
             EnvironmentRefreshIntervalSeconds = 60;
         }

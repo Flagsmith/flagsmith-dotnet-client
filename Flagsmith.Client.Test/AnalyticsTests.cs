@@ -11,7 +11,7 @@ namespace Flagsmith.FlagsmithClientTest
 {
     public class AnalyticsTests
     {
-        const string _defaultApiUrl = "https://api.flagsmith.com/api/v1/";
+        const string _defaultApiUrl = "https://edge.api.flagsmith.com/api/v1/";
         [Fact]
         public void TestAnalyticsProcessorTrackFeatureUpdatesAnalyticsData()
         {
