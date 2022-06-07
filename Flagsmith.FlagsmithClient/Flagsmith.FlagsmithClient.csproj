@@ -24,12 +24,9 @@
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="6.0.0" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
     <PackageReference Include="Polly" Version="7.2.3" />
-    <None Include="LICENSE.txt" Pack="true" Visible="false" PackagePath="" />
-    <None Include="icon.png" Pack="true" PackagePath="\" />
-  </ItemGroup>
-
-  <ItemGroup>
     <ProjectReference Include="..\Flagsmith.Engine\Flagsmith.Engine.csproj" />
+    <None Include="LICENSE" Pack="true" Visible="false" PackagePath="" />
+    <None Include="icon.png" Pack="true" PackagePath="\" />
   </ItemGroup>
 
 </Project>
