@@ -1,0 +1,32 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <DefaultItemExcludes>$(DefaultItemExcludes);example/**;</DefaultItemExcludes>
+    <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+    <PackageId>Flagsmith</PackageId>
+    <Title>Flagsmith</Title>
+    <Version>4.0.0</Version>
+    <Authors>ssg-luke</Authors>
+    <Company>Flagsmith</Company>
+    <PackageDescription>Client SDK for Flagsmith. Ship features with confidence using feature flags and remote config. Host yourself or use our hosted version at https://flagsmith.com/</PackageDescription>
+    <Copyright>Copyright © 2021 Bullet Train Ltd</Copyright>
+    <PackageProjectUrl>https://flagsmith.com/</PackageProjectUrl>
+    <PackageIcon>icon.png</PackageIcon>
+    <PackageReleaseNotes>Singleton HTTP client</PackageReleaseNotes>
+    <PackageTags>feature flags remote config toggles</PackageTags>
+    <RepositoryUrl>https://github.com/Flagsmith/flagsmith-dotnet-client</RepositoryUrl>
+    <NeutralLanguage>en-GB</NeutralLanguage>
+    <PackageLicenseFile>LICENSE.txt</PackageLicenseFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="6.0.0" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
+    <PackageReference Include="Polly" Version="7.2.3" />
+    <ProjectReference Include="..\Flagsmith.Engine\Flagsmith.Engine.csproj" />
+    <None Include="LICENSE" Pack="true" Visible="false" PackagePath="" />
+    <None Include="icon.png" Pack="true" PackagePath="\" />
+  </ItemGroup>
+
+</Project>

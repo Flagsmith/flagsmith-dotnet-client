@@ -7,7 +7,12 @@ on:
 jobs:
     formatting:
         runs-on: ubuntu-latest
-        name: Check formatting
+        name: Check Build and formatting
+
+        strategy:
+          max-parallel: 2
+          matrix:
+            working-directory: ["Flagsmith.FlagsmithClient", "Flagsmith.Engine","Flagsmith.EngineTest","Flagsmith.Client.Test"]
 
         steps:
             - name: Cloning repo
@@ -20,8 +25,15 @@ jobs:
               with:
                   dotnet-version: "6.0"
 
+            - name: Install dependencies
+              run: dotnet restore
+            
+            - name: Build
+              run: dotnet build --configuration Release --no-restore  
+            
             - name: Check Formatting
               run: dotnet format --verify-no-changes
+              working-directory: ${{ matrix.working-directory }}
     
     test: 
         runs-on: ubuntu-latest
@@ -30,18 +42,20 @@ jobs:
         strategy:
             max-parallel: 4
             matrix:
-                dotnet-version: ["3.1", "5.0", "6.0"]
+                working-directory: ["Flagsmith.EngineTest","Flagsmith.Client.Test"]
         
         steps:
           - name: Cloning repo
             uses: actions/checkout@v2
             with:
                 fetch-depth: 0
-
-          - name: Set up Dotnet ${{ matrix.dotnet-version }}
+                submodules: recursive
+                
+          - name: Set up Dotnet 6.0
             uses: actions/setup-dotnet@v1
             with:
-                dotnet-version: ${{ matrix.dotnet-version }}
+                dotnet-version: 6.0.x      
 
           - name: Run Tests
             run: dotnet test
+            working-directory: ${{ matrix.working-directory }}
