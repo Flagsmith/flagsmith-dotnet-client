@@ -17,7 +17,7 @@
     <PackageTags>feature flags remote config toggles</PackageTags>
     <RepositoryUrl>https://github.com/Flagsmith/flagsmith-dotnet-client</RepositoryUrl>
     <NeutralLanguage>en-GB</NeutralLanguage>
-    <PackageLicenseFile>LICENSE.txt</PackageLicenseFile>
+    <PackageLicenseFile>LICENSE</PackageLicenseFile>
   </PropertyGroup>
 
   <ItemGroup>
@@ -25,7 +25,7 @@
     <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
     <PackageReference Include="Polly" Version="7.2.3" />
     <ProjectReference Include="..\Flagsmith.Engine\Flagsmith.Engine.csproj" />
-    <None Include="LICENSE" Pack="true" Visible="false" PackagePath="" />
+    <None Include="LICENSE" Pack="true" PackagePath="" />
     <None Include="icon.png" Pack="true" PackagePath="\" />
   </ItemGroup>
 
