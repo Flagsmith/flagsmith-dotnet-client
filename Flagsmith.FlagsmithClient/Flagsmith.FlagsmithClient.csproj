@@ -24,7 +24,11 @@
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="6.0.0" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
     <PackageReference Include="Polly" Version="7.2.3" />
-    <ProjectReference Include="..\Flagsmith.Engine\Flagsmith.Engine.csproj" />
+    <PackageReference Include="Teronis.MSBuild.Packaging.ProjectBuildInPackage" Version="1.0.0">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+    <ProjectReference Include="..\Flagsmith.Engine\Flagsmith.Engine.csproj" PrivateAssets="all" />
     <None Include="LICENSE" Pack="true" PackagePath="" />
     <None Include="icon.png" Pack="true" PackagePath="\" />
   </ItemGroup>
