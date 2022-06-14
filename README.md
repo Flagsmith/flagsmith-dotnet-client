@@ -14,7 +14,7 @@ This Project contains all the Test Cases to evaluate the Engine functionality.
 
 ## Adding to your project
 
-For full documentation visit [https://docs.flagsmith.com/clients/dotnet/](https://docs.flagsmith.com/clients/dotnet/)
+For full documentation visit [https://docs.flagsmith.com/clients/server-side](https://docs.flagsmith.com/clients/server-side).
 
 ## Contributing
 
