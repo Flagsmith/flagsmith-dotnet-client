@@ -102,9 +102,33 @@ namespace Flagsmith
         /// <summary>
         /// Get all the flags for the current environment for a given identity.
         /// </summary>
+        public async Task<Flags> GetIdentityFlags(string identity) {
+            return await GetIdentityFlags(identity, new Dictionary<string, object>());
+        }
 
-        public async Task<Flags> GetIdentityFlags(string identity, List<Trait> traits = null)
-             => Environment != null ? GetIdentityFlagsFromDocuments(identity, traits) : await GetIdentityFlagsFromApi(identity);
+        /// <summary>
+        /// Get all the flags for the current environment for a given identity with provided traits.
+        /// (Legacy implementation for backwards compatibility)
+        /// </summary>
+        public async Task<Flags> GetIdentityFlags(string identity, List<Trait> traits) {
+            Dictionary<string, object> traitsDict = new Dictionary<string, object>();
+            foreach (Trait trait in traits)
+            {
+                traitsDict.Add(trait.getTraitKey(), trait.getTraitValue());
+            }
+            return await GetIdentityFlags(identity, new Dictionary<string, object>());
+        }
+
+        /// <summary>
+        /// Get all the flags for the current environment for a given identity with provided traits.
+        /// </summary>
+        public async Task<Flags> GetIdentityFlags(string identity, Dictionary<string, object> traits) {
+            if (Environment != null) {
+                return GetIdentityFlagsFromDocuments(identity, traits);
+            }
+
+            return await GetIdentityFlagsFromApi(identity, traits);
+        }
 
         private async Task<string> GetJSON(HttpMethod method, string url, string body = null)
         {
@@ -140,11 +164,6 @@ namespace Flagsmith
                 throw new FlagsmithAPIError("Request cancelled: Api server takes too long to respond");
             }
         }
-
-        private string GetIdentitiesUrl(string identity)
-        {
-            return ApiUrl.AppendPath("identities", identity);
-        }
         private async Task GetAndUpdateEnvironmentFromApi()
         {
             try
@@ -173,13 +192,15 @@ namespace Flagsmith
             }
 
         }
-        private async Task<Flags> GetIdentityFlagsFromApi(string identity)
+        private async Task<Flags> GetIdentityFlagsFromApi(string identity, Dictionary<string, object> traits)
         {
             try
             {
-                string url = GetIdentitiesUrl(identity);
-                string json = await GetJSON(HttpMethod.Get, url);
-                var flags = JsonConvert.DeserializeObject<Identity>(json)?.flags;
+                string url = ApiUrl.AppendPath("identities");
+                var jsonBody =  JsonConvert.SerializeObject(
+                    new { identifier = identity, traits = traits?.Select(i => new { trait_key = i.Key, trait_value = i.Value }).ToList() });
+                string jsonResponse = await GetJSON(HttpMethod.Post, url, body: jsonBody);
+                var flags = JsonConvert.DeserializeObject<Identity>(jsonResponse)?.flags;
                 return Flags.FromApiFlag(_AnalyticsProcessor, DefaultFlagHandler, flags);
             }
             catch (FlagsmithAPIError e)
@@ -192,9 +213,9 @@ namespace Flagsmith
         {
             return Flags.FromFeatureStateModel(_AnalyticsProcessor, DefaultFlagHandler, _Engine.GetEnvironmentFeatureStates(Environment));
         }
-        private Flags GetIdentityFlagsFromDocuments(string identifier, List<Trait> traits)
+        private Flags GetIdentityFlagsFromDocuments(string identifier, Dictionary<string, object> traits)
         {
-            var identity = new IdentityModel { Identifier = identifier, IdentityTraits = traits?.Select(t => new TraitModel { TraitKey = t.GetKey(), TraitValue = t.GetIntValue() }).ToList() };
+            var identity = new IdentityModel { Identifier = identifier, IdentityTraits = traits?.Select(t => new TraitModel { TraitKey = t.Key, TraitValue = t.Value }).ToList() };
             return Flags.FromFeatureStateModel(_AnalyticsProcessor, DefaultFlagHandler, _Engine.GetIdentityFeatureStates(Environment, identity), identity.CompositeKey);
         }
         ~FlagsmithClient() => _PollingManager?.StopPoll();
