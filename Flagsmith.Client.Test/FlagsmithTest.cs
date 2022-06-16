@@ -193,8 +193,8 @@ namespace Flagsmith.FlagsmithClientTest
         public async Task TestGetIdentityFlagsSendsTraits()
         {
             string identifier = "identifier";
-            var traits = new List<Trait>() { new Trait( "foo", "bar" ), new Trait( "ifoo", 1 ) };
-    
+            var traits = new List<Trait>() { new Trait("foo", "bar"), new Trait("ifoo", 1) };
+
             var mockHttpClient = HttpMocker.MockHttpResponse(new HttpResponseMessage
             {
                 StatusCode = System.Net.HttpStatusCode.OK
@@ -202,7 +202,7 @@ namespace Flagsmith.FlagsmithClientTest
             var flagsmithClient = new FlagsmithClient(Fixtures.ApiKey, httpClient: mockHttpClient.Object);
 
             var flags = await flagsmithClient.GetIdentityFlags(identifier, traits);
-            
+
             mockHttpClient.verifyHttpRequest(HttpMethod.Post, "/api/v1/identities/", Times.Once);
             // TODO: verify the body is correct - I've verified manually but can't verify programmatically
         }

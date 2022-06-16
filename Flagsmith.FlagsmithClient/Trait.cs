@@ -23,12 +23,12 @@ namespace Flagsmith
             return JsonConvert.SerializeObject(this);
         }
 
-        public string getTraitKey() 
+        public string getTraitKey()
         {
             return this.traitKey;
         }
 
-        public dynamic getTraitValue() 
+        public dynamic getTraitValue()
         {
             return this.traitValue;
         }

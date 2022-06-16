@@ -102,15 +102,18 @@ namespace Flagsmith
         /// <summary>
         /// Get all the flags for the current environment for a given identity.
         /// </summary>
-        public async Task<Flags> GetIdentityFlags(string identity) {
+        public async Task<Flags> GetIdentityFlags(string identity)
+        {
             return await GetIdentityFlags(identity, null);
         }
 
         /// <summary>
         /// Get all the flags for the current environment for a given identity with provided traits.
         /// </summary>
-        public async Task<Flags> GetIdentityFlags(string identity, List<Trait> traits) {
-            if (Environment != null) {
+        public async Task<Flags> GetIdentityFlags(string identity, List<Trait> traits)
+        {
+            if (Environment != null)
+            {
                 return GetIdentityFlagsFromDocuments(identity, traits);
             }
 
@@ -184,7 +187,7 @@ namespace Flagsmith
             try
             {
                 string url = ApiUrl.AppendPath("identities");
-                var jsonBody =  JsonConvert.SerializeObject(new { identifier = identity, traits = traits });
+                var jsonBody = JsonConvert.SerializeObject(new { identifier = identity, traits = traits });
                 string jsonResponse = await GetJSON(HttpMethod.Post, url, body: jsonBody);
                 var flags = JsonConvert.DeserializeObject<Identity>(jsonResponse)?.flags;
                 return Flags.FromApiFlag(_AnalyticsProcessor, DefaultFlagHandler, flags);
@@ -201,13 +204,15 @@ namespace Flagsmith
         }
         private Flags GetIdentityFlagsFromDocuments(string identifier, List<Trait> traits)
         {
-            
+
             IdentityModel identity;
-            
-            if (traits?.Count > 0) 
+
+            if (traits?.Count > 0)
             {
                 identity = new IdentityModel { Identifier = identifier, IdentityTraits = traits?.Select(t => new TraitModel { TraitKey = t.getTraitKey(), TraitValue = t.getTraitValue() }).ToList() };
-            } else {
+            }
+            else
+            {
                 identity = new IdentityModel { Identifier = identifier };
             }
 
