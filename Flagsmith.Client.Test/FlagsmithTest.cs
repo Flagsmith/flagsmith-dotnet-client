@@ -201,8 +201,6 @@ namespace Flagsmith.FlagsmithClientTest
             });
             var flagsmithClient = new FlagsmithClient(Fixtures.ApiKey, httpClient: mockHttpClient.Object);
 
-            HttpContent expectedBody = new StringContent("{\"identifier\":\"identifier\",\"traits\":[{\"trait_key\":\"foo\",\"trait_value\":\"bar\"},{\"trait_key\":\"ifoo\",\"trait_value\":1}]}");
-
             var flags = await flagsmithClient.GetIdentityFlags(identifier, traits);
             
             mockHttpClient.verifyHttpRequest(HttpMethod.Post, "/api/v1/identities/", Times.Once);
