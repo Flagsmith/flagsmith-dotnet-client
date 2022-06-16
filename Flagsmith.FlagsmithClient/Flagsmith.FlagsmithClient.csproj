@@ -6,8 +6,8 @@
     <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
     <PackageId>Flagsmith</PackageId>
     <Title>Flagsmith</Title>
-    <Version>4.0.1</Version>
-    <Authors>ssg-luke</Authors>
+    <Version>5.0.0</Version>
+    <Authors>flagsmith</Authors>
     <Company>Flagsmith</Company>
     <PackageDescription>Client SDK for Flagsmith. Ship features with confidence using feature flags and remote config. Host yourself or use our hosted version at https://flagsmith.com/</PackageDescription>
     <Copyright>Copyright © 2021 Bullet Train Ltd</Copyright>
