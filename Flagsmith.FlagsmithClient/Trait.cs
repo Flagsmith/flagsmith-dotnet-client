@@ -6,7 +6,7 @@ namespace Flagsmith
     public class Trait
     {
         public Trait() { }
-        public Trait(string traitKey, object traitValue)
+        public Trait(string traitKey, dynamic traitValue)
         {
             this.traitKey = traitKey;
             this.traitValue = traitValue;
@@ -16,7 +16,7 @@ namespace Flagsmith
         private string traitKey = null;
 
         [JsonProperty("trait_value")]
-        private object traitValue = null;
+        private dynamic traitValue = null;
 
         public override string ToString()
         {
@@ -28,7 +28,7 @@ namespace Flagsmith
             return this.traitKey;
         }
 
-        public object getTraitValue() 
+        public dynamic getTraitValue() 
         {
             return this.traitValue;
         }

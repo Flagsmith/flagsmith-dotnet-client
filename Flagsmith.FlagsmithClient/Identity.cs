@@ -10,7 +10,7 @@ namespace Flagsmith
         public List<Flag> flags;
 
         [JsonProperty]
-        public Dictionary<string, object> traits;
+        public List<Trait> traits;
 
         public override string ToString()
         {

@@ -80,7 +80,7 @@ namespace Flagsmith.FlagsmithClientTest
             Assert.True(flags[0].Enabled);
             Assert.Equal("some-value", flags[0].Value);
             Assert.Equal("some_feature", flags[0].GetFeatureName());
-            mockHttpClient.verifyHttpRequest(HttpMethod.Get, "/api/v1/identities/identifier/", Times.Once);
+            mockHttpClient.verifyHttpRequest(HttpMethod.Post, "/api/v1/identities/", Times.Once);
 
         }
         [Fact]
@@ -193,7 +193,7 @@ namespace Flagsmith.FlagsmithClientTest
         public async Task TestGetIdentityFlagsSendsTraits()
         {
             string identifier = "identifier";
-            var traits = new Dictionary<string, object>() { { "foo", "bar" }, { "ifoo", 1 } };
+            var traits = new List<Trait>() { new Trait( "foo", "bar" ), new Trait( "ifoo", 1 ) };
     
             var mockHttpClient = HttpMocker.MockHttpResponse(new HttpResponseMessage
             {
