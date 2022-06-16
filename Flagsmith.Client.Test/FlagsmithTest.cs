@@ -1,8 +1,11 @@
 ﻿using Moq;
+using System.Collections.Generic;
 using System.Net.Http;
 using System.Threading.Tasks;
 using System.Threading;
 using Xunit;
+using Newtonsoft.Json;
+
 namespace Flagsmith.FlagsmithClientTest
 {
     public class FlagsmithTest
@@ -186,8 +189,25 @@ namespace Flagsmith.FlagsmithClientTest
             Assert.Equal("some-default-value", flag.Value);
         }
 
+        [Fact]
+        public async Task TestGetIdentityFlagsSendsTraits()
+        {
+            string identifier = "identifier";
+            var traits = new Dictionary<string, object>() { { "foo", "bar" }, { "ifoo", 1 } };
+    
+            var mockHttpClient = HttpMocker.MockHttpResponse(new HttpResponseMessage
+            {
+                StatusCode = System.Net.HttpStatusCode.OK
+            });
+            var flagsmithClient = new FlagsmithClient(Fixtures.ApiKey, httpClient: mockHttpClient.Object);
 
+            HttpContent expectedBody = new StringContent("{\"identifier\":\"identifier\",\"traits\":[{\"trait_key\":\"foo\",\"trait_value\":\"bar\"},{\"trait_key\":\"ifoo\",\"trait_value\":1}]}");
+
+            var flags = await flagsmithClient.GetIdentityFlags(identifier, traits);
+            
+            mockHttpClient.verifyHttpRequest(HttpMethod.Post, "/api/v1/identities/", Times.Once);
+            // TODO: verify the body is correct - I've verified manually but can't verify programmatically
+        }
     }
-
 }
 
