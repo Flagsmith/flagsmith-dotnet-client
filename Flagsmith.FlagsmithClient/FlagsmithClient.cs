@@ -209,7 +209,7 @@ namespace Flagsmith
 
             if (traits?.Count > 0)
             {
-                identity = new IdentityModel { Identifier = identifier, IdentityTraits = traits?.Select(t => new TraitModel { TraitKey = t.getTraitKey(), TraitValue = t.getTraitValue() }).ToList() };
+                identity = new IdentityModel { Identifier = identifier, IdentityTraits = traits?.Select(t => new TraitModel { TraitKey = t.GetTraitKey(), TraitValue = t.GetTraitValue() }).ToList() };
             }
             else
             {
