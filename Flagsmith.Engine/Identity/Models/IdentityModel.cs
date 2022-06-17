@@ -39,6 +39,5 @@ namespace FlagsmithEngine.Identity.Models
             });
             IdentityTraits = existingModels.Values.ToList();
         }
-
     }
 }
