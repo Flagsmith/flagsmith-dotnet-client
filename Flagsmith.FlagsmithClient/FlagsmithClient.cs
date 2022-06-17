@@ -187,7 +187,7 @@ namespace Flagsmith
             try
             {
                 string url = ApiUrl.AppendPath("identities");
-                var jsonBody = JsonConvert.SerializeObject(new { identifier = identity, traits = traits });
+                var jsonBody = JsonConvert.SerializeObject(new { identifier = identity, traits = traits ?? new List<Trait>() });
                 string jsonResponse = await GetJSON(HttpMethod.Post, url, body: jsonBody);
                 var flags = JsonConvert.DeserializeObject<Identity>(jsonResponse)?.flags;
                 return Flags.FromApiFlag(_AnalyticsProcessor, DefaultFlagHandler, flags);
