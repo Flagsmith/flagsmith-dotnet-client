@@ -31,7 +31,7 @@ namespace Flagsmith
 
             }
             if (_AnalyticsProcessor != null)
-                await _AnalyticsProcessor.TrackFeature(flag.getFeatureId());
+                await _AnalyticsProcessor.TrackFeature(flag.GetFeatureName());
             return flag;
         }
         public List<Flag> AllFlags() => _Flags;
