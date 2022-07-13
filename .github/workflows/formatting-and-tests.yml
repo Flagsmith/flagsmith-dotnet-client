@@ -57,5 +57,9 @@ jobs:
                 dotnet-version: 6.0.x      
 
           - name: Run Tests
-            run: dotnet test
+            run: |
+              echo "Dotnet version: "
+              dotnet --version
+              echo "-------"
+              dotnet test
             working-directory: ${{ matrix.working-directory }}
