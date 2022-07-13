@@ -57,6 +57,7 @@ jobs:
                 dotnet-version: 6.0.x      
 
           - name: Run Tests
+            # bafflingly adding the below debugging echo / version statements got the workflow to pass
             run: |
               echo "Dotnet version: "
               dotnet --version
