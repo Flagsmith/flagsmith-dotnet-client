@@ -16,10 +16,10 @@ namespace Flagsmith.FlagsmithClientTest
         public void TestAnalyticsProcessorTrackFeatureUpdatesAnalyticsData()
         {
             var analyticsProcessor = Fixtures.GetAnalyticalProcessorTest();
-            _ = analyticsProcessor.TrackFeature(1);
-            Assert.Equal(1, analyticsProcessor[1]);
-            _ = analyticsProcessor.TrackFeature(1);
-            Assert.Equal(2, analyticsProcessor[1]);
+            _ = analyticsProcessor.TrackFeature("myFeature");
+            Assert.Equal(1, analyticsProcessor["myFeature"]);
+            _ = analyticsProcessor.TrackFeature("myFeature");
+            Assert.Equal(2, analyticsProcessor["myFeature"]);
         }
         [Fact]
         public async Task TestAnalyticsProcessorFlushClearsAnalyticsData()
@@ -29,7 +29,7 @@ namespace Flagsmith.FlagsmithClientTest
                 StatusCode = System.Net.HttpStatusCode.OK,
             });
             var analyticsProcessor = new AnalyticsProcessorTest(mockHttpClient.Object, null, null);
-            await analyticsProcessor.TrackFeature(1);
+            await analyticsProcessor.TrackFeature("myFeature");
             await analyticsProcessor.Flush();
             Assert.False(analyticsProcessor.HasTrackingItemsInCache());
         }
@@ -41,13 +41,13 @@ namespace Flagsmith.FlagsmithClientTest
                 StatusCode = System.Net.HttpStatusCode.OK,
             });
             var analyticsProcessor = new AnalyticsProcessorTest(mockHttpClient.Object, null, baseApiUrl: _defaultApiUrl);
-            await analyticsProcessor.TrackFeature(1);
-            await analyticsProcessor.TrackFeature(2);
+            await analyticsProcessor.TrackFeature("myFeature1");
+            await analyticsProcessor.TrackFeature("myFeature2");
             var jObject = JObject.Parse(analyticsProcessor.ToString());
             await analyticsProcessor.Flush();
             mockHttpClient.verifyHttpRequest(HttpMethod.Post, "/api/v1/analytics/flags/", Times.Once);
-            Assert.Equal(1, jObject["1"].Value<int>());
-            Assert.Equal(1, jObject["2"].Value<int>());
+            Assert.Equal(1, jObject["myFeature1"].Value<int>());
+            Assert.Equal(1, jObject["myFeature2"].Value<int>());
         }
         [Fact]
         public async Task TestAnalyticsProcessorFlushEarlyExitIfAnalyticsDataIsEmpty()
@@ -69,7 +69,7 @@ namespace Flagsmith.FlagsmithClientTest
             });
             var analyticsProcessor = new AnalyticsProcessorTest(mockHttpClient.Object, null, baseApiUrl: _defaultApiUrl);
             await Task.Delay(12 * 1000);
-            await analyticsProcessor.TrackFeature(1);
+            await analyticsProcessor.TrackFeature("myFeature");
             mockHttpClient.verifyHttpRequest(HttpMethod.Post, "/api/v1/analytics/flags/", Times.Once);
         }
     }

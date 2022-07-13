@@ -18,7 +18,7 @@ namespace Flagsmith
         readonly string _EnvironmentKey;
         readonly int _TimeOut;
         DateTime _LastFlushed;
-        protected Dictionary<int, int> AnalyticsData;
+        protected Dictionary<string, int> AnalyticsData;
         HttpClient _HttpClient;
         ILogger _Logger;
         Dictionary<string, string> _CustomHeaders;
@@ -28,7 +28,7 @@ namespace Flagsmith
             _AnalyticsEndPoint = baseApiUrl + "analytics/flags/";
             _TimeOut = timeOut;
             _LastFlushed = DateTime.Now;
-            AnalyticsData = new Dictionary<int, int>();
+            AnalyticsData = new Dictionary<string, int>();
             _HttpClient = httpClient;
             _Logger = logger;
             _FlushIntervalSeconds = flushIntervalSeconds;
@@ -77,9 +77,9 @@ namespace Flagsmith
         /// </summary>
         /// <param name="featureId"></param>
         /// <returns></returns>
-        public async Task TrackFeature(int featureId)
+        public async Task TrackFeature(string featureName)
         {
-            AnalyticsData[featureId] = AnalyticsData.TryGetValue(featureId, out int value) ? value + 1 : 1;
+            AnalyticsData[featureName] = AnalyticsData.TryGetValue(featureName, out int value) ? value + 1 : 1;
             if ((DateTime.Now - _LastFlushed).Seconds > _FlushIntervalSeconds)
                 await Flush();
         }
