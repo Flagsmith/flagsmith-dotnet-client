@@ -22,7 +22,7 @@ namespace Flagsmith.FlagsmithClientTest
         /// </summary>
         /// <param name="featureId"></param>
         /// <returns></returns>
-        public int this[int featureId] => AnalyticsData[featureId];
+        public int this[string featureName] => AnalyticsData[featureName];
         /// <summary>
         /// Check if there are any items in analytics cache.
         /// </summary>
