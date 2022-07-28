@@ -244,7 +244,7 @@ namespace Flagsmith.FlagsmithClientTest
             List<Segment> segments = flagsmithClient.GetIdentitySegments(identifier, traits);
 
             // Then
-            Assert.Equal(1, segments.Count);
+            Assert.Single(segments);
             Assert.Equal("Test segment", segments[0].Name);
         }
     }
