@@ -11,7 +11,7 @@ namespace FlagsmithEngine.Segment.Models
         [JsonProperty("rules")]
         public List<SegmentRuleModel> Rules { get; set; }
         [JsonProperty("conditions")]
-        public List<SegmentConditionModel> Conditions { get; set; }
+        public List<SegmentConditionModel> Conditions { get; set; } = new List<SegmentConditionModel>();
 
         public bool MatchingFunction(List<bool> list)
         {

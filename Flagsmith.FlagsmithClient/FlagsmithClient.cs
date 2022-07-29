@@ -9,6 +9,8 @@ using FlagsmithEngine.Environment.Models;
 using FlagsmithEngine;
 using FlagsmithEngine.Interfaces;
 using FlagsmithEngine.Identity.Models;
+using FlagsmithEngine.Segment;
+using FlagsmithEngine.Segment.Models;
 using FlagsmithEngine.Trait.Models;
 using Microsoft.Extensions.Logging;
 using System.Threading;
@@ -118,6 +120,25 @@ namespace Flagsmith
             }
 
             return await GetIdentityFlagsFromApi(identity, traits);
+        }
+
+        public List<Segment> GetIdentitySegments(string identifier)
+        {
+            return GetIdentitySegments(identifier, new List<Trait>());
+        }
+
+        public List<Segment> GetIdentitySegments(string identifier, List<Trait> traits)
+        {
+            if (this.Environment == null)
+            {
+                throw new FlagsmithClientError("Local evaluation required to obtain identity segments.");
+            }
+            IdentityModel identityModel = new IdentityModel { Identifier = identifier, IdentityTraits = traits?.Select(t => new TraitModel { TraitKey = t.GetTraitKey(), TraitValue = t.GetTraitValue() }).ToList() };
+            List<SegmentModel> segmentModels = Evaluator.GetIdentitySegments(
+                this.Environment, identityModel, new List<TraitModel>()
+            );
+
+            return segmentModels?.Select(t => new Segment(id: t.Id, name: t.Name)).ToList();
         }
 
         private async Task<string> GetJSON(HttpMethod method, string url, string body = null)

@@ -4,7 +4,8 @@ using System.Net.Http;
 using System.Threading.Tasks;
 using System.Threading;
 using Xunit;
-using Newtonsoft.Json;
+using FlagsmithEngine.Environment.Models;
+using FlagsmithEngine.Segment.Models;
 
 namespace Flagsmith.FlagsmithClientTest
 {
@@ -205,6 +206,46 @@ namespace Flagsmith.FlagsmithClientTest
 
             mockHttpClient.verifyHttpRequest(HttpMethod.Post, "/api/v1/identities/", Times.Once);
             // TODO: verify the body is correct - I've verified manually but can't verify programmatically
+        }
+
+        [Fact]
+        public void testGetIdentitySegmentsNoTraits()
+        {
+            // Given
+            var mockHttpClient = HttpMocker.MockHttpResponse(new HttpResponseMessage
+            {
+                StatusCode = System.Net.HttpStatusCode.OK,
+                Content = new StringContent(Fixtures.JsonObject.ToString())
+            });
+            FlagsmithClient flagsmithClient = new FlagsmithClient(Fixtures.ApiKey, httpClient: mockHttpClient.Object, enableClientSideEvaluation: true);
+
+            // When
+            List<Segment> segments = flagsmithClient.GetIdentitySegments("identifier");
+
+            // Then
+            Assert.Empty(segments);
+        }
+
+        [Fact]
+        public void testGetIdentitySegmentsWithValidTrait()
+        {
+            // Given
+            var mockHttpClient = HttpMocker.MockHttpResponse(new HttpResponseMessage
+            {
+                StatusCode = System.Net.HttpStatusCode.OK,
+                Content = new StringContent(Fixtures.JsonObject.ToString())
+            });
+            FlagsmithClient flagsmithClient = new FlagsmithClient(Fixtures.ApiKey, httpClient: mockHttpClient.Object, enableClientSideEvaluation: true);
+
+            string identifier = "identifier";
+            List<Trait> traits = new List<Trait>() { new Trait(traitKey: "foo", traitValue: "bar") };
+
+            // When
+            List<Segment> segments = flagsmithClient.GetIdentitySegments(identifier, traits);
+
+            // Then
+            Assert.Single(segments);
+            Assert.Equal("Test segment", segments[0].Name);
         }
     }
 }
