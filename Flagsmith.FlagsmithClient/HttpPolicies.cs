@@ -1,13 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using System.Net.Http;
+﻿using Polly;
 using Polly.Retry;
-using System.Net;
-using Polly;
+using System;
 using System.Linq;
-using System.Threading.Tasks;
-using System.Threading;
+using System.Net;
+using System.Net.Http;
 
 namespace Flagsmith
 {
@@ -20,8 +16,9 @@ namespace Flagsmith
                    HttpStatusCode.ServiceUnavailable, // 503
                    HttpStatusCode.GatewayTimeout // 504
                 };
-        public static AsyncRetryPolicy<HttpResponseMessage> GetRetryPolicyAwaitable(int? retries)
-        => Policy
+
+        public static AsyncRetryPolicy<HttpResponseMessage> GetRetryPolicyAwaitable(int? retries) =>
+            Policy
                 .Handle<HttpRequestException>()
                 .OrResult<HttpResponseMessage>(r => httpStatusCodesWorthRetrying.Contains(r.StatusCode))
                 .WaitAndRetryAsync(retries ?? 3, retryAttempt => TimeSpan.FromSeconds(Math.Pow(0.5, retryAttempt)));

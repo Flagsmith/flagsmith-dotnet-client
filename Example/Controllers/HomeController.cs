@@ -1,5 +1,6 @@
 ﻿using Example.Settings;
 using Flagsmith;
+using Flagsmith.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -12,8 +13,8 @@ namespace Example.Controllers
         public HomeController(IConfiguration configuration)
         {
             var settings = configuration.GetSection("FlagsmithConfiguration").Get<FlagsmithSettings>();
-            _flagsmithClient = new(settings.EnvironmentKey, defaultFlagHandler: defaultFlagHandler);
-            static Flag defaultFlagHandler(string featureName)
+            _flagsmithClient = new(null, new FlagsmithConfiguration { EnvironmentKey = settings.EnvironmentKey, DefaultFlagHandler = defaultFlagHandler });
+            static IFlag defaultFlagHandler(string featureName)
             {
                 if (featureName == "secret_button")
                     return new Flag(new Feature("secret_button"), enabled: false, value: JsonConvert.SerializeObject(new { colour = "#b8b8b8" }).ToString());

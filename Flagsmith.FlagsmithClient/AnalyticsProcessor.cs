@@ -1,13 +1,13 @@
-﻿using System;
+﻿using Flagsmith.Extensions;
+using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
+using System;
 using System.Collections.Generic;
-using System.Text;
-using System.Threading.Tasks;
 using System.Linq;
 using System.Net.Http;
-using Newtonsoft.Json;
+using System.Text;
 using System.Threading;
-using Microsoft.Extensions.Logging;
-using Flagsmith.Extensions;
+using System.Threading.Tasks;
 
 namespace Flagsmith
 {
@@ -21,8 +21,9 @@ namespace Flagsmith
         protected Dictionary<string, int> AnalyticsData;
         HttpClient _HttpClient;
         ILogger _Logger;
-        Dictionary<string, string> _CustomHeaders;
-        public AnalyticsProcessor(HttpClient httpClient, string environmentKey, string baseApiUrl, ILogger logger = null, Dictionary<string, string> customHeaders = null, int timeOut = 3, int flushIntervalSeconds = 10)
+        IReadOnlyDictionary<string, string> _CustomHeaders;
+
+        public AnalyticsProcessor(HttpClient httpClient, string environmentKey, string baseApiUrl, ILogger logger = null, IReadOnlyDictionary<string, string> customHeaders = null, int timeOut = 3, int flushIntervalSeconds = 10)
         {
             _EnvironmentKey = environmentKey;
             _AnalyticsEndPoint = baseApiUrl + "analytics/flags/";
@@ -34,6 +35,7 @@ namespace Flagsmith
             _FlushIntervalSeconds = flushIntervalSeconds;
             _CustomHeaders = customHeaders;
         }
+
         /// <summary>
         /// Post the features on the provided endpoint and clear the cached data.
         /// </summary>

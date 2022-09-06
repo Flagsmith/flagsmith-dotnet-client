@@ -1,8 +1,9 @@
+using Flagsmith.Interfaces;
 using Newtonsoft.Json;
 
 namespace Flagsmith
 {
-    public class Feature
+    public class Feature : IFeature
     {
         public Feature(string name, int id = default)
         {
