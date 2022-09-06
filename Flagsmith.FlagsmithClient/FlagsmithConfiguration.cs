@@ -55,14 +55,7 @@ namespace Flagsmith
 
         IReadOnlyDictionary<string, string> IFlagsmithClientConfig.CustomHeaders => CustomHeaders;
 
-        public FlagsmithConfiguration()
-        {
-            ApiUrl = DefaultApiUrl;
-            EnvironmentKey = string.Empty;
-            EnvironmentRefreshIntervalSeconds = 60;
-        }
-
-        public FlagsmithConfiguration(
+        public static FlagsmithConfiguration From(
             string environmentKey,
             string apiUrl = DefaultApiUrl,
             Func<string, IFlag> defaultFlagHandler = null,
@@ -72,17 +65,19 @@ namespace Flagsmith
             Dictionary<string, string> customHeaders = null,
             int? retries = null,
             double? requestTimeout = null)
-            : this()
         {
-            EnvironmentKey = environmentKey;
-            ApiUrl = apiUrl;
-            DefaultFlagHandler = defaultFlagHandler;
-            EnableAnalytics = enableAnalytics;
-            EnableClientSideEvaluation = enableClientSideEvaluation;
-            EnvironmentRefreshIntervalSeconds = environmentRefreshIntervalSeconds;
-            CustomHeaders = customHeaders;
-            Retries = retries;
-            RequestTimeout = requestTimeout;
+            return new FlagsmithConfiguration
+            {
+                EnvironmentKey = environmentKey,
+                ApiUrl = apiUrl,
+                DefaultFlagHandler = defaultFlagHandler,
+                EnableAnalytics = enableAnalytics,
+                EnableClientSideEvaluation = enableClientSideEvaluation,
+                EnvironmentRefreshIntervalSeconds = environmentRefreshIntervalSeconds,
+                CustomHeaders = customHeaders,
+                Retries = retries,
+                RequestTimeout = requestTimeout,
+            };
         }
     }
 }
