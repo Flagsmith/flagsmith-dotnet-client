@@ -11,22 +11,17 @@ namespace Flagsmith
         /// <summary>
         /// Override the URL of the Flagsmith API to communicate with.
         /// </summary>
-        public string ApiUrl { get; set; }
+        public string ApiUrl { get; set; } = DefaultApiUrl;
 
         /// <summary>
         /// The environment key obtained from Flagsmith interface.
         /// </summary>
-        public string EnvironmentKey { get; set; }
-
-        /// <summary>
-        /// Enables local evaluation of flags.
-        /// </summary>
-        public bool EnableClientSideEvaluation { get; set; }
+        public string EnvironmentKey { get; set; } = string.Empty;
 
         /// <summary>
         /// If using local evaluation, specify the interval period between refreshes of local environment data.
         /// </summary>
-        public int EnvironmentRefreshIntervalSeconds { get; set; }
+        public int EnvironmentRefreshIntervalSeconds { get; set; } = 60;
 
         /// <summary>
         /// Callable which will be used in the case where flags cannot be retrieved from the API or a non existent feature is requested.
@@ -60,7 +55,6 @@ namespace Flagsmith
             string apiUrl = DefaultApiUrl,
             Func<string, IFlag> defaultFlagHandler = null,
             bool enableAnalytics = false,
-            bool enableClientSideEvaluation = false,
             int environmentRefreshIntervalSeconds = 60,
             Dictionary<string, string> customHeaders = null,
             int? retries = null,
@@ -72,7 +66,6 @@ namespace Flagsmith
                 ApiUrl = apiUrl,
                 DefaultFlagHandler = defaultFlagHandler,
                 EnableAnalytics = enableAnalytics,
-                EnableClientSideEvaluation = enableClientSideEvaluation,
                 EnvironmentRefreshIntervalSeconds = environmentRefreshIntervalSeconds,
                 CustomHeaders = customHeaders,
                 Retries = retries,
