@@ -1,5 +1,7 @@
 ﻿using Example.Settings;
 using Flagsmith;
+using Flagsmith.Caching;
+using Flagsmith.Caching.Impl;
 using Flagsmith.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
@@ -9,11 +11,13 @@ namespace Example.Controllers
 {
     public class HomeController : Controller
     {
-        static FlagsmithClient _flagsmithClient;
+        private static readonly ICache _cache = new MemoryCache();
+        private readonly IFlagsmithClient _flagsmithClient;
+
         public HomeController(IConfiguration configuration)
         {
             var settings = configuration.GetSection("FlagsmithConfiguration").Get<FlagsmithSettings>();
-            _flagsmithClient = new(null, new FlagsmithConfiguration { EnvironmentKey = settings.EnvironmentKey, DefaultFlagHandler = defaultFlagHandler });
+            _flagsmithClient = new FlagsmithClient(null, _cache, new FlagsmithConfiguration { EnvironmentKey = settings.EnvironmentKey, DefaultFlagHandler = defaultFlagHandler });
             static IFlag defaultFlagHandler(string featureName)
             {
                 if (featureName == "secret_button")

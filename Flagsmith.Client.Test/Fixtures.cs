@@ -1,9 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Net.Http;
-using System.Text;
-using FlagsmithEngine.Environment.Models;
+﻿using FlagsmithEngine.Environment.Models;
 using Newtonsoft.Json.Linq;
+using System.Net.Http;
 
 namespace Flagsmith.FlagsmithClientTest
 {
@@ -69,55 +66,5 @@ namespace Flagsmith.FlagsmithClientTest
   ]
 }");
         public static EnvironmentModel Environment { get; } = JsonObject.ToObject<EnvironmentModel>();
-        public static string ApiFlagResponse => @"[
-    {
-        'id': 1,
-        'feature': {
-            'id': 1,
-            'name': 'some_feature',
-            'created_date': '2019-08-27T14:53:45.698555Z',
-            'initial_value': null,
-            'description': null,
-            'default_enabled': false,
-            'type': 'STANDARD',
-            'project': 1
-        },
-        'feature_state_value': 'some-value',
-        'enabled': true,
-        'environment': 1,
-        'identity': null,
-        'feature_segment': null
-    }
-]";
-        public static string ApiIdentityResponse => @"{
-    'traits': [
-        {
-            'id': 1,
-            'trait_key': 'some_trait',
-            'trait_value': 'some_value'
-        }
-    ],
-    'flags': [
-        {
-            'id': 1,
-            'feature': {
-                'id': 1,
-                'name': 'some_feature',
-                'created_date': '2019-08-27T14:53:45.698555Z',
-                'initial_value': null,
-                'description': null,
-                'default_enabled': false,
-                'type': 'STANDARD',
-                'project': 1
-            },
-            'feature_state_value': 'some-value',
-            'enabled': true,
-            'environment': 1,
-            'identity': null,
-            'feature_segment': null
-        }
-    ]
-}";
-
     }
 }

@@ -16,11 +16,6 @@ namespace Flagsmith.Interfaces
         string EnvironmentKey { get; }
 
         /// <summary>
-        /// Enables local evaluation of flags.
-        /// </summary>
-        bool EnableClientSideEvaluation { get; }
-
-        /// <summary>
         /// If using local evaluation, specify the interval period between refreshes of local environment data.
         /// </summary>
         int EnvironmentRefreshIntervalSeconds { get; }
