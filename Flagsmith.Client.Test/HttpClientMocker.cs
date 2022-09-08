@@ -1,15 +1,11 @@
 ﻿using Moq;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Net.Http;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
 namespace Flagsmith.FlagsmithClientTest
 {
-    internal static class HttpMocker
+    internal static class HttpClientMocker
     {
         public static Mock<HttpClient> MockHttpResponse(HttpResponseMessage httpResponseMessage)
         {
@@ -22,6 +18,7 @@ namespace Flagsmith.FlagsmithClientTest
                 }));
             return httpClientMock;
         }
+
         public static Mock<HttpClient> MockHttpThrowConnectionError()
         {
             var httpClientMock = new Mock<HttpClient>();
@@ -29,7 +26,6 @@ namespace Flagsmith.FlagsmithClientTest
                 .ThrowsAsync(new HttpRequestException());
             return httpClientMock;
         }
-
 
         public static void verifyHttpRequest(this Mock<HttpClient> mockHttpClient, HttpMethod httpMethod, string url, System.Func<Moq.Times> times)
         {

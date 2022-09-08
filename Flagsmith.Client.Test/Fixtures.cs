@@ -1,14 +1,11 @@
 ﻿using FlagsmithEngine.Environment.Models;
 using Newtonsoft.Json.Linq;
-using System.Net.Http;
 
 namespace Flagsmith.FlagsmithClientTest
 {
     internal class Fixtures
     {
         public static string ApiKey => "test_key";
-        public static string ApiUrl => "http://test_url/";
-        public static AnalyticsProcessorTest GetAnalyticalProcessorTest() => new(new HttpClient(), ApiKey, ApiUrl);
         public static JObject JsonObject = JObject.Parse(@"{
   'api_key': 'test_key',
   'project': {

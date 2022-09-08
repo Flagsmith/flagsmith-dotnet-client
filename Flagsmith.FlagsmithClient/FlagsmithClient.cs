@@ -1,5 +1,4 @@
 using Flagsmith.Caching;
-using Flagsmith.Extensions;
 using Flagsmith.Interfaces;
 using FlagsmithEngine;
 using FlagsmithEngine.Environment.Models;
@@ -33,24 +32,22 @@ namespace Flagsmith
     {
         private readonly ILogger<FlagsmithClient> _logger;
         private readonly IFlagsmithClientConfig _config;
-        private readonly HttpClient _httpClient;
+        private readonly IHttpClientFactory _httpClientFactory;
         private readonly IEngine _engine;
-        private readonly AnalyticsProcessor _analyticsProcessor;
         private readonly ICache _cache;
+        private readonly IAnalyticsCollector _analytics;
 
         /// <summary>
         /// Create flagsmith client.
         /// </summary>
-        public FlagsmithClient(ILogger<FlagsmithClient> logger, ICache cache, IFlagsmithClientConfig config, HttpClient client = null)
+        public FlagsmithClient(ILogger<FlagsmithClient> logger, ICache cache, IAnalyticsCollector analytics, IFlagsmithClientConfig config, IHttpClientFactory httpClientFactory)
         {
             _logger = logger;
             _config = config;
             _cache = cache;
-            _httpClient = client ?? new HttpClient();
+            _httpClientFactory = httpClientFactory;
             _engine = new Engine();
-
-            if (_config.EnableAnalytics)
-                _analyticsProcessor = new AnalyticsProcessor(_httpClient, _config.EnvironmentKey, _config.ApiUrl, _logger, _config.CustomHeaders);
+            _analytics = analytics;
         }
 
         /// <summary>
@@ -58,7 +55,7 @@ namespace Flagsmith
         /// </summary>
         public async Task<IFlags> GetEnvironmentFlags()
         {
-            return Flags.FromFeatureStateModel(_analyticsProcessor, _config.DefaultFlagHandler, _engine.GetEnvironmentFeatureStates(await GetEnvironment()));
+            return Flags.FromFeatureStateModel(_analytics, _config.DefaultFlagHandler, _engine.GetEnvironmentFeatureStates(await GetEnvironment()));
         }
 
         /// <summary>
@@ -75,7 +72,7 @@ namespace Flagsmith
         public async Task<IFlags> GetIdentityFlags(string identity, IEnumerable<ITrait> traits)
         {
             var id = GetIdentity(identity, traits);
-            return Flags.FromFeatureStateModel(_analyticsProcessor, _config.DefaultFlagHandler, _engine.GetIdentityFeatureStates(await GetEnvironment(), id), id.CompositeKey);
+            return Flags.FromFeatureStateModel(_analytics, _config.DefaultFlagHandler, _engine.GetIdentityFeatureStates(await GetEnvironment(), id), id.CompositeKey);
         }
 
         public Task<IReadOnlyCollection<ISegment>> GetIdentitySegments(string identifier)
@@ -103,34 +100,31 @@ namespace Flagsmith
         {
             try
             {
+                var client = _httpClientFactory.CreateClient(_config.ApiUrl + _config.EnvironmentKey);
+
                 var policy = HttpPolicies.GetRetryPolicyAwaitable(_config.Retries);
-                return await (await policy.ExecuteAsync(async () =>
+                using var response = await policy.ExecuteAsync(async () =>
                 {
-                    HttpRequestMessage request = new HttpRequestMessage(method, url)
-                    {
-                        Headers = {
-                            { "X-Environment-Key", _config.EnvironmentKey }
-                        }
-                    };
-                    _config.CustomHeaders?.ForEach(kvp => request.Headers.Add(kvp.Key, kvp.Value));
-                    if (body != null)
-                    {
+                    using var request = new HttpRequestMessage(method, url);
+                    if (!string.IsNullOrEmpty(body))
                         request.Content = new StringContent(body, Encoding.UTF8, "application/json");
-                    }
-                    var cancellationTokenSource = new CancellationTokenSource(TimeSpan.FromSeconds(_config.RequestTimeout ?? 100));
-                    HttpResponseMessage response = await _httpClient.SendAsync(request, cancellationTokenSource.Token);
+
+                    using var cancellationTokenSource = new CancellationTokenSource(TimeSpan.FromSeconds(_config.RequestTimeout ?? 100));
+                    var response = await client.SendAsync(request, cancellationTokenSource.Token);
                     return response.EnsureSuccessStatusCode();
-                })).Content.ReadAsStringAsync();
+                });
+
+                return await response.Content.ReadAsStringAsync();
             }
             catch (HttpRequestException e)
             {
                 _logger?.LogError(e, "\nHTTP Request Exception Caught!");
-                throw new FlagsmithAPIError("Unable to get valid response from Flagsmith API");
+                throw new FlagsmithAPIError("Unable to get valid response from Flagsmith API", e);
             }
             catch (TaskCanceledException e)
             {
                 _logger?.LogError(e, "\nHTTP Request Exception Caught!");
-                throw new FlagsmithAPIError("Request cancelled: Api server takes too long to respond");
+                throw new FlagsmithAPIError("Request cancelled: Api server takes too long to respond", e);
             }
         }
 
@@ -140,7 +134,7 @@ namespace Flagsmith
             {
                 policy.AbsoluteExpiration = DateTime.Now + TimeSpan.FromSeconds(_config.EnvironmentRefreshIntervalSeconds);
 
-                var json = await GetJSON(HttpMethod.Get, _config.ApiUrl + "environment-document/");
+                var json = await GetJSON(HttpMethod.Get, "environment-document/");
                 var env = JsonConvert.DeserializeObject<EnvironmentModel>(json);
                 _logger?.LogInformation("Local Environment updated: " + json);
 
