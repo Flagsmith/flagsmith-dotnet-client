@@ -12,6 +12,7 @@ var settings = builder.Configuration.GetSection("FlagsmithConfiguration").Get<Fl
 builder.Services.AddFlagsmithClient(x =>
 {
     x.EnvironmentKey = settings.EnvironmentKey;
+    x.EnableAnalytics = settings.EnableAnalytics;
     x.DefaultFlagHandler = featureName =>
     {
         if (featureName == "secret_button")
