@@ -1,30 +1,19 @@
-﻿using Example.Settings;
-using Flagsmith;
-using Flagsmith.Caching;
-using Flagsmith.Caching.Impl;
+﻿using Flagsmith;
 using Flagsmith.Interfaces;
 using Microsoft.AspNetCore.Mvc;
-using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
 namespace Example.Controllers
 {
     public class HomeController : Controller
     {
-        private static readonly ICache _cache = new MemoryCache();
         private readonly IFlagsmithClient _flagsmithClient;
 
-        public HomeController(IConfiguration configuration)
+        public HomeController(IFlagsmithClient flagsmithClient)
         {
-            var settings = configuration.GetSection("FlagsmithConfiguration").Get<FlagsmithSettings>();
-            _flagsmithClient = new FlagsmithClient(null, _cache, new FlagsmithConfiguration { EnvironmentKey = settings.EnvironmentKey, DefaultFlagHandler = defaultFlagHandler });
-            static IFlag defaultFlagHandler(string featureName)
-            {
-                if (featureName == "secret_button")
-                    return new Flag(new Feature("secret_button"), enabled: false, value: JsonConvert.SerializeObject(new { colour = "#b8b8b8" }).ToString());
-                else return new Flag() { };
-            }
+            _flagsmithClient = flagsmithClient;
         }
+
         [HttpPost]
         [HttpGet]
         public async Task<IActionResult> Index()
@@ -37,8 +26,8 @@ namespace Example.Controllers
                 var traitValue = request.Query["trait-value"].ToString();
                 var traits = new List<Trait>() { new Trait(traitKey, traitValue) };
                 var flags = await _flagsmithClient.GetIdentityFlags(Identifier, traits);
-                var showButton = await flags.IsFeatureEnabled("secret_button");
-                var buttonData = flags.GetFeatureValue("secret_button").Result;
+                var showButton = flags.IsFeatureEnabled("secret_button");
+                var buttonData = flags.GetFeatureValue("secret_button");
                 ViewBag.props = new
                 {
                     showButton = showButton,
@@ -50,10 +39,9 @@ namespace Example.Controllers
             }
             else
             {
-
                 var flag = await _flagsmithClient.GetEnvironmentFlags();
-                var showButton = await flag.IsFeatureEnabled("secret_button");
-                var buttonData = flag.GetFeatureValue("secret_button").Result;
+                var showButton = flag.IsFeatureEnabled("secret_button");
+                var buttonData = flag.GetFeatureValue("secret_button");
                 ViewBag.props = new
                 {
                     showButton = showButton,

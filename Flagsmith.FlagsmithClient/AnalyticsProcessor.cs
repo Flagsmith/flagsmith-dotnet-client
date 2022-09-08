@@ -1,4 +1,6 @@
 ﻿using Flagsmith.Extensions;
+using Flagsmith.Interfaces;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using System;
@@ -11,79 +13,104 @@ using System.Threading.Tasks;
 
 namespace Flagsmith
 {
-    public class AnalyticsProcessor
+    public class AnalyticsProcessor : BackgroundService, IAnalyticsCollector
     {
-        int _FlushIntervalSeconds = 10;
-        readonly string _AnalyticsEndPoint;
-        readonly string _EnvironmentKey;
-        readonly int _TimeOut;
-        DateTime _LastFlushed;
-        protected Dictionary<string, int> AnalyticsData;
-        HttpClient _HttpClient;
-        ILogger _Logger;
-        IReadOnlyDictionary<string, string> _CustomHeaders;
+        private Dictionary<string, int> _data = new Dictionary<string, int>();
+        private readonly object _sync = new object();
+        private readonly IFlagsmithClientConfig _config;
+        private readonly ILogger<AnalyticsProcessor> _logger;
+        private readonly IHttpClientFactory _httpClientFactory;
 
-        public AnalyticsProcessor(HttpClient httpClient, string environmentKey, string baseApiUrl, ILogger logger = null, IReadOnlyDictionary<string, string> customHeaders = null, int timeOut = 3, int flushIntervalSeconds = 10)
+        public AnalyticsProcessor(ILogger<AnalyticsProcessor> logger, IFlagsmithClientConfig config, IHttpClientFactory httpClientFactory)
         {
-            _EnvironmentKey = environmentKey;
-            _AnalyticsEndPoint = baseApiUrl + "analytics/flags/";
-            _TimeOut = timeOut;
-            _LastFlushed = DateTime.Now;
-            AnalyticsData = new Dictionary<string, int>();
-            _HttpClient = httpClient;
-            _Logger = logger;
-            _FlushIntervalSeconds = flushIntervalSeconds;
-            _CustomHeaders = customHeaders;
+            _logger = logger;
+            _config = config;
+            _httpClientFactory = httpClientFactory;
         }
 
         /// <summary>
         /// Post the features on the provided endpoint and clear the cached data.
         /// </summary>
         /// <returns></returns>
-        public async Task Flush()
+        private async Task Flush(CancellationToken stoppingToken)
         {
-            if (AnalyticsData?.Any() == false)
-                return;
+            Dictionary<string, int> temp;
+            lock (_sync)
+            {
+                if (!_data.Any())
+                {
+                    _logger.LogDebug("No statistics to be posted.");
+                    return;
+                }
+                temp = _data;
+                _data = new Dictionary<string, int>();
+            }
+
             try
             {
-                var analyticsJson = JsonConvert.SerializeObject(AnalyticsData);
-                var request = new HttpRequestMessage(HttpMethod.Post, _AnalyticsEndPoint)
+                var client = _httpClientFactory.CreateClient(_config.ApiUrl + _config.EnvironmentKey);
+                using (var request = new HttpRequestMessage(HttpMethod.Post, "analytics/flags/"))
                 {
-                    Headers =
+                    request.Content = new StringContent(JsonConvert.SerializeObject(_data), Encoding.UTF8, "application/json");
+                    using (var response = await client.SendAsync(request, stoppingToken))
+                        response.EnsureSuccessStatusCode();
+                }
+                _logger.LogDebug("Statistics posted successfully.");
+            }
+            catch
+            {
+                if (!stoppingToken.IsCancellationRequested)
                 {
-                    { "X-Environment-Key", _EnvironmentKey }
-                },
-                    Content = new StringContent(analyticsJson, Encoding.UTF8, "application/json")
-                };
-                _CustomHeaders?.ForEach(kvp => request.Headers.Add(kvp.Key, kvp.Value));
-                var tokenSource = new CancellationTokenSource();
-                tokenSource.CancelAfter(TimeSpan.FromSeconds(_TimeOut));
-                var response = await _HttpClient.SendAsync(request, tokenSource.Token);
-                response.EnsureSuccessStatusCode();
-                _Logger?.LogInformation("Analytics posted: " + analyticsJson);
-                AnalyticsData.Clear();
-                _Logger?.LogInformation("Analytics cleared: " + analyticsJson);
+                    lock (_sync)
+                    {
+                        var data = _data;
+                        _data = temp;
+                        data.ForEach(x => TrackFeatureInternal(x.Key, x.Value));
+                    }
+                }
+                throw;
             }
-            catch (HttpRequestException ex)
-            {
-                _Logger?.LogError("Analytics api error: " + ex.Message);
-            }
-            catch (TaskCanceledException)
-            {
-                _Logger?.LogWarning("Analytics request cancelled: Api request takes too long to respond");
-            }
-            _LastFlushed = DateTime.Now;
         }
-        /// <summary>
-        /// Send analytics to server about feature usage.
-        /// </summary>
-        /// <param name="featureId"></param>
-        /// <returns></returns>
-        public async Task TrackFeature(string featureName)
+
+        private void TrackFeatureInternal(string name, int increment)
         {
-            AnalyticsData[featureName] = AnalyticsData.TryGetValue(featureName, out int value) ? value + 1 : 1;
-            if ((DateTime.Now - _LastFlushed).Seconds > _FlushIntervalSeconds)
-                await Flush();
+            _data[name] = _data.TryGetValue(name, out var value) ? value + increment : increment;
+        }
+
+        /// <summary>
+        /// Track feature usuage
+        /// </summary>
+        /// <param name="name">feature name</param>
+        public void TrackFeature(string name)
+        {
+            lock (_sync)
+                TrackFeatureInternal(name, 1);
+        }
+
+        protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+        {
+            try
+            {
+                while (!stoppingToken.IsCancellationRequested)
+                {
+                    await Task.Delay(TimeSpan.FromSeconds(60), stoppingToken);
+                    try
+                    {
+                        await Flush(stoppingToken);
+                    }
+                    catch (Exception e)
+                    {
+                        _logger.LogError(e, "Failed to flush the statistics.");
+                    }
+                }
+            }
+            catch
+            {
+            }
+            finally
+            {
+                _logger.LogDebug("Exiting...");
+            }
         }
     }
 }
