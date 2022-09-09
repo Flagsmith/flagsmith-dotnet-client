@@ -8,10 +8,14 @@ namespace Flagsmith
         public int Id { get; set; }
         public string Name { get; set; }
 
+        public Segment()
+        {
+        }
+
         public Segment(int id, string name)
         {
-            this.Id = id;
-            this.Name = name;
+            Id = id;
+            Name = name;
         }
 
         public override string ToString()

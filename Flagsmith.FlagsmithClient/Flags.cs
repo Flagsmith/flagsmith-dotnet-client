@@ -3,7 +3,6 @@ using FlagsmithEngine.Feature.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks;
 
 namespace Flagsmith
 {
@@ -36,15 +35,16 @@ namespace Flagsmith
             return flag;
         }
 
-        public Task<IReadOnlyCollection<IFlag>> AllFlags() => Task.FromResult<IReadOnlyCollection<IFlag>>(_flags);
-
         private static Flag FromFeatureStateModel(FeatureStateModel featureStateModel, string identityId = null) =>
             new Flag(new Feature(featureStateModel.Feature.Name, featureStateModel.Feature.Id), featureStateModel.Enabled, featureStateModel.GetValue(identityId)?.ToString());
 
-        public static Flags FromFeatureStateModel(IAnalyticsCollector analytics, Func<string, IFlag> defaultFlagHandler, List<FeatureStateModel> featureStateModels, string identityId = null)
+        internal static Flags FromFeatureStateModel(IAnalyticsCollector analytics, Func<string, IFlag> defaultFlagHandler, List<FeatureStateModel> featureStateModels, string identityId = null)
         {
             var flags = featureStateModels.Select(f => FromFeatureStateModel(f, identityId)).ToList();
             return new Flags(flags, analytics, defaultFlagHandler);
         }
+
+        internal static Flags FromApiFlag(IAnalyticsCollector analytics, Func<string, IFlag> defaultFlagHandler, List<Flag> flags) =>
+            new Flags(flags, analytics, defaultFlagHandler);
     }
 }
