@@ -5,11 +5,16 @@ namespace Flagsmith
 {
     public class Feature : IFeature
     {
-        public Feature(string name, int id = default)
+        public Feature()
         {
-            this.Id = id;
-            this.Name = name;
         }
+
+        public Feature(string name, int id = 0)
+        {
+            Id = id;
+            Name = name;
+        }
+
         [JsonProperty("id")]
         public int Id { get; set; }
 

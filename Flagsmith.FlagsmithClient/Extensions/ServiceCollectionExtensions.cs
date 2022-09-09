@@ -1,7 +1,10 @@
 ﻿using Flagsmith.Caching;
 using Flagsmith.Caching.Impl;
 using Flagsmith.Interfaces;
+using FlagsmithEngine;
+using FlagsmithEngine.Interfaces;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
 using System;
 
@@ -15,7 +18,8 @@ namespace Flagsmith.Extensions
             config(configuration);
 
             services.AddSingleton<IFlagsmithClientConfig>(configuration);
-            services.AddSingleton<ICache, MemoryCache>();
+            services.TryAddSingleton<ICache, MemoryCache>();
+            services.TryAddSingleton<IRestClient, RestClient>();
 
             if (configuration.EnableAnalytics)
             {
@@ -34,7 +38,13 @@ namespace Flagsmith.Extensions
                 configuration.CustomHeaders?.ForEach(i => x.DefaultRequestHeaders.Add(i.Key, i.Value));
             });
 
-            services.AddSingleton<IFlagsmithClient, FlagsmithClient>();
+            if (configuration.EnableClientSideEvaluation)
+            {
+                services.AddSingleton<IEngine, Engine>();
+                services.AddSingleton<IFlagsmithClient, LocalEvalFlagsmithClient>();
+            }
+            else
+                services.AddSingleton<IFlagsmithClient, RemoteEvalFlagsmithClient>();
         }
     }
 }

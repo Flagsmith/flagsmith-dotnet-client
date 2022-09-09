@@ -7,7 +7,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -17,15 +16,13 @@ namespace Flagsmith
     {
         private Dictionary<string, int> _data = new Dictionary<string, int>();
         private readonly object _sync = new object();
-        private readonly IFlagsmithClientConfig _config;
         private readonly ILogger<AnalyticsProcessor> _logger;
-        private readonly IHttpClientFactory _httpClientFactory;
+        private readonly IRestClient _restClient;
 
-        public AnalyticsProcessor(ILogger<AnalyticsProcessor> logger, IFlagsmithClientConfig config, IHttpClientFactory httpClientFactory)
+        public AnalyticsProcessor(ILogger<AnalyticsProcessor> logger, IRestClient restClient)
         {
             _logger = logger;
-            _config = config;
-            _httpClientFactory = httpClientFactory;
+            _restClient = restClient;
         }
 
         /// <summary>
@@ -48,13 +45,7 @@ namespace Flagsmith
 
             try
             {
-                var client = _httpClientFactory.CreateClient(_config.ApiUrl + _config.EnvironmentKey);
-                using (var request = new HttpRequestMessage(HttpMethod.Post, "analytics/flags/"))
-                {
-                    request.Content = new StringContent(JsonConvert.SerializeObject(_data), Encoding.UTF8, "application/json");
-                    using (var response = await client.SendAsync(request, stoppingToken))
-                        response.EnsureSuccessStatusCode();
-                }
+                await _restClient.Send(HttpMethod.Post, "analytics/flags", JsonConvert.SerializeObject(temp), stoppingToken);
                 _logger.LogDebug("Statistics posted successfully.");
             }
             catch

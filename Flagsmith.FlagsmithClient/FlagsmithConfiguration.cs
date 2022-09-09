@@ -24,6 +24,11 @@ namespace Flagsmith
         public int EnvironmentRefreshIntervalSeconds { get; set; } = 60;
 
         /// <summary>
+        /// Enables local evaluation of flags.
+        /// </summary>
+        public bool EnableClientSideEvaluation { get; set; }
+
+        /// <summary>
         /// Callable which will be used in the case where flags cannot be retrieved from the API or a non existent feature is requested.
         /// </summary>
         public Func<string, IFlag> DefaultFlagHandler { get; set; }

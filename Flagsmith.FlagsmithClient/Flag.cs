@@ -11,9 +11,9 @@ namespace Flagsmith
 
         public Flag(Feature feature, bool enabled, string value)
         {
-            this.Enabled = enabled;
-            this.Value = value;
-            this.Feature = feature;
+            Enabled = enabled;
+            Value = value;
+            Feature = feature;
         }
 
         [JsonProperty("id")]
@@ -32,12 +32,12 @@ namespace Flagsmith
 
         public int getFeatureId()
         {
-            return this.Feature.Id;
+            return Feature?.Id ?? 0;
         }
 
         public string GetFeatureName()
         {
-            return this.Feature.Name;
+            return Feature?.Name;
         }
 
         public override string ToString()
