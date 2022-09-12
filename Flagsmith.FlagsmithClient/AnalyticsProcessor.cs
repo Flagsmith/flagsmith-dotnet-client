@@ -45,7 +45,7 @@ namespace Flagsmith
 
             try
             {
-                await _restClient.Send(HttpMethod.Post, "analytics/flags", JsonConvert.SerializeObject(temp), stoppingToken);
+                await _restClient.Send(HttpMethod.Post, "analytics/flags", JsonConvert.SerializeObject(temp), stoppingToken).ConfigureAwait(false);
                 _logger.LogDebug("Statistics posted successfully.");
             }
             catch
@@ -84,10 +84,10 @@ namespace Flagsmith
             {
                 while (!stoppingToken.IsCancellationRequested)
                 {
-                    await Task.Delay(TimeSpan.FromSeconds(60), stoppingToken);
+                    await Task.Delay(TimeSpan.FromSeconds(60), stoppingToken).ConfigureAwait(false);
                     try
                     {
-                        await Flush(stoppingToken);
+                        await Flush(stoppingToken).ConfigureAwait(false);
                     }
                     catch (Exception e)
                     {

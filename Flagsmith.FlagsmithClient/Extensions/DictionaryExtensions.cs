@@ -21,7 +21,7 @@ namespace Flagsmith.Extensions
         public static async Task ForEachAsync<TValue>(this IEnumerable<TValue> values, Func<TValue, Task> action)
         {
             foreach (var kvp in values)
-                await action(kvp);
+                await action(kvp).ConfigureAwait(false);
         }
     }
 }

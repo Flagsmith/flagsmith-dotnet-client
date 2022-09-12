@@ -53,7 +53,7 @@ namespace Flagsmith
         /// </summary>
         public async Task<IFlags> GetEnvironmentFlags()
         {
-            return Flags.FromFeatureStateModel(_analytics, _config.DefaultFlagHandler, _engine.GetEnvironmentFeatureStates(await GetEnvironment()));
+            return Flags.FromFeatureStateModel(_analytics, _config.DefaultFlagHandler, _engine.GetEnvironmentFeatureStates(await GetEnvironment().ConfigureAwait(false)));
         }
 
         /// <summary>
@@ -61,7 +61,7 @@ namespace Flagsmith
         /// </summary>
         public async Task<IFlags> GetIdentityFlags(string identity)
         {
-            return await GetIdentityFlags(identity, null);
+            return await GetIdentityFlags(identity, null).ConfigureAwait(false);
         }
 
         /// <summary>
@@ -70,7 +70,7 @@ namespace Flagsmith
         public async Task<IFlags> GetIdentityFlags(string identity, IEnumerable<ITrait> traits)
         {
             var id = GetIdentity(identity, traits);
-            return Flags.FromFeatureStateModel(_analytics, _config.DefaultFlagHandler, _engine.GetIdentityFeatureStates(await GetEnvironment(), id), id.CompositeKey);
+            return Flags.FromFeatureStateModel(_analytics, _config.DefaultFlagHandler, _engine.GetIdentityFeatureStates(await GetEnvironment().ConfigureAwait(false), id), id.CompositeKey);
         }
 
         public Task<IReadOnlyCollection<ISegment>> GetIdentitySegments(string identifier)
@@ -90,7 +90,7 @@ namespace Flagsmith
 
         public async Task<IReadOnlyCollection<ISegment>> GetIdentitySegments(string identifier, IEnumerable<ITrait> traits)
         {
-            var segmentModels = Evaluator.GetIdentitySegments(await GetEnvironment(), GetIdentity(identifier, traits), new List<TraitModel>());
+            var segmentModels = Evaluator.GetIdentitySegments(await GetEnvironment().ConfigureAwait(false), GetIdentity(identifier, traits), new List<TraitModel>());
             return segmentModels?.Select(t => new Segment(id: t.Id, name: t.Name)).ToList();
         }
 
@@ -100,12 +100,12 @@ namespace Flagsmith
             {
                 policy.AbsoluteExpiration = DateTime.Now + TimeSpan.FromSeconds(_config.EnvironmentRefreshIntervalSeconds);
 
-                var json = await _restClient.Send(HttpMethod.Get, "environment-document", null, CancellationToken.None);
+                var json = await _restClient.Send(HttpMethod.Get, "environment-document", null, CancellationToken.None).ConfigureAwait(false);
                 var env = JsonConvert.DeserializeObject<EnvironmentModel>(json);
                 _logger?.LogInformation("Local Environment updated: " + json);
 
                 return env;
-            });
+            }).ConfigureAwait(false);
         }
     }
 }

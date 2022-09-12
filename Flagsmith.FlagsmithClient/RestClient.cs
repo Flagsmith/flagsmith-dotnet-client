@@ -33,11 +33,11 @@ namespace Flagsmith
                     if (!string.IsNullOrEmpty(body))
                         request.Content = new StringContent(body, Encoding.UTF8, "application/json");
 
-                    var response = await client.SendAsync(request, token);
+                    var response = await client.SendAsync(request, token).ConfigureAwait(false);
                     return response.EnsureSuccessStatusCode();
-                });
+                }).ConfigureAwait(false);
 
-                return await response.Content.ReadAsStringAsync();
+                return await response.Content.ReadAsStringAsync().ConfigureAwait(false);
             }
             catch (HttpRequestException e)
             {

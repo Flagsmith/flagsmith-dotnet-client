@@ -38,7 +38,7 @@ namespace Flagsmith.Caching.Impl
             {
                 var value = Interlocked.Exchange(ref _value, null);
                 if (value is IAsyncDisposable disposable)
-                    await disposable.DisposeAsync();
+                    await disposable.DisposeAsync().ConfigureAwait(false);
 
                 GC.SuppressFinalize(this);
             }
@@ -112,25 +112,25 @@ namespace Flagsmith.Caching.Impl
 
         public async Task<T> GetObjectAsync<T>(string key, Func<ICacheItemPolicy, Task<T>> createObject)
         {
-            var result = await GetHolderAsync(key);
+            var result = await GetHolderAsync(key).ConfigureAwait(false);
             if (result.Item2 == null)
                 return (T)result.Item1.Value;
 
             try
             {
-                using (await result.Item2.Value.WaitAsync())
+                using (await result.Item2.Value.WaitAsync().ConfigureAwait(false))
                 {
-                    var concurrent = await CheckConcurrentAsync(key, result.Item1);
+                    var concurrent = await CheckConcurrentAsync(key, result.Item1).ConfigureAwait(false);
                     if (concurrent != null)
                         return (T)concurrent.Value;
 
-                    result.Item1.Value = await createObject(result.Item1);
+                    result.Item1.Value = await createObject(result.Item1).ConfigureAwait(false);
                     return FinishHolder<T>(key, result.Item1);
                 }
             }
             catch
             {
-                await result.Item1.DisposeAsync();
+                await result.Item1.DisposeAsync().ConfigureAwait(false);
                 throw;
             }
             finally
@@ -180,7 +180,7 @@ namespace Flagsmith.Caching.Impl
             }
 
             if (holder != null)
-                await holder.DisposeAsync();
+                await holder.DisposeAsync().ConfigureAwait(false);
 
             return default;
         }
@@ -208,7 +208,7 @@ namespace Flagsmith.Caching.Impl
                 _objects.Clear();
             }
 
-            await holders.ForEachAsync(async (x) => await x.DisposeAsync());
+            await holders.ForEachAsync(async (x) => await x.DisposeAsync().ConfigureAwait(false)).ConfigureAwait(false);
 
             GC.Collect();
         }
@@ -248,7 +248,7 @@ namespace Flagsmith.Caching.Impl
         public async Task RemoveAsync(string key)
         {
             if (FindHolder(ref key, out var holder))
-                await holder.DisposeAsync();
+                await holder.DisposeAsync().ConfigureAwait(false);
         }
 
         public void RemoveAll(Func<string, bool> func)
@@ -273,7 +273,7 @@ namespace Flagsmith.Caching.Impl
         {
             if (func == null)
             {
-                await ClearAsync();
+                await ClearAsync().ConfigureAwait(false);
                 return;
             }
 
@@ -284,7 +284,7 @@ namespace Flagsmith.Caching.Impl
                 toRemove.ForEach(x => _objects.Remove(x.Key));
             }
 
-            await toRemove.ForEachAsync(async x => await x.Value.DisposeAsync());
+            await toRemove.ForEachAsync(async x => await x.Value.DisposeAsync().ConfigureAwait(false)).ConfigureAwait(false);
         }
 
         public IReadOnlyCollection<ICacheItem> GetItems()
@@ -325,7 +325,7 @@ namespace Flagsmith.Caching.Impl
         {
             var expired = GetHolderAndExpired(key, out var holder, out var sync);
             if (expired != null && expired.Count > 0)
-                await expired.ForEachAsync(async x => await x.Value.DisposeAsync());
+                await expired.ForEachAsync(async x => await x.Value.DisposeAsync().ConfigureAwait(false)).ConfigureAwait(false);
             return (holder, sync);
         }
 
@@ -346,7 +346,7 @@ namespace Flagsmith.Caching.Impl
                     return null;
             }
 
-            await holder.DisposeAsync();
+            await holder.DisposeAsync().ConfigureAwait(false);
             concurrent.Accessed();
             return concurrent;
         }
@@ -396,7 +396,7 @@ namespace Flagsmith.Caching.Impl
 
         public async ValueTask DisposeAsync()
         {
-            await ClearAsync();
+            await ClearAsync().ConfigureAwait(false);
             GC.SuppressFinalize(this);
         }
 
