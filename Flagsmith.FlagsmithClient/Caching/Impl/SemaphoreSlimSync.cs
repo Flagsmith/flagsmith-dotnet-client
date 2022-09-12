@@ -22,7 +22,7 @@ namespace Flagsmith.Caching.Impl
 
         public async Task<IDisposable> WaitAsync(Action releaseAction = null)
         {
-            await _semaphore.WaitAsync();
+            await _semaphore.WaitAsync().ConfigureAwait(false);
             return new SemaphoreSlimSection(_semaphore, releaseAction);
         }
 

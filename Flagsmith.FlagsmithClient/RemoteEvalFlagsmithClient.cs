@@ -48,7 +48,7 @@ namespace Flagsmith
         {
             try
             {
-                var json = await _restClient.Send(HttpMethod.Get, "flags", null, CancellationToken.None);
+                var json = await _restClient.Send(HttpMethod.Get, "flags", null, CancellationToken.None).ConfigureAwait(false);
                 var flags = JsonConvert.DeserializeObject<List<Flag>>(json);
                 return Flags.FromApiFlag(_analytics, _config.DefaultFlagHandler, flags);
             }
@@ -68,7 +68,7 @@ namespace Flagsmith
         /// </summary>
         public async Task<IFlags> GetIdentityFlags(string identity)
         {
-            return await GetIdentityFlagsFromApi(identity, null);
+            return await GetIdentityFlagsFromApi(identity, null).ConfigureAwait(false);
         }
 
         /// <summary>
@@ -76,7 +76,7 @@ namespace Flagsmith
         /// </summary>
         public async Task<IFlags> GetIdentityFlags(string identity, IEnumerable<ITrait> traits)
         {
-            return await GetIdentityFlagsFromApi(identity, traits);
+            return await GetIdentityFlagsFromApi(identity, traits).ConfigureAwait(false);
         }
 
         public Task<IReadOnlyCollection<ISegment>> GetIdentitySegments(string identifier)
@@ -94,7 +94,7 @@ namespace Flagsmith
             try
             {
                 var jsonBody = JsonConvert.SerializeObject(new { identifier = identity, traits = traits ?? new List<Trait>() });
-                var jsonResponse = await _restClient.Send(HttpMethod.Post, "identities", jsonBody, CancellationToken.None);
+                var jsonResponse = await _restClient.Send(HttpMethod.Post, "identities", jsonBody, CancellationToken.None).ConfigureAwait(false);
                 var flags = JsonConvert.DeserializeObject<Identity>(jsonResponse)?.flags;
                 return Flags.FromApiFlag(_analytics, _config.DefaultFlagHandler, flags);
             }
