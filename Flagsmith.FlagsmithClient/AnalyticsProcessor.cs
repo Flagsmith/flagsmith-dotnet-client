@@ -48,8 +48,9 @@ namespace Flagsmith
                 await _restClient.Send(HttpMethod.Post, "analytics/flags", JsonConvert.SerializeObject(temp), stoppingToken).ConfigureAwait(false);
                 _logger.LogDebug("Statistics posted successfully.");
             }
-            catch
+            catch (Exception e)
             {
+                _logger.LogError(e, "Failed to flush the statistics.");
                 if (!stoppingToken.IsCancellationRequested)
                 {
                     lock (_sync)
@@ -59,7 +60,6 @@ namespace Flagsmith
                         data.ForEach(x => TrackFeatureInternal(x.Key, x.Value));
                     }
                 }
-                throw;
             }
         }
 
@@ -85,14 +85,7 @@ namespace Flagsmith
                 while (!stoppingToken.IsCancellationRequested)
                 {
                     await Task.Delay(TimeSpan.FromSeconds(60), stoppingToken).ConfigureAwait(false);
-                    try
-                    {
-                        await Flush(stoppingToken).ConfigureAwait(false);
-                    }
-                    catch (Exception e)
-                    {
-                        _logger.LogError(e, "Failed to flush the statistics.");
-                    }
+                    await Flush(stoppingToken).ConfigureAwait(false);
                 }
             }
             catch

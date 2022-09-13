@@ -1,6 +1,7 @@
 ﻿using Flagsmith;
 using Flagsmith.FlagsmithClientTest;
 using Flagsmith.Interfaces;
+using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 using System;
 using System.Collections.Generic;
@@ -17,11 +18,11 @@ namespace ClientTest
         {
             var config = FlagsmithConfiguration.From(Fixtures.ApiKey, defaultFlagHandler: defaultFlagHandler);
             var httpFactory = new HttpClientFactoryMocker(httpClient);
-            var restClient = new RestClient(FakeLogger<RestClient>.Instance, config, httpFactory);
+            var restClient = new RestClient(NullLogger<RestClient>.Instance, config, httpFactory);
 
             return new RemoteEvalFlagsmithClient(
-                FakeLogger<RemoteEvalFlagsmithClient>.Instance,
-                new FakeAnalyticsProcessor(FakeLogger<FakeAnalyticsProcessor>.Instance),
+                NullLogger<RemoteEvalFlagsmithClient>.Instance,
+                new NullAnalyticsProcessor(NullLogger<NullAnalyticsProcessor>.Instance),
                 config,
                 restClient);
         }

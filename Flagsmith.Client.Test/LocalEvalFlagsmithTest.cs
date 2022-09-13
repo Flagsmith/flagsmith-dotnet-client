@@ -1,13 +1,14 @@
 ﻿using Flagsmith;
-using Flagsmith.Caching.Impl;
 using Flagsmith.FlagsmithClientTest;
 using Flagsmith.Interfaces;
 using FlagsmithEngine;
+using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
+using System.Threading;
 using System.Threading.Tasks;
 using Xunit;
 
@@ -15,43 +16,45 @@ namespace ClientTest
 {
     public class LocalEvalFlagsmithTest
     {
-        private static IFlagsmithClient CreateLocalEvalClient(HttpClient httpClient, Func<string, IFlag> defaultFlagHandler = null)
+        private static async Task<IFlagsmithClient> CreateLocalEvalClient(HttpClient httpClient, Func<string, IFlag> defaultFlagHandler = null)
         {
             var config = FlagsmithConfiguration.From(Fixtures.ApiKey, apiUrl: Fixtures.ApiUrl, defaultFlagHandler: defaultFlagHandler);
             var httpFactory = new HttpClientFactoryMocker(httpClient);
-            var restClient = new RestClient(FakeLogger<RestClient>.Instance, config, httpFactory);
+            var restClient = new RestClient(NullLogger<RestClient>.Instance, config, httpFactory);
+
+            var refreshService = new EnvironmentRefreshService(NullLogger<EnvironmentRefreshService>.Instance, config, restClient);
+            await refreshService.UpdateEnvironment(CancellationToken.None);
 
             return new LocalEvalFlagsmithClient(
-                FakeLogger<LocalEvalFlagsmithClient>.Instance,
-                new MemoryCache(),
-                new FakeAnalyticsProcessor(FakeLogger<FakeAnalyticsProcessor>.Instance),
+                NullLogger<LocalEvalFlagsmithClient>.Instance,
+                new NullAnalyticsProcessor(NullLogger<NullAnalyticsProcessor>.Instance),
                 config,
-                restClient,
+                refreshService,
                 new Engine());
         }
 
         [Fact]
-        public async void TestFlagsmithStartsPollingManagerOnInitIfEnabled()
+        public async Task TestFlagsmithStartsPollingManagerOnInitIfEnabled()
         {
             var mockHttpClient = HttpClientMocker.MockHttpResponse(new HttpResponseMessage
             {
                 StatusCode = System.Net.HttpStatusCode.OK,
                 Content = new StringContent(Fixtures.JsonObject.ToString())
             });
-            var flagsmithClientTest = CreateLocalEvalClient(mockHttpClient.Object);
+            var flagsmithClientTest = await CreateLocalEvalClient(mockHttpClient.Object);
             await flagsmithClientTest.GetEnvironmentFlags();
             mockHttpClient.verifyHttpRequest(HttpMethod.Get, "environment-document", Times.Once);
         }
 
         [Fact]
-        public async void TestUpdateEnvironmentSetsEnvironment()
+        public async Task TestUpdateEnvironmentSetsEnvironment()
         {
             var mockHttpClient = HttpClientMocker.MockHttpResponse(new HttpResponseMessage
             {
                 StatusCode = System.Net.HttpStatusCode.OK,
                 Content = new StringContent(Fixtures.JsonObject.ToString())
             });
-            var flagsmithClientTest = CreateLocalEvalClient(mockHttpClient.Object);
+            var flagsmithClientTest = await CreateLocalEvalClient(mockHttpClient.Object);
             await flagsmithClientTest.GetEnvironmentFlags();
             mockHttpClient.verifyHttpRequest(HttpMethod.Get, "environment-document", Times.Once);
             await flagsmithClientTest.GetEnvironmentFlags();
@@ -67,7 +70,7 @@ namespace ClientTest
                 StatusCode = System.Net.HttpStatusCode.OK,
                 Content = new StringContent(Fixtures.JsonObject.ToString())
             });
-            var flagsmithClientTest = CreateLocalEvalClient(mockHttpClient.Object);
+            var flagsmithClientTest = await CreateLocalEvalClient(mockHttpClient.Object);
             var flags = (await flagsmithClientTest.GetEnvironmentFlags()).Flags?.ToList();
             mockHttpClient.verifyHttpRequest(HttpMethod.Get, "environment-document", Times.Once);
             var fs = Fixtures.Environment.FeatureStates[0];
@@ -86,7 +89,7 @@ namespace ClientTest
                 StatusCode = System.Net.HttpStatusCode.OK,
                 Content = new StringContent(Fixtures.JsonObject.ToString())
             });
-            var flagsmithClientTest = CreateLocalEvalClient(mockHttpClient.Object);
+            var flagsmithClientTest = await CreateLocalEvalClient(mockHttpClient.Object);
             await flagsmithClientTest.GetEnvironmentFlags();
             mockHttpClient.verifyHttpRequest(HttpMethod.Get, "environment-document", Times.Once);
             _ = await flagsmithClientTest.GetIdentityFlags("identifier", null);
@@ -102,7 +105,7 @@ namespace ClientTest
                 StatusCode = System.Net.HttpStatusCode.OK,
                 Content = new StringContent(Fixtures.JsonObject.ToString())
             });
-            var flagsmithClient = CreateLocalEvalClient(mockHttpClient.Object);
+            var flagsmithClient = await CreateLocalEvalClient(mockHttpClient.Object);
 
             // When
             var segments = await flagsmithClient.GetIdentitySegments("identifier");
@@ -120,7 +123,7 @@ namespace ClientTest
                 StatusCode = System.Net.HttpStatusCode.OK,
                 Content = new StringContent(Fixtures.JsonObject.ToString())
             });
-            var flagsmithClient = CreateLocalEvalClient(mockHttpClient.Object);
+            var flagsmithClient = await CreateLocalEvalClient(mockHttpClient.Object);
 
             string identifier = "identifier";
             List<Trait> traits = new List<Trait>() { new Trait(traitKey: "foo", traitValue: "bar") };
