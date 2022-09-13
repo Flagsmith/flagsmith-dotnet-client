@@ -4,6 +4,6 @@ namespace Flagsmith.Interfaces
 {
     public interface IEnvironmentAccessor
     {
-        EnvironmentModel GetEnvironmentModel();
+        EnvironmentModel GetEnvironment();
     }
 }
