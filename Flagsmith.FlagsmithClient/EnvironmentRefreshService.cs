@@ -24,7 +24,7 @@ namespace Flagsmith
             _restClient = restClient;
         }
 
-        public EnvironmentModel GetEnvironmentModel()
+        public EnvironmentModel GetEnvironment()
         {
             if (_environment == null)
                 throw new FlagsmithClientError("Failed to get local environment.");
@@ -48,7 +48,7 @@ namespace Flagsmith
         public override async Task StartAsync(CancellationToken cancellationToken)
         {
             await UpdateEnvironment(cancellationToken).ConfigureAwait(false);
-            await base.StartAsync(cancellationToken);
+            await base.StartAsync(cancellationToken).ConfigureAwait(false);
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)

@@ -46,7 +46,7 @@ namespace Flagsmith
         /// </summary>
         public Task<IFlags> GetEnvironmentFlags()
         {
-            return Task.FromResult<IFlags>(Flags.FromFeatureStateModel(_analytics, _config.DefaultFlagHandler, _engine.GetEnvironmentFeatureStates(_environmentAccessor.GetEnvironmentModel())));
+            return Task.FromResult<IFlags>(Flags.FromFeatureStateModel(_analytics, _config.DefaultFlagHandler, _engine.GetEnvironmentFeatureStates(_environmentAccessor.GetEnvironment())));
         }
 
         /// <summary>
@@ -63,7 +63,7 @@ namespace Flagsmith
         public Task<IFlags> GetIdentityFlags(string identity, IEnumerable<ITrait> traits)
         {
             var id = GetIdentity(identity, traits);
-            return Task.FromResult<IFlags>(Flags.FromFeatureStateModel(_analytics, _config.DefaultFlagHandler, _engine.GetIdentityFeatureStates(_environmentAccessor.GetEnvironmentModel(), id), id.CompositeKey));
+            return Task.FromResult<IFlags>(Flags.FromFeatureStateModel(_analytics, _config.DefaultFlagHandler, _engine.GetIdentityFeatureStates(_environmentAccessor.GetEnvironment(), id), id.CompositeKey));
         }
 
         public Task<IReadOnlyCollection<ISegment>> GetIdentitySegments(string identifier)
@@ -83,7 +83,7 @@ namespace Flagsmith
 
         public Task<IReadOnlyCollection<ISegment>> GetIdentitySegments(string identifier, IEnumerable<ITrait> traits)
         {
-            var segmentModels = Evaluator.GetIdentitySegments(_environmentAccessor.GetEnvironmentModel(), GetIdentity(identifier, traits), new List<TraitModel>());
+            var segmentModels = Evaluator.GetIdentitySegments(_environmentAccessor.GetEnvironment(), GetIdentity(identifier, traits), new List<TraitModel>());
             return Task.FromResult<IReadOnlyCollection<ISegment>>(segmentModels?.Select(t => new Segment(id: t.Id, name: t.Name)).ToList());
         }
     }
