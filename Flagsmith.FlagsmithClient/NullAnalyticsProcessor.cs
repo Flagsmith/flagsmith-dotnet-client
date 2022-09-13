@@ -3,11 +3,11 @@ using Microsoft.Extensions.Logging;
 
 namespace Flagsmith
 {
-    public class FakeAnalyticsProcessor : IAnalyticsCollector
+    public class NullAnalyticsProcessor : IAnalyticsCollector
     {
-        private readonly ILogger<FakeAnalyticsProcessor> _logger;
+        private readonly ILogger<NullAnalyticsProcessor> _logger;
 
-        public FakeAnalyticsProcessor(ILogger<FakeAnalyticsProcessor> logger)
+        public NullAnalyticsProcessor(ILogger<NullAnalyticsProcessor> logger)
         {
             _logger = logger;
         }
