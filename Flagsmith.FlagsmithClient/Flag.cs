@@ -17,16 +17,16 @@ namespace Flagsmith
         }
 
         [JsonProperty("id")]
-        public int Id { get; }
+        public int Id { get; set; }
 
         [JsonProperty("feature")]
-        public Feature Feature { get; }
+        public Feature Feature { get; set; }
 
         [JsonProperty("enabled")]
-        public bool Enabled { get; }
+        public bool Enabled { get; set; }
 
         [JsonProperty("feature_state_value")]
-        public string Value { get; }
+        public string Value { get; set; }
 
         IFeature IFlag.Feature => Feature;
 

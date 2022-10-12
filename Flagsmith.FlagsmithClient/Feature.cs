@@ -11,8 +11,9 @@ namespace Flagsmith
             this.Name = name;
         }
         [JsonProperty("id")]
-        public int Id { get; private set; }
+        public int Id { get; set; }
+
         [JsonProperty("name")]
-        public string Name { get; private set; }
+        public string Name { get; set; }
     }
 }

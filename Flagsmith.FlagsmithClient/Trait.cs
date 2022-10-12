@@ -7,10 +7,10 @@ namespace Flagsmith
     public class Trait : ITrait
     {
         [JsonProperty("trait_key")]
-        public string Key { get; }
+        public string Key { get; set; }
 
         [JsonProperty("trait_value")]
-        public dynamic Value { get; }
+        public dynamic Value { get; set; }
 
         public Trait()
         {

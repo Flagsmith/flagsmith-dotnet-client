@@ -8,13 +8,6 @@ namespace Flagsmith
     {
         public const string DefaultApiUrl = "https://edge.api.flagsmith.com/api/v1/";
 
-        public FlagsmithConfiguration()
-        {
-            ApiUrl = DefaultApiUrl;
-            EnvironmentKey = string.Empty;
-            EnvironmentRefreshIntervalSeconds = 60;
-        }
-
         /// <summary>
         /// Override the URL of the Flagsmith API to communicate with.
         /// </summary>
@@ -62,7 +55,14 @@ namespace Flagsmith
 
         IReadOnlyDictionary<string, string> IFlagsmithClientConfig.CustomHeaders => CustomHeaders;
 
-        public static FlagsmithConfiguration From(
+        public FlagsmithConfiguration()
+        {
+            ApiUrl = DefaultApiUrl;
+            EnvironmentKey = string.Empty;
+            EnvironmentRefreshIntervalSeconds = 60;
+        }
+
+        public FlagsmithConfiguration(
             string environmentKey,
             string apiUrl = DefaultApiUrl,
             Func<string, IFlag> defaultFlagHandler = null,
@@ -72,19 +72,17 @@ namespace Flagsmith
             Dictionary<string, string> customHeaders = null,
             int? retries = null,
             double? requestTimeout = null)
+            : this()
         {
-            return new FlagsmithConfiguration
-            {
-                EnvironmentKey = environmentKey,
-                ApiUrl = apiUrl,
-                DefaultFlagHandler = defaultFlagHandler,
-                EnableAnalytics = enableAnalytics,
-                EnableClientSideEvaluation = enableClientSideEvaluation,
-                EnvironmentRefreshIntervalSeconds = environmentRefreshIntervalSeconds,
-                CustomHeaders = customHeaders,
-                Retries = retries,
-                RequestTimeout = requestTimeout,
-            };
+            EnvironmentKey = environmentKey;
+            ApiUrl = apiUrl;
+            DefaultFlagHandler = defaultFlagHandler;
+            EnableAnalytics = enableAnalytics;
+            EnableClientSideEvaluation = enableClientSideEvaluation;
+            EnvironmentRefreshIntervalSeconds = environmentRefreshIntervalSeconds;
+            CustomHeaders = customHeaders;
+            Retries = retries;
+            RequestTimeout = requestTimeout;
         }
     }
 }
