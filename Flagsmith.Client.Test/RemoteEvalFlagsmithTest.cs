@@ -16,7 +16,7 @@ namespace ClientTest
     {
         private static IFlagsmithClient CreateRemoteEvalClient(HttpClient httpClient, Func<string, IFlag> defaultFlagHandler = null)
         {
-            var config = FlagsmithConfiguration.From(Fixtures.ApiKey, defaultFlagHandler: defaultFlagHandler);
+            var config = new FlagsmithConfiguration(Fixtures.ApiKey, defaultFlagHandler: defaultFlagHandler);
             var httpFactory = new HttpClientFactoryMocker(httpClient);
             var restClient = new RestClient(NullLogger<RestClient>.Instance, config, httpFactory);
 

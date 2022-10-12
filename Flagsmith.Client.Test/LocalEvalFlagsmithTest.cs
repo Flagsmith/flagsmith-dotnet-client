@@ -18,7 +18,7 @@ namespace ClientTest
     {
         private static async Task<IFlagsmithClient> CreateLocalEvalClient(HttpClient httpClient, Func<string, IFlag> defaultFlagHandler = null)
         {
-            var config = FlagsmithConfiguration.From(Fixtures.ApiKey, apiUrl: Fixtures.ApiUrl, defaultFlagHandler: defaultFlagHandler);
+            var config = new FlagsmithConfiguration(Fixtures.ApiKey, apiUrl: Fixtures.ApiUrl, defaultFlagHandler: defaultFlagHandler);
             var httpFactory = new HttpClientFactoryMocker(httpClient);
             var restClient = new RestClient(NullLogger<RestClient>.Instance, config, httpFactory);
 
