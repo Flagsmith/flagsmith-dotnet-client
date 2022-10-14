@@ -142,6 +142,10 @@ namespace EngineTest.Unit.Segments
                                     new TraitModel { TraitKey = Fixtures.TraitKey3, TraitValue = Fixtures.TraitValue3 }
                                     }, true
                 },
+                new object[] { Fixtures.SegmentToCheckIfTrait1IsSet, new List<TraitModel>(), false },
+                new object[] { Fixtures.SegmentToCheckIfTrait1IsSet, new List<TraitModel>() { new TraitModel {TraitKey = Fixtures.TraitKey1, TraitValue = "foo"}}, true },
+                new object[] { Fixtures.SegmentToCheckIfTrait1IsNotSet, new List<TraitModel>() { new TraitModel {TraitKey = Fixtures.TraitKey1, TraitValue = "foo"}}, false },
+                new object[] { Fixtures.SegmentToCheckIfTrait1IsNotSet, new List<TraitModel>(), true },
             };
         [Theory]
         [InlineData(10, 1, true)]
@@ -164,6 +168,5 @@ namespace EngineTest.Unit.Segments
             var result = Evaluator.EvaluateIdentityInSegment(Unit.Fixtures.Identity(), segment, null);
             Assert.Equal(expectedResult, result);
         }
-
     }
 }
