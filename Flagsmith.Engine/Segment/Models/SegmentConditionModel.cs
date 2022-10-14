@@ -14,8 +14,10 @@ namespace FlagsmithEngine.Segment.Models
 
         public bool EvaluateNotContains(string traitValue) => !traitValue.Contains(Value);
         public bool EvaluateRegex(string traitValue) => Regex.Match(traitValue, Value).Success;
-        public bool EvaluateModulo(object traitValue) {
-            try {
+        public bool EvaluateModulo(object traitValue)
+        {
+            try
+            {
                 string[] parts = this.Value.Split('|');
                 if (parts.Length != 2) { return false; }
 
@@ -23,7 +25,9 @@ namespace FlagsmithEngine.Segment.Models
                 double remainder = Convert.ToDouble(parts[1]);
 
                 return Convert.ToDouble(traitValue) % divisor == remainder;
-            } catch (FormatException) {
+            }
+            catch (FormatException)
+            {
                 return false;
             }
         }
