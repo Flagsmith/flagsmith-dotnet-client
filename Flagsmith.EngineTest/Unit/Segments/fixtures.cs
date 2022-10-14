@@ -140,8 +140,8 @@ namespace EngineTest.Unit.Segments
 
         public static SegmentModel SegmentToCheckIfTrait1IsNotSet => new SegmentModel()
         {
-            Id = 7,
-            Name = "segment_to_check_if_foo_is_set",
+            Id = 8,
+            Name = "segment_to_check_if_foo_is_not_set",
             Rules = new List<SegmentRuleModel> {
                 new SegmentRuleModel {
                     Type = Constants.AllRule,
