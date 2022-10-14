@@ -1,36 +1,34 @@
+using Flagsmith.Interfaces;
 using Newtonsoft.Json;
 
 namespace Flagsmith
 {
     [JsonObject(MemberSerialization.OptIn)]
-    public class Trait
+    public class Trait : ITrait
     {
-        public Trait() { }
-        public Trait(string traitKey, dynamic traitValue)
-        {
-            this.traitKey = traitKey;
-            this.traitValue = traitValue;
-        }
-
         [JsonProperty("trait_key")]
-        private string traitKey = null;
+        public string Key { get; set; }
 
         [JsonProperty("trait_value")]
-        private dynamic traitValue = null;
+        public dynamic Value { get; set; }
+
+        public Trait()
+        {
+        }
+
+        public Trait(string traitKey, dynamic traitValue)
+        {
+            Key = traitKey;
+            Value = traitValue;
+        }
 
         public override string ToString()
         {
             return JsonConvert.SerializeObject(this);
         }
 
-        public string GetTraitKey()
-        {
-            return this.traitKey;
-        }
+        public string GetTraitKey() => Key;
 
-        public dynamic GetTraitValue()
-        {
-            return this.traitValue;
-        }
+        public dynamic GetTraitValue() => Value;
     }
 }

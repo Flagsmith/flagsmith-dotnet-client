@@ -18,6 +18,7 @@
     <RepositoryUrl>https://github.com/Flagsmith/flagsmith-dotnet-client</RepositoryUrl>
     <NeutralLanguage>en-GB</NeutralLanguage>
     <PackageLicenseFile>LICENSE</PackageLicenseFile>
+    <RootNamespace>Flagsmith</RootNamespace>
   </PropertyGroup>
 
   <ItemGroup>

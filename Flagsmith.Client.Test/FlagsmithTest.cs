@@ -1,11 +1,9 @@
 ﻿using Moq;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
-using System.Threading;
 using Xunit;
-using FlagsmithEngine.Environment.Models;
-using FlagsmithEngine.Segment.Models;
 
 namespace Flagsmith.FlagsmithClientTest
 {
@@ -19,7 +17,7 @@ namespace Flagsmith.FlagsmithClientTest
                 StatusCode = System.Net.HttpStatusCode.OK,
                 Content = new StringContent(Fixtures.JsonObject.ToString())
             });
-            var flagsmithClientTest = new FlagsmithClient(Fixtures.ApiKey, httpClient: mockHttpClient.Object, enableClientSideEvaluation: true);
+            var flagsmithClientTest = new FlagsmithClient(null, new FlagsmithConfiguration(Fixtures.ApiKey, enableClientSideEvaluation: true), mockHttpClient.Object);
             mockHttpClient.verifyHttpRequest(HttpMethod.Get, "/api/v1/environment-document/", Times.Once);
         }
         [Fact]
@@ -30,7 +28,7 @@ namespace Flagsmith.FlagsmithClientTest
                 StatusCode = System.Net.HttpStatusCode.OK,
                 Content = new StringContent(Fixtures.JsonObject.ToString())
             });
-            var flagsmithClientTest = new FlagsmithClient(Fixtures.ApiKey, enableClientSideEvaluation: true, httpClient: mockHttpClient.Object);
+            var flagsmithClientTest = new FlagsmithClient(null, new FlagsmithConfiguration(Fixtures.ApiKey, enableClientSideEvaluation: true), mockHttpClient.Object);
             mockHttpClient.verifyHttpRequest(HttpMethod.Get, "/api/v1/environment-document/", Times.Once);
             await flagsmithClientTest.GetEnvironmentFlags();
             mockHttpClient.verifyHttpRequest(HttpMethod.Get, "/api/v1/environment-document/", Times.Once);
@@ -44,12 +42,14 @@ namespace Flagsmith.FlagsmithClientTest
                 StatusCode = System.Net.HttpStatusCode.OK,
                 Content = new StringContent(Fixtures.ApiFlagResponse)
             });
-            var flagsmithClientTest = new FlagsmithClient(Fixtures.ApiKey, httpClient: mockHttpClient.Object);
-            var flags = (await flagsmithClientTest.GetEnvironmentFlags()).AllFlags();
+            var flagsmithClientTest = new FlagsmithClient(null, new FlagsmithConfiguration(Fixtures.ApiKey), mockHttpClient.Object);
+            var flags = await (await flagsmithClientTest.GetEnvironmentFlags()).AllFlags();
+            var firstFlag = flags.FirstOrDefault();
             mockHttpClient.verifyHttpRequest(HttpMethod.Get, "/api/v1/flags/", Times.Once);
-            Assert.True(flags[0].Enabled);
-            Assert.Equal("some-value", flags[0].Value);
-            Assert.Equal("some_feature", flags[0].GetFeatureName());
+            Assert.NotNull(firstFlag);
+            Assert.True(firstFlag.Enabled);
+            Assert.Equal("some-value", firstFlag.Value);
+            Assert.Equal("some_feature", firstFlag.Feature.Name);
         }
         [Fact]
         public async Task TestGetEnvironmentFlagsUsesLocalEnvironmentWhenAvailable()
@@ -59,13 +59,15 @@ namespace Flagsmith.FlagsmithClientTest
                 StatusCode = System.Net.HttpStatusCode.OK,
                 Content = new StringContent(Fixtures.JsonObject.ToString())
             });
-            var flagsmithClientTest = new FlagsmithClient(Fixtures.ApiKey, enableClientSideEvaluation: true, httpClient: mockHttpClient.Object);
+            var flagsmithClientTest = new FlagsmithClient(null, new FlagsmithConfiguration(Fixtures.ApiKey, enableClientSideEvaluation: true), mockHttpClient.Object);
             mockHttpClient.verifyHttpRequest(HttpMethod.Get, "/api/v1/environment-document/", Times.Once);
-            var flags = (await flagsmithClientTest.GetEnvironmentFlags()).AllFlags();
+            var flags = await (await flagsmithClientTest.GetEnvironmentFlags()).AllFlags();
+            var firstFlag = flags.FirstOrDefault();
             var fs = Fixtures.Environment.FeatureStates[0];
-            Assert.Equal(fs.Enabled, flags[0].Enabled);
-            Assert.Equal(fs.GetValue(), flags[0].Value);
-            Assert.Equal(fs.Feature.Name, flags[0].GetFeatureName());
+            Assert.NotNull(firstFlag);
+            Assert.Equal(fs.Enabled, firstFlag.Enabled);
+            Assert.Equal(fs.GetValue(), firstFlag.Value);
+            Assert.Equal(fs.Feature.Name, firstFlag.Feature.Name);
             mockHttpClient.verifyHttpRequest(HttpMethod.Get, "/api/v1/environment-document/", Times.Once);
         }
         [Fact]
@@ -76,11 +78,13 @@ namespace Flagsmith.FlagsmithClientTest
                 StatusCode = System.Net.HttpStatusCode.OK,
                 Content = new StringContent(Fixtures.ApiIdentityResponse)
             });
-            var flagsmithClientTest = new FlagsmithClient(Fixtures.ApiKey, httpClient: mockHttpClient.Object);
-            var flags = (await flagsmithClientTest.GetIdentityFlags("identifier")).AllFlags();
-            Assert.True(flags[0].Enabled);
-            Assert.Equal("some-value", flags[0].Value);
-            Assert.Equal("some_feature", flags[0].GetFeatureName());
+            var flagsmithClientTest = new FlagsmithClient(null, new FlagsmithConfiguration(Fixtures.ApiKey), mockHttpClient.Object);
+            var flags = await (await flagsmithClientTest.GetIdentityFlags("identifier")).AllFlags();
+            var firstFlag = flags.FirstOrDefault();
+            Assert.NotNull(firstFlag);
+            Assert.True(firstFlag.Enabled);
+            Assert.Equal("some-value", firstFlag.Value);
+            Assert.Equal("some_feature", firstFlag.Feature.Name);
             mockHttpClient.verifyHttpRequest(HttpMethod.Post, "/api/v1/identities/", Times.Once);
 
         }
@@ -92,7 +96,7 @@ namespace Flagsmith.FlagsmithClientTest
                 StatusCode = System.Net.HttpStatusCode.OK,
                 Content = new StringContent(Fixtures.JsonObject.ToString())
             });
-            var flagsmithClientTest = new FlagsmithClient(Fixtures.ApiKey, enableClientSideEvaluation: true, httpClient: mockHttpClient.Object);
+            var flagsmithClientTest = new FlagsmithClient(null, new FlagsmithConfiguration(Fixtures.ApiKey, enableClientSideEvaluation: true), mockHttpClient.Object);
             mockHttpClient.verifyHttpRequest(HttpMethod.Get, "/api/v1/environment-document/", Times.Once);
             _ = await flagsmithClientTest.GetIdentityFlags("identifier", null);
             mockHttpClient.verifyHttpRequest(HttpMethod.Get, "/api/v1/environment-document/", Times.Once);
@@ -102,7 +106,7 @@ namespace Flagsmith.FlagsmithClientTest
         public async Task TestRequestConnectionErrorRaisesFlagsmithApiError()
         {
             var mockHttpClient = HttpMocker.MockHttpThrowConnectionError();
-            var flagsmithClientTest = new FlagsmithClient(Fixtures.ApiKey, httpClient: mockHttpClient.Object);
+            var flagsmithClientTest = new FlagsmithClient(null, new FlagsmithConfiguration(Fixtures.ApiKey), mockHttpClient.Object);
             await Assert.ThrowsAsync<FlagsmithAPIError>(async () => await flagsmithClientTest.GetEnvironmentFlags());
         }
         [Fact]
@@ -112,7 +116,7 @@ namespace Flagsmith.FlagsmithClientTest
             {
                 StatusCode = System.Net.HttpStatusCode.Forbidden,
             });
-            var flagsmithClientTest = new FlagsmithClient(Fixtures.ApiKey, httpClient: mockHttpClient.Object);
+            var flagsmithClientTest = new FlagsmithClient(null, new FlagsmithConfiguration(Fixtures.ApiKey), mockHttpClient.Object);
             await Assert.ThrowsAsync<FlagsmithAPIError>(async () => await flagsmithClientTest.GetEnvironmentFlags());
         }
         [Fact]
@@ -124,7 +128,7 @@ namespace Flagsmith.FlagsmithClientTest
                 StatusCode = System.Net.HttpStatusCode.OK,
                 Content = new StringContent("[]")
             });
-            var flagsmithClientTest = new FlagsmithClient(Fixtures.ApiKey, httpClient: mockHttpClient.Object, defaultFlagHandler: (string name) => defaultFlag);
+            var flagsmithClientTest = new FlagsmithClient(null, new FlagsmithConfiguration(Fixtures.ApiKey, defaultFlagHandler: x => defaultFlag), mockHttpClient.Object);
             var flags = await flagsmithClientTest.GetEnvironmentFlags();
             var flag = await flags.GetFlag("some_feature");
             Assert.True(flag.Enabled);
@@ -139,7 +143,7 @@ namespace Flagsmith.FlagsmithClientTest
                 StatusCode = System.Net.HttpStatusCode.OK,
                 Content = new StringContent(Fixtures.ApiFlagResponse)
             });
-            var flagsmithClientTest = new FlagsmithClient(Fixtures.ApiKey, httpClient: mockHttpClient.Object, defaultFlagHandler: (string name) => defaultFlag);
+            var flagsmithClientTest = new FlagsmithClient(null, new FlagsmithConfiguration(Fixtures.ApiKey, defaultFlagHandler: x => defaultFlag), mockHttpClient.Object);
             var flags = await flagsmithClientTest.GetEnvironmentFlags();
             var flag = await flags.GetFlag("some_feature");
             Assert.True(flag.Enabled);
@@ -154,7 +158,7 @@ namespace Flagsmith.FlagsmithClientTest
                 StatusCode = System.Net.HttpStatusCode.OK,
                 Content = new StringContent("{}")
             });
-            var flagsmithClientTest = new FlagsmithClient(Fixtures.ApiKey, httpClient: mockHttpClient.Object, defaultFlagHandler: (string name) => defaultFlag);
+            var flagsmithClientTest = new FlagsmithClient(null, new FlagsmithConfiguration(Fixtures.ApiKey, defaultFlagHandler: x => defaultFlag), mockHttpClient.Object);
             var flags = await flagsmithClientTest.GetIdentityFlags("identifier");
             var flag = await flags.GetFlag("some_feature");
             Assert.True(flag.Enabled);
@@ -169,7 +173,7 @@ namespace Flagsmith.FlagsmithClientTest
                 StatusCode = System.Net.HttpStatusCode.OK,
                 Content = new StringContent(Fixtures.ApiIdentityResponse)
             });
-            var flagsmithClientTest = new FlagsmithClient(Fixtures.ApiKey, httpClient: mockHttpClient.Object, defaultFlagHandler: (string name) => defaultFlag);
+            var flagsmithClientTest = new FlagsmithClient(null, new FlagsmithConfiguration(Fixtures.ApiKey, defaultFlagHandler: x => defaultFlag), mockHttpClient.Object);
             var flags = await flagsmithClientTest.GetIdentityFlags("identifier");
             var flag = await flags.GetFlag("some_feature");
             Assert.True(flag.Enabled);
@@ -183,7 +187,7 @@ namespace Flagsmith.FlagsmithClientTest
             {
                 StatusCode = System.Net.HttpStatusCode.Forbidden,
             });
-            var flagsmithClientTest = new FlagsmithClient(Fixtures.ApiKey, httpClient: mockHttpClient.Object, defaultFlagHandler: (string name) => defaultFlag);
+            var flagsmithClientTest = new FlagsmithClient(null, new FlagsmithConfiguration(Fixtures.ApiKey, defaultFlagHandler: x => defaultFlag), mockHttpClient.Object);
             var flags = await flagsmithClientTest.GetEnvironmentFlags();
             var flag = await flags.GetFlag("some_feature");
             Assert.True(flag.Enabled);
@@ -200,7 +204,7 @@ namespace Flagsmith.FlagsmithClientTest
             {
                 StatusCode = System.Net.HttpStatusCode.OK
             });
-            var flagsmithClient = new FlagsmithClient(Fixtures.ApiKey, httpClient: mockHttpClient.Object);
+            var flagsmithClient = new FlagsmithClient(null, new FlagsmithConfiguration(Fixtures.ApiKey), mockHttpClient.Object);
 
             var flags = await flagsmithClient.GetIdentityFlags(identifier, traits);
 
@@ -209,7 +213,7 @@ namespace Flagsmith.FlagsmithClientTest
         }
 
         [Fact]
-        public void testGetIdentitySegmentsNoTraits()
+        public async Task testGetIdentitySegmentsNoTraits()
         {
             // Given
             var mockHttpClient = HttpMocker.MockHttpResponse(new HttpResponseMessage
@@ -217,17 +221,17 @@ namespace Flagsmith.FlagsmithClientTest
                 StatusCode = System.Net.HttpStatusCode.OK,
                 Content = new StringContent(Fixtures.JsonObject.ToString())
             });
-            FlagsmithClient flagsmithClient = new FlagsmithClient(Fixtures.ApiKey, httpClient: mockHttpClient.Object, enableClientSideEvaluation: true);
+            FlagsmithClient flagsmithClient = new FlagsmithClient(null, new FlagsmithConfiguration(Fixtures.ApiKey, enableClientSideEvaluation: true), mockHttpClient.Object);
 
             // When
-            List<Segment> segments = flagsmithClient.GetIdentitySegments("identifier");
+            var segments = await flagsmithClient.GetIdentitySegments("identifier");
 
             // Then
             Assert.Empty(segments);
         }
 
         [Fact]
-        public void testGetIdentitySegmentsWithValidTrait()
+        public async Task testGetIdentitySegmentsWithValidTrait()
         {
             // Given
             var mockHttpClient = HttpMocker.MockHttpResponse(new HttpResponseMessage
@@ -235,18 +239,17 @@ namespace Flagsmith.FlagsmithClientTest
                 StatusCode = System.Net.HttpStatusCode.OK,
                 Content = new StringContent(Fixtures.JsonObject.ToString())
             });
-            FlagsmithClient flagsmithClient = new FlagsmithClient(Fixtures.ApiKey, httpClient: mockHttpClient.Object, enableClientSideEvaluation: true);
+            FlagsmithClient flagsmithClient = new FlagsmithClient(null, new FlagsmithConfiguration(Fixtures.ApiKey, enableClientSideEvaluation: true), mockHttpClient.Object);
 
             string identifier = "identifier";
             List<Trait> traits = new List<Trait>() { new Trait(traitKey: "foo", traitValue: "bar") };
 
             // When
-            List<Segment> segments = flagsmithClient.GetIdentitySegments(identifier, traits);
+            var segments = await flagsmithClient.GetIdentitySegments(identifier, traits);
 
             // Then
             Assert.Single(segments);
-            Assert.Equal("Test segment", segments[0].Name);
+            Assert.Equal("Test segment", segments.First().Name);
         }
     }
 }
-

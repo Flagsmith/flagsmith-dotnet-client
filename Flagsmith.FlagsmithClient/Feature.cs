@@ -1,8 +1,9 @@
+using Flagsmith.Interfaces;
 using Newtonsoft.Json;
 
 namespace Flagsmith
 {
-    public class Feature
+    public class Feature : IFeature
     {
         public Feature(string name, int id = default)
         {
@@ -10,8 +11,9 @@ namespace Flagsmith
             this.Name = name;
         }
         [JsonProperty("id")]
-        public int Id { get; private set; }
+        public int Id { get; set; }
+
         [JsonProperty("name")]
-        public string Name { get; private set; }
+        public string Name { get; set; }
     }
 }
