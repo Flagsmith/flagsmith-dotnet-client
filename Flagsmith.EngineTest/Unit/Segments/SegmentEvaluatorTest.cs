@@ -93,6 +93,12 @@ namespace EngineTest.Unit.Segments
                 new object[]{Constants.LessThanInclusive, "1.0.0", "1.0.1:semver", true},
                 new object[]{Constants.LessThanInclusive, "1.0.0", "1.0.0:semver", true},
                 new object[]{Constants.LessThanInclusive, "1.0.1", "1.0.0:semver", false},
+                new object[]{Constants.Modulo, 2, "2|0", true},
+                new object[]{Constants.Modulo, 3, "2|0", false},
+                new object[]{Constants.Modulo, 2.0, "2|0", true},
+                new object[]{Constants.Modulo, 2.0, "2.0|0", true},
+                new object[]{Constants.Modulo, "foo", "2|0", false},
+                new object[]{Constants.Modulo, "foo", "foo|bar", false},
             };
         [Theory]
         [MemberData(nameof(TestCasesIdentityInSegment))]

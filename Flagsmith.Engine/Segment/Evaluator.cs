@@ -45,6 +45,7 @@ namespace FlagsmithEngine.Segment
             var exceptionOperatorMethods = new Dictionary<string, string>(){
                 {Constants.NotContains, "EvaluateNotContains"},
                 {Constants.Regex, "EvaluateRegex"},
+                {Constants.Modulo, "EvaluateModulo"},
             };
             if (exceptionOperatorMethods.ContainsKey(condition.Operator))
                 return (bool)typeof(SegmentConditionModel).GetMethod(exceptionOperatorMethods[condition.Operator]).Invoke(condition, new object[] { traitValue });
