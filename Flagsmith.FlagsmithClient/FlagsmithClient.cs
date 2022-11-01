@@ -208,8 +208,20 @@ namespace Flagsmith
             try
             {
                 string url = ApiUrl.AppendPath("identities");
-                var jsonBody = JsonConvert.SerializeObject(new { identifier = identity, traits = traits ?? new List<Trait>() });
-                string jsonResponse = await GetJSON(HttpMethod.Post, url, body: jsonBody);
+                string jsonBody;
+                string jsonResponse;
+
+                if (traits != null && traits.Count > 0)
+                {
+                    jsonBody = JsonConvert.SerializeObject(new { identifier = identity, traits = traits ?? new List<Trait>() });
+                    jsonResponse = await GetJSON(HttpMethod.Post, url, body: jsonBody);
+                }
+                else
+                {
+                    url += $"?identifier={identity}";
+                    jsonResponse = await GetJSON(HttpMethod.Get, url);
+                }
+
                 var flags = JsonConvert.DeserializeObject<Identity>(jsonResponse)?.flags;
                 return Flags.FromApiFlag(_AnalyticsProcessor, DefaultFlagHandler, flags);
             }

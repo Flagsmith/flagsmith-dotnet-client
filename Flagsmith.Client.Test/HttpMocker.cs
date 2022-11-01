@@ -6,6 +6,7 @@ using System.Net.Http;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Web;
 
 namespace Flagsmith.FlagsmithClientTest
 {
@@ -30,12 +31,27 @@ namespace Flagsmith.FlagsmithClientTest
             return httpClientMock;
         }
 
-
         public static void verifyHttpRequest(this Mock<HttpClient> mockHttpClient, HttpMethod httpMethod, string url, System.Func<Moq.Times> times)
         {
+            verifyHttpRequest(mockHttpClient, httpMethod, url, times, null);
+        }
+
+        public static void verifyHttpRequest(this Mock<HttpClient> mockHttpClient, HttpMethod httpMethod, string url, System.Func<Moq.Times> times, Dictionary<string, string> queryParams)
+        {
+            var query = HttpUtility.ParseQueryString(string.Empty);
+            if (queryParams != null)
+            {
+                foreach (KeyValuePair<string, string> entry in queryParams)
+                {
+                    query[entry.Key] = entry.Value;
+                }
+            }
+            string queryString = query.ToString();
+
             mockHttpClient.Verify(x => x.SendAsync(It.Is<HttpRequestMessage>(req =>
           req.Method == httpMethod &&
-          req.RequestUri.AbsolutePath == url), It.IsAny<CancellationToken>()), times);
+          req.RequestUri.AbsolutePath == url &&
+          (queryString == "" || req.RequestUri.Query.Equals($"?{queryString}"))), It.IsAny<CancellationToken>()), times);
         }
     }
 }
