@@ -36,15 +36,24 @@ namespace FlagsmithEngine.Segment
                 return Hashing.GetHashedPercentageForObjectIds(new List<string>() { segemntId, identityId }) <= float.Parse(condition.Value);
 
             var trait = identityTraits?.FirstOrDefault(t => t.TraitKey == condition.Property);
-            if (trait != null)
-                return MatchesTraitValue(trait.TraitValue, condition);
-            return false;
+
+            if (condition.Operator == Constants.IsSet)
+            {
+                return trait != null;
+            }
+            else if (condition.Operator == Constants.IsNotSet)
+            {
+                return trait == null;
+            }
+
+            return trait != null && MatchesTraitValue(trait.TraitValue, condition);
         }
         public static bool MatchesTraitValue(object traitValue, SegmentConditionModel condition)
         {
             var exceptionOperatorMethods = new Dictionary<string, string>(){
                 {Constants.NotContains, "EvaluateNotContains"},
                 {Constants.Regex, "EvaluateRegex"},
+                {Constants.Modulo, "EvaluateModulo"},
             };
             if (exceptionOperatorMethods.ContainsKey(condition.Operator))
                 return (bool)typeof(SegmentConditionModel).GetMethod(exceptionOperatorMethods[condition.Operator]).Invoke(condition, new object[] { traitValue });

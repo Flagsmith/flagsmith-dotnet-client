@@ -20,5 +20,8 @@ namespace FlagsmithEngine.Segment
         public const string NotEqual = "NOT_EQUAL";
         public const string Regex = "REGEX";
         public const string PercentageSplit = "PERCENTAGE_SPLIT";
+        public const string IsSet = "IS_SET";
+        public const string IsNotSet = "IS_NOT_SET";
+        public const string Modulo = "MODULO";
     }
 }
