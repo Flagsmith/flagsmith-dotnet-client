@@ -30,16 +30,6 @@ namespace Flagsmith
 
         IFeature IFlag.Feature => Feature;
 
-        public int getFeatureId()
-        {
-            return Feature?.Id ?? 0;
-        }
-
-        public string GetFeatureName()
-        {
-            return Feature?.Name;
-        }
-
         public override string ToString()
         {
             return JsonConvert.SerializeObject(this);

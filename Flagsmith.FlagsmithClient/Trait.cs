@@ -26,9 +26,5 @@ namespace Flagsmith
         {
             return JsonConvert.SerializeObject(this);
         }
-
-        public string GetTraitKey() => Key;
-
-        public dynamic GetTraitValue() => Value;
     }
 }
