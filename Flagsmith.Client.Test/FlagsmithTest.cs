@@ -69,7 +69,24 @@ namespace Flagsmith.FlagsmithClientTest
             mockHttpClient.verifyHttpRequest(HttpMethod.Get, "/api/v1/environment-document/", Times.Once);
         }
         [Fact]
-        public async Task TestGetIdentityFlagsCallsApiWhenNoLocalEnvironmentNoTraits()
+        public async Task TestGetIdentityFlagsCallsGetApiWhenNoLocalEnvironmentNoTraits()
+        {
+            string identifier = "identifier";
+            var mockHttpClient = HttpMocker.MockHttpResponse(new HttpResponseMessage
+            {
+                StatusCode = System.Net.HttpStatusCode.OK,
+                Content = new StringContent(Fixtures.ApiIdentityResponse)
+            });
+            var flagsmithClientTest = new FlagsmithClient(Fixtures.ApiKey, httpClient: mockHttpClient.Object);
+            var flags = (await flagsmithClientTest.GetIdentityFlags(identifier)).AllFlags();
+            Assert.True(flags[0].Enabled);
+            Assert.Equal("some-value", flags[0].Value);
+            Assert.Equal("some_feature", flags[0].GetFeatureName());
+            mockHttpClient.verifyHttpRequest(HttpMethod.Get, "/api/v1/identities/", Times.Once, new Dictionary<string, string> { { "identifier", identifier } });
+
+        }
+        [Fact]
+        public async Task TestGetIdentityFlagsCallsPostApiWhenNoLocalEnvironmentWithTraits()
         {
             var mockHttpClient = HttpMocker.MockHttpResponse(new HttpResponseMessage
             {
@@ -77,7 +94,10 @@ namespace Flagsmith.FlagsmithClientTest
                 Content = new StringContent(Fixtures.ApiIdentityResponse)
             });
             var flagsmithClientTest = new FlagsmithClient(Fixtures.ApiKey, httpClient: mockHttpClient.Object);
-            var flags = (await flagsmithClientTest.GetIdentityFlags("identifier")).AllFlags();
+            var traits = new List<Trait> { new Trait("foo", "bar") };
+
+
+            var flags = (await flagsmithClientTest.GetIdentityFlags("identifier", traits)).AllFlags();
             Assert.True(flags[0].Enabled);
             Assert.Equal("some-value", flags[0].Value);
             Assert.Equal("some_feature", flags[0].GetFeatureName());
