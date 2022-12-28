@@ -43,7 +43,7 @@ jobs:
             max-parallel: 4
             matrix:
                 working-directory: ["Flagsmith.EngineTest","Flagsmith.Client.Test"]
-                dotnet-version: ["4.8.x", "5.0.x", "6.0.x"]
+                dotnet-version: ["5.0.x", "6.0.x", "7.0.x"]
 
         steps:
           - name: Cloning repo
