@@ -28,7 +28,7 @@ namespace Flagsmith
     /// <exception cref="FlagsmithClientError">
     /// A general exception with a error message. Example: Feature not found, etc.
     /// </exception>
-    public class FlagsmithClient
+    public class FlagsmithClient : IFlagsmithClient
     {
         private string ApiUrl { get; set; }
         private string EnvironmentKey { get; set; }

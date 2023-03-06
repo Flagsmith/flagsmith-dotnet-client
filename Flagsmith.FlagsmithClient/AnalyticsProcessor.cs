@@ -11,7 +11,7 @@ using Flagsmith.Extensions;
 
 namespace Flagsmith
 {
-    public class AnalyticsProcessor
+    public class AnalyticsProcessor : IAnalyticsProcessor
     {
         int _FlushIntervalSeconds = 10;
         readonly string _AnalyticsEndPoint;
