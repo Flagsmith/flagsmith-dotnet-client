@@ -2,7 +2,7 @@ using Newtonsoft.Json;
 
 namespace Flagsmith
 {
-    public class Segment
+    public class Segment : ISegment
     {
         public Segment(int id, string name)
         {

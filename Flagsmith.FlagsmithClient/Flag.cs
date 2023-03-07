@@ -6,7 +6,7 @@ using System.Reflection;
 
 namespace Flagsmith
 {
-    public class Flag
+    public class Flag : IFlag
     {
         public Flag() { }
         public Flag(Feature feature, bool enabled, string value, int featureId = default)

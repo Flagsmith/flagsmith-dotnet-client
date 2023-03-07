@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace Flagsmith
 {
-    public class Flags
+    public class Flags : IFlags
     {
         List<Flag> _Flags;
         private readonly AnalyticsProcessor _AnalyticsProcessor;
