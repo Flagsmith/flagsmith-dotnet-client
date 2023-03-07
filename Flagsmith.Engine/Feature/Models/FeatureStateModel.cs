@@ -18,11 +18,7 @@ namespace FlagsmithEngine.Feature.Models
         [JsonProperty(PropertyName = "enabled")]
         public bool Enabled { get; set; }
         [JsonProperty("feature_state_value")]
-        private string value;
-        public object Value {
-            get => !string.IsNullOrEmpty(value) ? value : null;
-            set => Value = value;
-        }
+        public object Value { get; set; }
         [JsonProperty(PropertyName = "multivariate_feature_state_values")]
         public List<MultivariateFeatureStateValueModel> MultivariateFeatureStateValues { get; set; }
         [JsonProperty(PropertyName = "django_id")]
