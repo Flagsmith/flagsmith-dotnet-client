@@ -18,7 +18,11 @@ namespace FlagsmithEngine.Feature.Models
         [JsonProperty(PropertyName = "enabled")]
         public bool Enabled { get; set; }
         [JsonProperty("feature_state_value")]
-        public object Value { get; set; }
+        private string value;
+        public object Value {
+            get => !string.IsNullOrEmpty(value) ? value : null;
+            set => Value = value;
+        }
         [JsonProperty(PropertyName = "multivariate_feature_state_values")]
         public List<MultivariateFeatureStateValueModel> MultivariateFeatureStateValues { get; set; }
         [JsonProperty(PropertyName = "django_id")]
@@ -48,10 +52,10 @@ namespace FlagsmithEngine.Feature.Models
         }
 
         /// <summary>
-        /// Another FeatureStateModel is deemed to be higher priority if and only if 
-        /// it has a FeatureSegment and either this.FeatureSegment is null or the 
-        /// value of other.FeatureSegment.priority is lower than that of 
-        /// this.FeatureSegment.priority. 
+        /// Another FeatureStateModel is deemed to be higher priority if and only if
+        /// it has a FeatureSegment and either this.FeatureSegment is null or the
+        /// value of other.FeatureSegment.priority is lower than that of
+        /// this.FeatureSegment.priority.
         /// </summary>
         public bool IsHigherPriority(FeatureStateModel other)
         {

@@ -36,7 +36,7 @@ namespace EngineTest
 
                 if (valueFromApi == null)
                 {
-                    Assert.True(string.IsNullOrEmpty(valueFromEngine));
+                    Assert.Null(valueFromEngine);
                 }
                 else
                 {
