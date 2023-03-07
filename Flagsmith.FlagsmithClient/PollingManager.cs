@@ -5,7 +5,7 @@ using System.Threading;
 using System.Threading.Tasks;
 namespace Flagsmith
 {
-    public class PollingManager
+    public class PollingManager : IPollingManager
     {
         CancellationTokenSource _CancellationTokenSource = new CancellationTokenSource();
         Func<Task> _CallBack;

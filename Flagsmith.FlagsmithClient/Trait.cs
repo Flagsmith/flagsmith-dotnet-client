@@ -3,7 +3,7 @@ using Newtonsoft.Json;
 namespace Flagsmith
 {
     [JsonObject(MemberSerialization.OptIn)]
-    public class Trait
+    public class Trait : ITrait
     {
         public Trait() { }
         public Trait(string traitKey, dynamic traitValue)

@@ -4,7 +4,7 @@ using Newtonsoft.Json;
 namespace Flagsmith
 {
     [JsonObject(MemberSerialization.OptIn)]
-    public class Identity
+    public class Identity : IIdentity
     {
         [JsonProperty]
         public List<Flag> flags;
