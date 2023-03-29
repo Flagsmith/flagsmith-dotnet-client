@@ -30,7 +30,7 @@ namespace Example.Controllers
                 var Identifier = request.Query["identifier"].ToString();
                 var traitKey = request.Query["trait-key"].ToString();
                 var traitValue = request.Query["trait-value"].ToString();
-                var traits = new List<Trait>() { new Trait(traitKey, traitValue) };
+                var traits = new List<ITrait>() { new Trait(traitKey, traitValue) };
                 var flags = await _flagsmithClient.GetIdentityFlags(Identifier, traits);
                 var showButton = await flags.IsFeatureEnabled("secret_button");
                 var buttonData = flags.GetFeatureValue("secret_button").Result;
