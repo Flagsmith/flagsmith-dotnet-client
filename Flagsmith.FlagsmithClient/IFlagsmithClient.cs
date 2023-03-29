@@ -18,9 +18,9 @@ namespace Flagsmith
         /// <summary>
         /// Get all the flags for the current environment for a given identity with provided traits.
         /// </summary>
-        Task<IFlags> GetIdentityFlags(string identity, List<Trait> traits);
+        Task<IFlags> GetIdentityFlags(string identity, List<ITrait> traits);
 
-        List<Segment> GetIdentitySegments(string identifier);
-        List<Segment> GetIdentitySegments(string identifier, List<Trait> traits);
+        List<ISegment> GetIdentitySegments(string identifier);
+        List<ISegment> GetIdentitySegments(string identifier, List<ITrait> traits);
     }
 }

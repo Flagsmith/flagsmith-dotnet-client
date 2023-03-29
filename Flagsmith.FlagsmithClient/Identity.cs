@@ -7,10 +7,10 @@ namespace Flagsmith
     public class Identity : IIdentity
     {
         [JsonProperty]
-        public List<IFlag> flags;
+        public List<Flag> flags;
 
         [JsonProperty]
-        public List<ITrait> traits;
+        public List<Trait> traits;
 
         public override string ToString()
         {

@@ -94,7 +94,7 @@ namespace Flagsmith.FlagsmithClientTest
                 Content = new StringContent(Fixtures.ApiIdentityResponse)
             });
             var flagsmithClientTest = new FlagsmithClient(Fixtures.ApiKey, httpClient: mockHttpClient.Object);
-            var traits = new List<Trait> { new Trait("foo", "bar") };
+            var traits = new List<ITrait> { new Trait("foo", "bar") };
 
 
             var flags = (await flagsmithClientTest.GetIdentityFlags("identifier", traits)).AllFlags();
@@ -214,7 +214,7 @@ namespace Flagsmith.FlagsmithClientTest
         public async Task TestGetIdentityFlagsSendsTraits()
         {
             string identifier = "identifier";
-            var traits = new List<Trait>() { new Trait("foo", "bar"), new Trait("ifoo", 1) };
+            var traits = new List<ITrait>() { new Trait("foo", "bar"), new Trait("ifoo", 1) };
 
             var mockHttpClient = HttpMocker.MockHttpResponse(new HttpResponseMessage
             {
@@ -240,7 +240,7 @@ namespace Flagsmith.FlagsmithClientTest
             FlagsmithClient flagsmithClient = new FlagsmithClient(Fixtures.ApiKey, httpClient: mockHttpClient.Object, enableClientSideEvaluation: true);
 
             // When
-            List<Segment> segments = flagsmithClient.GetIdentitySegments("identifier");
+            List<ISegment> segments = flagsmithClient.GetIdentitySegments("identifier");
 
             // Then
             Assert.Empty(segments);
@@ -258,10 +258,10 @@ namespace Flagsmith.FlagsmithClientTest
             FlagsmithClient flagsmithClient = new FlagsmithClient(Fixtures.ApiKey, httpClient: mockHttpClient.Object, enableClientSideEvaluation: true);
 
             string identifier = "identifier";
-            List<Trait> traits = new List<Trait>() { new Trait(traitKey: "foo", traitValue: "bar") };
+            List<ITrait> traits = new List<ITrait>() { new Trait(traitKey: "foo", traitValue: "bar") };
 
             // When
-            List<Segment> segments = flagsmithClient.GetIdentitySegments(identifier, traits);
+            List<ISegment> segments = flagsmithClient.GetIdentitySegments(identifier, traits);
 
             // Then
             Assert.Single(segments);
