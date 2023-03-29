@@ -34,7 +34,7 @@ namespace Flagsmith
         private string EnvironmentKey { get; set; }
         private bool EnableClientSideEvaluation { get; set; }
         private int EnvironmentRefreshIntervalSeconds { get; set; }
-        private Func<string, Flag> DefaultFlagHandler { get; set; }
+        private Func<string, IFlag> DefaultFlagHandler { get; set; }
         private ILogger Logger { get; set; }
         private bool EnableAnalytics { get; set; }
         private double? RequestTimeout { get; set; }
@@ -64,7 +64,7 @@ namespace Flagsmith
             string environmentKey,
             string apiUrl = _defaultApiUrl,
             ILogger logger = null,
-            Func<string, Flag> defaultFlagHandler = null,
+            Func<string, IFlag> defaultFlagHandler = null,
             bool enableAnalytics = false,
             bool enableClientSideEvaluation = false,
             int environmentRefreshIntervalSeconds = 60,
@@ -98,13 +98,13 @@ namespace Flagsmith
         /// <summary>
         /// Get all the default for flags for the current environment.
         /// </summary>
-        public async Task<Flags> GetEnvironmentFlags()
+        public async Task<IFlags> GetEnvironmentFlags()
             => Environment != null ? GetFeatureFlagsFromDocuments() : await GetFeatureFlagsFromApi();
 
         /// <summary>
         /// Get all the flags for the current environment for a given identity.
         /// </summary>
-        public async Task<Flags> GetIdentityFlags(string identity)
+        public async Task<IFlags> GetIdentityFlags(string identity)
         {
             return await GetIdentityFlags(identity, null);
         }
@@ -112,7 +112,7 @@ namespace Flagsmith
         /// <summary>
         /// Get all the flags for the current environment for a given identity with provided traits.
         /// </summary>
-        public async Task<Flags> GetIdentityFlags(string identity, List<Trait> traits)
+        public async Task<IFlags> GetIdentityFlags(string identity, List<Trait> traits)
         {
             if (Environment != null)
             {
@@ -188,13 +188,13 @@ namespace Flagsmith
                 Logger?.LogError(ex.Message);
             }
         }
-        private async Task<Flags> GetFeatureFlagsFromApi()
+        private async Task<IFlags> GetFeatureFlagsFromApi()
         {
             try
             {
                 string url = ApiUrl.AppendPath("flags");
                 string json = await GetJSON(HttpMethod.Get, url);
-                var flags = JsonConvert.DeserializeObject<List<Flag>>(json);
+                var flags = JsonConvert.DeserializeObject<List<IFlag>>(json);
                 return Flags.FromApiFlag(_AnalyticsProcessor, DefaultFlagHandler, flags);
             }
             catch (FlagsmithAPIError e)
@@ -203,7 +203,7 @@ namespace Flagsmith
             }
 
         }
-        private async Task<Flags> GetIdentityFlagsFromApi(string identity, List<Trait> traits)
+        private async Task<IFlags> GetIdentityFlagsFromApi(string identity, List<Trait> traits)
         {
             try
             {
@@ -231,11 +231,11 @@ namespace Flagsmith
             }
 
         }
-        private Flags GetFeatureFlagsFromDocuments()
+        private IFlags GetFeatureFlagsFromDocuments()
         {
             return Flags.FromFeatureStateModel(_AnalyticsProcessor, DefaultFlagHandler, _Engine.GetEnvironmentFeatureStates(Environment));
         }
-        private Flags GetIdentityFlagsFromDocuments(string identifier, List<Trait> traits)
+        private IFlags GetIdentityFlagsFromDocuments(string identifier, List<Trait> traits)
         {
 
             IdentityModel identity;

@@ -7,7 +7,7 @@ namespace Flagsmith
     {
         Task<string> GetFeatureValue(string featureName);
         Task<bool> IsFeatureEnabled(string featureName);
-        Task<Flag> GetFlag(string featureName);
-        List<Flag> AllFlags();
+        Task<IFlag> GetFlag(string featureName);
+        List<IFlag> AllFlags();
     }
 }
