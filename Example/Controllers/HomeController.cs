@@ -9,17 +9,23 @@ namespace Example.Controllers
     public class HomeController : Controller
     {
         static FlagsmithClient _flagsmithClient;
+        private const string FeatureName = "secret_button";
+
+
         public HomeController(IConfiguration configuration)
         {
             var settings = configuration.GetSection("FlagsmithConfiguration").Get<FlagsmithSettings>();
-            _flagsmithClient = new(settings.EnvironmentKey, defaultFlagHandler: defaultFlagHandler);
+            _flagsmithClient = new(settings.EnvironmentKey, settings.FlagsmithApiUrl, defaultFlagHandler: defaultFlagHandler, enableClientSideEvaluation: settings.EnableClientSideEvaluation,
+                enableAnalytics: settings.EnableAnalytics, requestTimeout: settings.RequestTimeout, environmentRefreshIntervalSeconds: settings.EnvironmentRefreshIntervalSeconds);
+
             static Flag defaultFlagHandler(string featureName)
             {
-                if (featureName == "secret_button")
-                    return new Flag(new Feature("secret_button"), enabled: false, value: JsonConvert.SerializeObject(new { colour = "#b8b8b8" }).ToString());
+                if (featureName == FeatureName)
+                    return new Flag(new Feature(FeatureName), enabled: false, value: JsonConvert.SerializeObject(new { colour = "#b8b8b8" }).ToString());
                 else return new Flag() { };
             }
         }
+
         [HttpPost]
         [HttpGet]
         public async Task<IActionResult> Index()
@@ -32,8 +38,8 @@ namespace Example.Controllers
                 var traitValue = request.Query["trait-value"].ToString();
                 var traits = new List<ITrait>() { new Trait(traitKey, traitValue) };
                 var flags = await _flagsmithClient.GetIdentityFlags(Identifier, traits);
-                var showButton = await flags.IsFeatureEnabled("secret_button");
-                var buttonData = flags.GetFeatureValue("secret_button").Result;
+                var showButton = await flags.IsFeatureEnabled(FeatureName);
+                var buttonData = flags.GetFeatureValue(FeatureName).Result;
                 ViewBag.props = new
                 {
                     showButton = showButton,
@@ -45,10 +51,9 @@ namespace Example.Controllers
             }
             else
             {
-
                 var flag = await _flagsmithClient.GetEnvironmentFlags();
-                var showButton = await flag.IsFeatureEnabled("secret_button");
-                var buttonData = flag.GetFeatureValue("secret_button").Result;
+                var showButton = await flag.IsFeatureEnabled(FeatureName);
+                var buttonData = flag.GetFeatureValue(FeatureName).Result;
                 ViewBag.props = new
                 {
                     showButton = showButton,
@@ -57,6 +62,11 @@ namespace Example.Controllers
                 };
                 return View();
             }
+        }
+
+        public IActionResult Privacy()
+        {
+            throw new NotImplementedException();
         }
     }
 }
