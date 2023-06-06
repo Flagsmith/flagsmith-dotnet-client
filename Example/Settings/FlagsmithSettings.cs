@@ -2,6 +2,8 @@
 {
     public class FlagsmithSettings
     {
+        public static string ConfigSection => "FlagsmithConfiguration";
+        
         public string FlagsmithApiUrl { get; set; } = "https://edge.api.flagsmith.com/api/v1/";
         public string EnvironmentKey { get; set; } = String.Empty;
         public bool EnableClientSideEvaluation { get; set; } = false;

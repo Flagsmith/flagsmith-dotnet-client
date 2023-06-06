@@ -18,7 +18,8 @@ using Flagsmith.Extensions;
 using System.Linq;
 
 namespace Flagsmith
-{   /// <summary>
+{
+    /// <summary>
     /// A Flagsmith client.
     /// Provides an interface for interacting with the Flagsmith http API.
     /// </summary>
@@ -40,12 +41,12 @@ namespace Flagsmith
         private double? RequestTimeout { get; set; }
         private int? Retries { get; set; }
         private Dictionary<string, string> CustomHeaders { get; set; }
-        const string _defaultApiUrl = "https://edge.api.flagsmith.com/api/v1/";
         private HttpClient httpClient;
         private EnvironmentModel Environment { get; set; }
         private readonly PollingManager _PollingManager;
         private readonly IEngine _Engine;
         private readonly AnalyticsProcessor _AnalyticsProcessor;
+
         /// <summary>
         /// Create flagsmith client.
         /// </summary>
@@ -62,7 +63,7 @@ namespace Flagsmith
         /// <param name="requestTimeout">Number of seconds to wait for a request to complete before terminating the request</param>
         public FlagsmithClient(
             string environmentKey,
-            string apiUrl = _defaultApiUrl,
+            string apiUrl,
             ILogger logger = null,
             Func<string, IFlag> defaultFlagHandler = null,
             bool enableAnalytics = false,
@@ -91,7 +92,6 @@ namespace Flagsmith
             {
                 _PollingManager = new PollingManager(GetAndUpdateEnvironmentFromApi, EnvironmentRefreshIntervalSeconds);
                 _ = _PollingManager.StartPoll();
-
             }
         }
 
@@ -133,7 +133,9 @@ namespace Flagsmith
             {
                 throw new FlagsmithClientError("Local evaluation required to obtain identity segments.");
             }
-            IdentityModel identityModel = new IdentityModel { Identifier = identifier, IdentityTraits = traits?.Select(t => new TraitModel { TraitKey = t.GetTraitKey(), TraitValue = t.GetTraitValue() }).ToList() };
+
+            IdentityModel identityModel = new IdentityModel
+                { Identifier = identifier, IdentityTraits = traits?.Select(t => new TraitModel { TraitKey = t.GetTraitKey(), TraitValue = t.GetTraitValue() }).ToList() };
             List<SegmentModel> segmentModels = Evaluator.GetIdentitySegments(
                 this.Environment, identityModel, new List<TraitModel>()
             );
@@ -150,7 +152,8 @@ namespace Flagsmith
                 {
                     HttpRequestMessage request = new HttpRequestMessage(method, url)
                     {
-                        Headers = {
+                        Headers =
+                        {
                             { "X-Environment-Key", EnvironmentKey }
                         }
                     };
@@ -159,6 +162,7 @@ namespace Flagsmith
                     {
                         request.Content = new StringContent(body, Encoding.UTF8, "application/json");
                     }
+
                     var cancellationTokenSource = new CancellationTokenSource(TimeSpan.FromSeconds(RequestTimeout ?? 100));
                     HttpResponseMessage response = await httpClient.SendAsync(request, cancellationTokenSource.Token);
                     return response.EnsureSuccessStatusCode();
@@ -175,6 +179,7 @@ namespace Flagsmith
                 throw new FlagsmithAPIError("Request cancelled: Api server takes too long to respond");
             }
         }
+
         private async Task GetAndUpdateEnvironmentFromApi()
         {
             try
@@ -188,6 +193,7 @@ namespace Flagsmith
                 Logger?.LogError(ex.Message);
             }
         }
+
         private async Task<IFlags> GetFeatureFlagsFromApi()
         {
             try
@@ -201,8 +207,8 @@ namespace Flagsmith
             {
                 return DefaultFlagHandler != null ? Flags.FromApiFlag(_AnalyticsProcessor, DefaultFlagHandler, null) : throw e;
             }
-
         }
+
         private async Task<IFlags> GetIdentityFlagsFromApi(string identity, List<ITrait> traits)
         {
             try
@@ -229,28 +235,33 @@ namespace Flagsmith
             {
                 return DefaultFlagHandler != null ? Flags.FromApiFlag(_AnalyticsProcessor, DefaultFlagHandler, null) : throw e;
             }
-
         }
+
         private IFlags GetFeatureFlagsFromDocuments()
         {
             return Flags.FromFeatureStateModel(_AnalyticsProcessor, DefaultFlagHandler, _Engine.GetEnvironmentFeatureStates(Environment));
         }
+
         private IFlags GetIdentityFlagsFromDocuments(string identifier, List<ITrait> traits)
         {
-
             IdentityModel identity;
 
             if (traits?.Count > 0)
             {
-                identity = new IdentityModel { Identifier = identifier, IdentityTraits = traits?.Select(t => new TraitModel { TraitKey = t.GetTraitKey(), TraitValue = t.GetTraitValue() }).ToList() };
+                identity = new IdentityModel
+                {
+                    Identifier = identifier, IdentityTraits = traits?.Select(t => new TraitModel { TraitKey = t.GetTraitKey(), TraitValue = t.GetTraitValue() }).ToList(),
+                    EnvironmentApiKey = Environment.ApiKey
+                };
             }
             else
             {
-                identity = new IdentityModel { Identifier = identifier };
+                identity = new IdentityModel { Identifier = identifier, EnvironmentApiKey = Environment.ApiKey };
             }
 
             return Flags.FromFeatureStateModel(_AnalyticsProcessor, DefaultFlagHandler, _Engine.GetIdentityFeatureStates(Environment, identity), identity.CompositeKey);
         }
+
         ~FlagsmithClient() => _PollingManager?.StopPoll();
     }
 }
