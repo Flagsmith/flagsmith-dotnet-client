@@ -116,7 +116,7 @@ namespace Flagsmith
         {
             if (Environment != null)
             {
-                return GetIdentityFlagsFromDocuments(identity, traits);
+                return GetIdentityFlagsFromDocument(identity, traits);
             }
 
             return await GetIdentityFlagsFromApi(identity, traits);
@@ -235,19 +235,19 @@ namespace Flagsmith
         {
             return Flags.FromFeatureStateModel(_AnalyticsProcessor, DefaultFlagHandler, _Engine.GetEnvironmentFeatureStates(Environment));
         }
-        private IFlags GetIdentityFlagsFromDocuments(string identifier, List<ITrait> traits)
+        private IFlags GetIdentityFlagsFromDocument(string identifier, List<ITrait> traits)
         {
 
-            IdentityModel identity;
+            List<TraitModel> traitModels = traits?.Count > 0
+                ? traits.Select(t => new TraitModel { TraitKey = t.GetTraitKey(), TraitValue = t.GetTraitValue() }).ToList()
+                : new List<TraitModel>();
 
-            if (traits?.Count > 0)
+            IdentityModel identity = new IdentityModel
             {
-                identity = new IdentityModel { Identifier = identifier, IdentityTraits = traits?.Select(t => new TraitModel { TraitKey = t.GetTraitKey(), TraitValue = t.GetTraitValue() }).ToList() };
-            }
-            else
-            {
-                identity = new IdentityModel { Identifier = identifier };
-            }
+                EnvironmentApiKey = Environment.ApiKey,
+                Identifier = identifier,
+                IdentityTraits = traitModels
+            };
 
             return Flags.FromFeatureStateModel(_AnalyticsProcessor, DefaultFlagHandler, _Engine.GetIdentityFeatureStates(Environment, identity), identity.CompositeKey);
         }
