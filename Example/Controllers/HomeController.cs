@@ -20,43 +20,29 @@ namespace Example.Controllers
         public async Task<IActionResult> Index()
         {
             var request = HttpContext.Request;
-            if (request.Query.Count > 0)
-            {
-                var Identifier = request.Query["identifier"].ToString();
-                var flags = await _flagsmithClient.GetIdentityFlags(Identifier, null);
-                var showButton = await flags.IsFeatureEnabled(FeatureName);
-                var buttonData = flags.GetFeatureValue(FeatureName).Result;
-                var ffValue = flags.GetFeatureValue("ab_multivariate_test").Result;
-                ViewBag.props = new
-                {
-                    showButton = showButton,
-                    buttonColour = JObject.Parse(buttonData)["colour"].Value<string>(),
-                    identifier = Identifier,
-                    ffValue = ffValue
-                };
+            string Identifier = request.Query["identifier"].ToString();
+            
+            IFlags flags;
 
-                return View();
+            if (!string.IsNullOrWhiteSpace(Identifier))
+            {
+                flags = await _flagsmithClient.GetIdentityFlags(Identifier, null);
             }
             else
             {
-                var flags = await _flagsmithClient.GetEnvironmentFlags();
-                var showButton = await flags.IsFeatureEnabled(FeatureName);
-                var buttonData = flags.GetFeatureValue(FeatureName).Result;
-                var ffValue = flags.GetFeatureValue("ab_multivariate_test").Result;
-                ViewBag.props = new
-                {
-                    showButton = showButton,
-                    buttonColour = JObject.Parse(buttonData)["colour"].Value<string>(),
-                    identifier = "",
-                    ffValue = ffValue
-                };
-                return View();
+                flags = await _flagsmithClient.GetEnvironmentFlags();
             }
-        }
 
-        public IActionResult Privacy()
-        {
-            throw new NotImplementedException();
+            var showButton = await flags.IsFeatureEnabled(FeatureName);
+            var buttonData = flags.GetFeatureValue(FeatureName).Result;
+            ViewBag.props = new
+            {
+                showButton = showButton,
+                buttonColour = JObject.Parse(buttonData)["colour"].Value<string>(),
+                identifier = Identifier,
+            };
+
+            return View();
         }
     }
 }

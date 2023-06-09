@@ -4,10 +4,6 @@
 
 <p>Hello,@(string.IsNullOrEmpty(ViewBag.props?.identifier) ? "World":ViewBag.props?.identifier).</p>
 
-<br/>
-<label for="ff-value">Lukas custom: </label> @ViewBag.props?.ffValue
-<br/>
-
 @if (ViewBag.props?.showButton)
 {
     <button style="background-color: @(ViewBag.props?.buttonColour)">A secret button</button>
