@@ -18,7 +18,8 @@ using Flagsmith.Extensions;
 using System.Linq;
 
 namespace Flagsmith
-{   /// <summary>
+{
+    /// <summary>
     /// A Flagsmith client.
     /// Provides an interface for interacting with the Flagsmith http API.
     /// </summary>
@@ -40,12 +41,14 @@ namespace Flagsmith
         private double? RequestTimeout { get; set; }
         private int? Retries { get; set; }
         private Dictionary<string, string> CustomHeaders { get; set; }
-        const string _defaultApiUrl = "https://edge.api.flagsmith.com/api/v1/";
-        private HttpClient httpClient;
         private EnvironmentModel Environment { get; set; }
-        private readonly PollingManager _PollingManager;
-        private readonly IEngine _Engine;
-        private readonly AnalyticsProcessor _AnalyticsProcessor;
+        const string DefaultApiUrl = "https://edge.api.flagsmith.com/api/v1/";
+        
+        private readonly HttpClient _httpClient;
+        private readonly PollingManager _pollingManager;
+        private readonly IEngine _engine;
+        private readonly AnalyticsProcessor _analyticsProcessor;
+
         /// <summary>
         /// Create flagsmith client.
         /// </summary>
@@ -56,13 +59,13 @@ namespace Flagsmith
         /// <param name="enableAnalytics">if enabled, sends additional requests to the Flagsmith API to power flag analytics charts.</param>
         /// <param name="enableClientSideEvaluation">If using local evaluation, specify the interval period between refreshes of local environment data.</param>
         /// <param name="environmentRefreshIntervalSeconds"></param>
-        /// <param name="useLegacyIdentities">Enables local evaluation of flags.</param>
         /// <param name="customHeaders">Additional headers to add to requests made to the Flagsmith API</param>
         /// <param name="retries">Total http retries for every failing request before throwing the final error.</param>
         /// <param name="requestTimeout">Number of seconds to wait for a request to complete before terminating the request</param>
+        /// <param name="httpClient">Http client used for flagsmith-API requests</param>
         public FlagsmithClient(
             string environmentKey,
-            string apiUrl = _defaultApiUrl,
+            string apiUrl = DefaultApiUrl,
             ILogger logger = null,
             Func<string, IFlag> defaultFlagHandler = null,
             bool enableAnalytics = false,
@@ -83,15 +86,27 @@ namespace Flagsmith
             this.CustomHeaders = customHeaders;
             this.Retries = retries;
             this.RequestTimeout = requestTimeout;
-            this.httpClient = httpClient ?? new HttpClient();
-            _Engine = new Engine();
+            this._httpClient = httpClient ?? new HttpClient();
+            _engine = new Engine();
             if (EnableAnalytics)
-                _AnalyticsProcessor = new AnalyticsProcessor(this.httpClient, EnvironmentKey, ApiUrl, Logger, CustomHeaders);
+                _analyticsProcessor = new AnalyticsProcessor(this._httpClient, EnvironmentKey, ApiUrl, Logger, CustomHeaders);
             if (EnableClientSideEvaluation)
             {
-                _PollingManager = new PollingManager(GetAndUpdateEnvironmentFromApi, EnvironmentRefreshIntervalSeconds);
-                _ = _PollingManager.StartPoll();
+                _pollingManager = new PollingManager(GetAndUpdateEnvironmentFromApi, EnvironmentRefreshIntervalSeconds);
+                _ = _pollingManager.StartPoll();
             }
+        }
+
+        /// <summary>
+        /// Create flagsmith client.
+        /// </summary>
+        /// <param name="configuration">Flagsmith client configuration</param>
+        /// <param name="httpClient">Http client used for flagsmith-API requests</param>
+        public FlagsmithClient(IFlagsmithConfiguration configuration, HttpClient httpClient = null) : this(
+            configuration.EnvironmentKey, configuration.ApiUrl, configuration.Logger, configuration.DefaultFlagHandler,
+            configuration.EnableAnalytics, configuration.EnableClientSideEvaluation, configuration.EnvironmentRefreshIntervalSeconds, configuration.CustomHeaders, configuration.Retries ?? 1,
+            configuration.RequestTimeout, httpClient)
+        {
         }
 
         /// <summary>
@@ -132,7 +147,9 @@ namespace Flagsmith
             {
                 throw new FlagsmithClientError("Local evaluation required to obtain identity segments.");
             }
-            IdentityModel identityModel = new IdentityModel { Identifier = identifier, IdentityTraits = traits?.Select(t => new TraitModel { TraitKey = t.GetTraitKey(), TraitValue = t.GetTraitValue() }).ToList() };
+
+            IdentityModel identityModel = new IdentityModel
+                { Identifier = identifier, IdentityTraits = traits?.Select(t => new TraitModel { TraitKey = t.GetTraitKey(), TraitValue = t.GetTraitValue() }).ToList() };
             List<SegmentModel> segmentModels = Evaluator.GetIdentitySegments(
                 this.Environment, identityModel, new List<TraitModel>()
             );
@@ -140,7 +157,7 @@ namespace Flagsmith
             return segmentModels?.Select(t => new Segment(id: t.Id, name: t.Name)).ToList<ISegment>();
         }
 
-        private async Task<string> GetJSON(HttpMethod method, string url, string body = null)
+        private async Task<string> GetJson(HttpMethod method, string url, string body = null)
         {
             try
             {
@@ -149,7 +166,8 @@ namespace Flagsmith
                 {
                     HttpRequestMessage request = new HttpRequestMessage(method, url)
                     {
-                        Headers = {
+                        Headers =
+                        {
                             { "X-Environment-Key", EnvironmentKey }
                         }
                     };
@@ -160,7 +178,7 @@ namespace Flagsmith
                     }
 
                     var cancellationTokenSource = new CancellationTokenSource(TimeSpan.FromSeconds(RequestTimeout ?? 100));
-                    HttpResponseMessage response = await httpClient.SendAsync(request, cancellationTokenSource.Token);
+                    HttpResponseMessage response = await _httpClient.SendAsync(request, cancellationTokenSource.Token);
                     return response.EnsureSuccessStatusCode();
                 })).Content.ReadAsStringAsync();
             }
@@ -180,7 +198,7 @@ namespace Flagsmith
         {
             try
             {
-                var json = await GetJSON(HttpMethod.Get, ApiUrl + "environment-document/");
+                var json = await GetJson(HttpMethod.Get, ApiUrl + "environment-document/");
                 Environment = JsonConvert.DeserializeObject<EnvironmentModel>(json);
                 Logger?.LogInformation("Local Environment updated: " + json);
             }
@@ -195,13 +213,13 @@ namespace Flagsmith
             try
             {
                 string url = ApiUrl.AppendPath("flags");
-                string json = await GetJSON(HttpMethod.Get, url);
+                string json = await GetJson(HttpMethod.Get, url);
                 var flags = JsonConvert.DeserializeObject<List<Flag>>(json)?.ToList<IFlag>();
-                return Flags.FromApiFlag(_AnalyticsProcessor, DefaultFlagHandler, flags);
+                return Flags.FromApiFlag(_analyticsProcessor, DefaultFlagHandler, flags);
             }
             catch (FlagsmithAPIError e)
             {
-                return DefaultFlagHandler != null ? Flags.FromApiFlag(_AnalyticsProcessor, DefaultFlagHandler, null) : throw e;
+                return DefaultFlagHandler != null ? Flags.FromApiFlag(_analyticsProcessor, DefaultFlagHandler, null) : throw e;
             }
         }
 
@@ -216,30 +234,30 @@ namespace Flagsmith
                 if (traits != null && traits.Count > 0)
                 {
                     jsonBody = JsonConvert.SerializeObject(new { identifier = identity, traits = traits ?? new List<ITrait>() });
-                    jsonResponse = await GetJSON(HttpMethod.Post, url, body: jsonBody);
+                    jsonResponse = await GetJson(HttpMethod.Post, url, body: jsonBody);
                 }
                 else
                 {
                     url += $"?identifier={identity}";
-                    jsonResponse = await GetJSON(HttpMethod.Get, url);
+                    jsonResponse = await GetJson(HttpMethod.Get, url);
                 }
 
                 var flags = JsonConvert.DeserializeObject<Identity>(jsonResponse)?.flags?.ToList<IFlag>();
-                return Flags.FromApiFlag(_AnalyticsProcessor, DefaultFlagHandler, flags);
+                return Flags.FromApiFlag(_analyticsProcessor, DefaultFlagHandler, flags);
             }
             catch (FlagsmithAPIError e)
             {
-                return DefaultFlagHandler != null ? Flags.FromApiFlag(_AnalyticsProcessor, DefaultFlagHandler, null) : throw e;
+                return DefaultFlagHandler != null ? Flags.FromApiFlag(_analyticsProcessor, DefaultFlagHandler, null) : throw e;
             }
-
         }
+
         private IFlags GetFeatureFlagsFromDocuments()
         {
-            return Flags.FromFeatureStateModel(_AnalyticsProcessor, DefaultFlagHandler, _Engine.GetEnvironmentFeatureStates(Environment));
+            return Flags.FromFeatureStateModel(_analyticsProcessor, DefaultFlagHandler, _engine.GetEnvironmentFeatureStates(Environment));
         }
+
         private IFlags GetIdentityFlagsFromDocument(string identifier, List<ITrait> traits)
         {
-
             List<TraitModel> traitModels = traits?.Count > 0
                 ? traits.Select(t => new TraitModel { TraitKey = t.GetTraitKey(), TraitValue = t.GetTraitValue() }).ToList()
                 : new List<TraitModel>();
@@ -251,8 +269,9 @@ namespace Flagsmith
                 IdentityTraits = traitModels
             };
 
-            return Flags.FromFeatureStateModel(_AnalyticsProcessor, DefaultFlagHandler, _Engine.GetIdentityFeatureStates(Environment, identity), identity.CompositeKey);
+            return Flags.FromFeatureStateModel(_analyticsProcessor, DefaultFlagHandler, _engine.GetIdentityFeatureStates(Environment, identity), identity.CompositeKey);
         }
-        ~FlagsmithClient() => _PollingManager?.StopPoll();
+
+        ~FlagsmithClient() => _pollingManager?.StopPoll();
     }
 }

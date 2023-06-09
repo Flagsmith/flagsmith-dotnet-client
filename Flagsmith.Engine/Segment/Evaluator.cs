@@ -7,7 +7,6 @@ using Semver;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 
 namespace FlagsmithEngine.Segment
 {
@@ -24,16 +23,15 @@ namespace FlagsmithEngine.Segment
         }
         static bool TraitsMatchSegmentRule(List<TraitModel> identityTraits, SegmentRuleModel rule, string segmentId, string identityId)
         {
-            var matchesConditions = rule.Conditions.Any() ?
-              rule.MatchingFunction(rule.Conditions.Select(c =>
-              TraitsMatchSegmentCondition(identityTraits, c, segmentId, identityId)).ToList()
-              ) : true;
+            var matchesConditions = !rule.Conditions.Any() || rule.MatchingFunction(rule.Conditions.Select(c =>
+                    TraitsMatchSegmentCondition(identityTraits, c, segmentId, identityId)).ToList()
+            );
             return matchesConditions && (rule.Rules?.All(r => TraitsMatchSegmentRule(identityTraits, r, segmentId, identityId)) ?? true);
         }
-        static bool TraitsMatchSegmentCondition(List<TraitModel> identityTraits, SegmentConditionModel condition, string segemntId, string identityId)
+        static bool TraitsMatchSegmentCondition(List<TraitModel> identityTraits, SegmentConditionModel condition, string segmentId, string identityId)
         {
             if (condition.Operator == Constants.PercentageSplit)
-                return Hashing.GetHashedPercentageForObjectIds(new List<string>() { segemntId, identityId }) <= float.Parse(condition.Value);
+                return Hashing.GetHashedPercentageForObjectIds(new List<string>() { segmentId, identityId }) <= float.Parse(condition.Value);
 
             var trait = identityTraits?.FirstOrDefault(t => t.TraitKey == condition.Property);
 
@@ -55,8 +53,12 @@ namespace FlagsmithEngine.Segment
                 {Constants.Regex, "EvaluateRegex"},
                 {Constants.Modulo, "EvaluateModulo"},
             };
-            if (exceptionOperatorMethods.ContainsKey(condition.Operator))
-                return (bool)typeof(SegmentConditionModel).GetMethod(exceptionOperatorMethods[condition.Operator]).Invoke(condition, new object[] { traitValue });
+            
+            if (exceptionOperatorMethods.TryGetValue(condition.Operator, out var operatorMethod))
+            {
+                return (bool)typeof(SegmentConditionModel).GetMethod(operatorMethod).Invoke(condition, new object[] { traitValue });
+            }
+
             return MatchingFunctionName(traitValue, condition);
         }
         static bool MatchingFunctionName(object traitValue, SegmentConditionModel condition)
