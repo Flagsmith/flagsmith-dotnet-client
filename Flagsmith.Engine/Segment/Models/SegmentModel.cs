@@ -12,8 +12,8 @@ namespace FlagsmithEngine.Segment.Models
         [JsonProperty("name")]
         public string Name { get; set; }
         [JsonProperty("rules")]
-        public List<SegmentRuleModel> Rules { get; set; }
+        public List<SegmentRuleModel> Rules { get; set; } = new List<SegmentRuleModel>();
         [JsonProperty("feature_states")]
-        public List<FeatureStateModel> FeatureStates { get; set; }
+        public List<FeatureStateModel> FeatureStates { get; set; } = new List<FeatureStateModel>();
     }
 }
