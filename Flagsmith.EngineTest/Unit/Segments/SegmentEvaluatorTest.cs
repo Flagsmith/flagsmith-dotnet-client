@@ -174,5 +174,27 @@ namespace EngineTest.Unit.Segments
             var result = Evaluator.EvaluateIdentityInSegment(Unit.Fixtures.Identity(), segment, null);
             Assert.Equal(expectedResult, result);
         }
+        [Theory]
+        [MemberData(nameof(TestCasesIdentities))]
+        public void TestIdentityInSegmentPercentageSplitUsesDjangoId(IdentityModel identity, bool expectedResult)
+        {
+            var percentage_split_condition = new SegmentConditionModel
+            {
+                Operator = Constants.PercentageSplit,
+                Value = "50",
+            };
+            var rule = new SegmentRuleModel { Type = Constants.AllRule, Conditions = new List<SegmentConditionModel> { percentage_split_condition } };
+            var segment = new SegmentModel { Id = 1, Name = "% split", Rules = new List<SegmentRuleModel> { rule } };
+
+            var result = Evaluator.EvaluateIdentityInSegment(identity, segment, null);
+
+            Assert.Equal(expectedResult, result);
+        }
+        public static IEnumerable<object[]> TestCasesIdentities() =>
+            new List<object[]>
+            {
+                new object[]{new IdentityModel(){ Identifier = "Test", EnvironmentApiKey = "key" }, true},
+                new object[]{new IdentityModel(){ DjangoId = 1, Identifier = "Test", EnvironmentApiKey = "key" }, false},
+            };
     }
 }

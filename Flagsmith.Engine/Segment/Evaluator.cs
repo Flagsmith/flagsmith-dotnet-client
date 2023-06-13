@@ -20,7 +20,8 @@ namespace FlagsmithEngine.Segment
         public static bool EvaluateIdentityInSegment(IdentityModel identity, SegmentModel segment, List<TraitModel> overrideTraits)
         {
             var traits = overrideTraits?.Any() == true ? overrideTraits : identity.IdentityTraits;
-            return segment.Rules?.Any() == true && segment.Rules.All(rule => TraitsMatchSegmentRule(traits, rule, segment.Id.ToString(), identity.CompositeKey));
+            var identityHashKey = identity.DjangoId == null ? identity.CompositeKey : identity.DjangoId.ToString();
+            return segment.Rules?.Any() == true && segment.Rules.All(rule => TraitsMatchSegmentRule(traits, rule, segment.Id.ToString(), identityHashKey));
         }
         static bool TraitsMatchSegmentRule(List<TraitModel> identityTraits, SegmentRuleModel rule, string segmentId, string identityId)
         {
