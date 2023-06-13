@@ -24,6 +24,7 @@ namespace FlagsmithEngine.Feature.Models
         [JsonProperty(PropertyName = "django_id")]
         public int DjangoId { get; set; }
         public string FeatureStateUUID { get; set; } = new Guid().ToString();
+        public int? IdentityId { get; set; } = null;
         [JsonProperty(PropertyName = "feature_segment")]
         public FeatureSegmentModel FeatureSegment { get; set; } = null;
         public object GetValue(string identityId = null) =>

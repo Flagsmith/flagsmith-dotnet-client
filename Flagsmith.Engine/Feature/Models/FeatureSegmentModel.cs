@@ -7,6 +7,7 @@ namespace FlagsmithEngine.Feature.Models
 {
     public class FeatureSegmentModel
     {
+        public int Id { get; set; }
         [JsonProperty(PropertyName = "priority")]
         public int Priority { get; set; }
     }
