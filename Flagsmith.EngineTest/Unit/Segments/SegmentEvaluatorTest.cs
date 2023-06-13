@@ -173,6 +173,7 @@ namespace EngineTest.Unit.Segments
             Evaluator.Hashing = hashingMock.Object;
             var result = Evaluator.EvaluateIdentityInSegment(Unit.Fixtures.Identity(), segment, null);
             Assert.Equal(expectedResult, result);
+            Evaluator.Hashing = new Hashing();
         }
         [Theory]
         [MemberData(nameof(TestCasesIdentities))]
