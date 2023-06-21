@@ -148,11 +148,8 @@ namespace Flagsmith
                 throw new FlagsmithClientError("Local evaluation required to obtain identity segments.");
             }
 
-            IdentityModel identityModel = new IdentityModel
-                { Identifier = identifier, IdentityTraits = traits?.Select(t => new TraitModel { TraitKey = t.GetTraitKey(), TraitValue = t.GetTraitValue() }).ToList() };
-            List<SegmentModel> segmentModels = Evaluator.GetIdentitySegments(
-                this.Environment, identityModel, new List<TraitModel>()
-            );
+            IdentityModel identityModel = new IdentityModel { Identifier = identifier, IdentityTraits = traits?.Select(t => new TraitModel { TraitKey = t.GetTraitKey(), TraitValue = t.GetTraitValue() }).ToList() };
+            List<SegmentModel> segmentModels = Evaluator.GetIdentitySegments(this.Environment, identityModel, new List<TraitModel>());
 
             return segmentModels?.Select(t => new Segment(id: t.Id, name: t.Name)).ToList<ISegment>();
         }
