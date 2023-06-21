@@ -43,7 +43,7 @@ namespace Flagsmith
         private Dictionary<string, string> CustomHeaders { get; set; }
         private EnvironmentModel Environment { get; set; }
         const string DefaultApiUrl = "https://edge.api.flagsmith.com/api/v1/";
-        
+
         private readonly HttpClient _httpClient;
         private readonly PollingManager _pollingManager;
         private readonly IEngine _engine;

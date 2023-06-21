@@ -13,6 +13,7 @@ namespace FlagsmithEngine.Segment
     public static class Evaluator
     {
         public static Hashing Hashing = new Hashing();
+
         public static List<SegmentModel> GetIdentitySegments(EnvironmentModel environmentModel, IdentityModel identity, List<TraitModel> overrideTraits)
             => environmentModel.Project.Segments.Where(s => EvaluateIdentityInSegment(identity, s, overrideTraits)).ToList();
 
@@ -21,6 +22,7 @@ namespace FlagsmithEngine.Segment
             var traits = overrideTraits?.Any() == true ? overrideTraits : identity.IdentityTraits;
             return segment.Rules?.Any() == true && segment.Rules.All(rule => TraitsMatchSegmentRule(traits, rule, segment.Id.ToString(), identity.CompositeKey));
         }
+
         static bool TraitsMatchSegmentRule(List<TraitModel> identityTraits, SegmentRuleModel rule, string segmentId, string identityId)
         {
             var matchesConditions = !rule.Conditions.Any() || rule.MatchingFunction(rule.Conditions.Select(c =>
@@ -28,6 +30,7 @@ namespace FlagsmithEngine.Segment
             );
             return matchesConditions && (rule.Rules?.All(r => TraitsMatchSegmentRule(identityTraits, r, segmentId, identityId)) ?? true);
         }
+
         static bool TraitsMatchSegmentCondition(List<TraitModel> identityTraits, SegmentConditionModel condition, string segmentId, string identityId)
         {
             if (condition.Operator == Constants.PercentageSplit)
@@ -46,14 +49,16 @@ namespace FlagsmithEngine.Segment
 
             return trait != null && MatchesTraitValue(trait.TraitValue, condition);
         }
+
         public static bool MatchesTraitValue(object traitValue, SegmentConditionModel condition)
         {
-            var exceptionOperatorMethods = new Dictionary<string, string>(){
-                {Constants.NotContains, "EvaluateNotContains"},
-                {Constants.Regex, "EvaluateRegex"},
-                {Constants.Modulo, "EvaluateModulo"},
+            var exceptionOperatorMethods = new Dictionary<string, string>()
+            {
+                { Constants.NotContains, "EvaluateNotContains" },
+                { Constants.Regex, "EvaluateRegex" },
+                { Constants.Modulo, "EvaluateModulo" },
             };
-            
+
             if (exceptionOperatorMethods.TryGetValue(condition.Operator, out var operatorMethod))
             {
                 return (bool)typeof(SegmentConditionModel).GetMethod(operatorMethod).Invoke(condition, new object[] { traitValue });
@@ -61,6 +66,7 @@ namespace FlagsmithEngine.Segment
 
             return MatchingFunctionName(traitValue, condition);
         }
+
         static bool MatchingFunctionName(object traitValue, SegmentConditionModel condition)
         {
             switch (traitValue.GetType().FullName)
@@ -77,6 +83,7 @@ namespace FlagsmithEngine.Segment
                     return stringOperations((string)traitValue, condition);
             }
         }
+
         static bool stringOperations(string traitValue, SegmentConditionModel condition)
         {
             var currentValue = condition.Value;
@@ -94,6 +101,7 @@ namespace FlagsmithEngine.Segment
                 default: throw new ArgumentException("Invalid Operator");
             }
         }
+
         static bool longOperations(long traitValue, SegmentConditionModel condition)
         {
             var currentValue = Convert.ToInt64(condition.Value);
@@ -108,6 +116,7 @@ namespace FlagsmithEngine.Segment
                 default: throw new ArgumentException("Invalid Operator");
             }
         }
+
         static bool intOperations(long traitValue, SegmentConditionModel condition)
         {
             var currentValue = Convert.ToInt32(condition.Value);
@@ -122,6 +131,7 @@ namespace FlagsmithEngine.Segment
                 default: throw new ArgumentException("Invalid Operator");
             }
         }
+
         static bool doubleOperations(double traitValue, SegmentConditionModel condition)
         {
             var currentValue = Convert.ToDouble(condition.Value);
@@ -136,6 +146,7 @@ namespace FlagsmithEngine.Segment
                 default: throw new ArgumentException("Invalid Operator");
             }
         }
+
         static bool boolOperations(bool traitValue, SegmentConditionModel condition)
         {
             var currentValue = Convert.ToBoolean(condition.Value);
@@ -171,6 +182,5 @@ namespace FlagsmithEngine.Segment
                 return false;
             }
         }
-
     }
 }
