@@ -99,6 +99,13 @@ namespace EngineTest.Unit.Segments
                 new object[]{Constants.Modulo, 2.0, "2.0|0", true},
                 new object[]{Constants.Modulo, "foo", "2|0", false},
                 new object[]{Constants.Modulo, "foo", "foo|bar", false},
+                new object[]{Constants.In, "foo", "", false},
+                new object[]{Constants.In, "foo", "foo, bar", true},
+                new object[]{Constants.In, "bar", "foo, bar", true},
+                new object[]{Constants.In, "foo", "foo", true},
+                new object[]{Constants.In, 1, "1,2,3,4", true},
+                new object[]{Constants.In, 1, "", false},
+                new object[]{Constants.In, 1, "1", true},
             };
         [Theory]
         [MemberData(nameof(TestCasesIdentityInSegment))]

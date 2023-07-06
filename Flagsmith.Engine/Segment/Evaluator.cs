@@ -53,11 +53,11 @@ namespace FlagsmithEngine.Segment
 
         public static bool MatchesTraitValue(object traitValue, SegmentConditionModel condition)
         {
-            var exceptionOperatorMethods = new Dictionary<string, string>()
-            {
-                { Constants.NotContains, "EvaluateNotContains" },
-                { Constants.Regex, "EvaluateRegex" },
-                { Constants.Modulo, "EvaluateModulo" },
+            var exceptionOperatorMethods = new Dictionary<string, string>(){
+                {Constants.In, "EvaluateIn"},
+                {Constants.NotContains, "EvaluateNotContains"},
+                {Constants.Regex, "EvaluateRegex"},
+                {Constants.Modulo, "EvaluateModulo"},
             };
 
             if (exceptionOperatorMethods.TryGetValue(condition.Operator, out var operatorMethod))
