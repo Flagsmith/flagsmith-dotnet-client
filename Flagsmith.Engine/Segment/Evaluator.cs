@@ -55,6 +55,7 @@ namespace FlagsmithEngine.Segment
         {
             var exceptionOperatorMethods = new Dictionary<string, string>()
             {
+                { Constants.In, "EvaluateIn" },
                 { Constants.NotContains, "EvaluateNotContains" },
                 { Constants.Regex, "EvaluateRegex" },
                 { Constants.Modulo, "EvaluateModulo" },
@@ -62,7 +63,7 @@ namespace FlagsmithEngine.Segment
 
             if (exceptionOperatorMethods.TryGetValue(condition.Operator, out var operatorMethod))
             {
-                return (bool)typeof(SegmentConditionModel).GetMethod(operatorMethod).Invoke(condition, new object[] { traitValue });
+                return (bool)typeof(SegmentConditionModel).GetMethod(operatorMethod).Invoke(condition, new object[] { traitValue.ToString() });
             }
 
             return MatchingFunctionName(traitValue, condition);
