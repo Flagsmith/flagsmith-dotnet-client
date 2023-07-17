@@ -100,12 +100,17 @@ namespace EngineTest.Unit.Segments
                 new object[]{Constants.Modulo, "foo", "2|0", false},
                 new object[]{Constants.Modulo, "foo", "foo|bar", false},
                 new object[]{Constants.In, "foo", "", false},
-                new object[]{Constants.In, "foo", "foo, bar", true},
-                new object[]{Constants.In, "bar", "foo, bar", true},
+                new object[]{Constants.In, "foo", "foo,bar", true},
+                new object[]{Constants.In, "bar", "foo,bar", true},
+                new object[]{Constants.In, "ba", "foo,bar", false},
                 new object[]{Constants.In, "foo", "foo", true},
                 new object[]{Constants.In, 1, "1,2,3,4", true},
                 new object[]{Constants.In, 1, "", false},
                 new object[]{Constants.In, 1, "1", true},
+                // Flagsmith's engine does not evaluate `IN` condition for floats/doubles and booleans
+                // due to ambiguous serialization across supported platforms.
+                new object[]{Constants.In, 1.5, "1.5", false},
+                new object[]{Constants.In, false, "false", false},
             };
         [Theory]
         [MemberData(nameof(TestCasesIdentityInSegment))]
