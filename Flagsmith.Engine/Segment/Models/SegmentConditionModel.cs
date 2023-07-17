@@ -12,7 +12,6 @@ namespace FlagsmithEngine.Segment.Models
         [JsonProperty("property_")]
         public string Property { get; set; }
 
-        public bool EvaluateIn(string traitValue) => Value.Contains(traitValue);
         public bool EvaluateNotContains(string traitValue) => !traitValue.Contains(Value);
         public bool EvaluateRegex(string traitValue) => Regex.Match(traitValue, Value).Success;
         public bool EvaluateModulo(string traitValue)
