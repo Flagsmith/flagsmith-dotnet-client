@@ -14,7 +14,7 @@ namespace FlagsmithEngine.Segment.Models
 
         public bool EvaluateNotContains(string traitValue) => !traitValue.Contains(Value);
         public bool EvaluateRegex(string traitValue) => Regex.Match(traitValue, Value).Success;
-        public bool EvaluateModulo(object traitValue)
+        public bool EvaluateModulo(string traitValue)
         {
             try
             {

@@ -62,7 +62,7 @@ namespace FlagsmithEngine.Segment
 
             if (exceptionOperatorMethods.TryGetValue(condition.Operator, out var operatorMethod))
             {
-                return (bool)typeof(SegmentConditionModel).GetMethod(operatorMethod).Invoke(condition, new object[] { traitValue });
+                return (bool)typeof(SegmentConditionModel).GetMethod(operatorMethod).Invoke(condition, new object[] { traitValue.ToString() });
             }
 
             return MatchingFunctionName(traitValue, condition);
@@ -99,62 +99,63 @@ namespace FlagsmithEngine.Segment
                 case Constants.Equal: return traitValue == currentValue;
                 case Constants.NotEqual: return traitValue != currentValue;
                 case Constants.Contains: return traitValue.Contains(currentValue);
+                case Constants.In: return condition.Value.Split(',').Contains(traitValue);
                 default: throw new ArgumentException("Invalid Operator");
             }
         }
 
         static bool longOperations(long traitValue, SegmentConditionModel condition)
         {
-            var currentValue = Convert.ToInt64(condition.Value);
             switch (condition.Operator)
             {
-                case Constants.Equal: return traitValue == currentValue;
-                case Constants.NotEqual: return traitValue != currentValue;
-                case Constants.GreaterThan: return traitValue > currentValue;
-                case Constants.GreaterThanInclusive: return traitValue >= currentValue;
-                case Constants.LessThan: return traitValue < currentValue;
-                case Constants.LessThanInclusive: return traitValue <= currentValue;
+                case Constants.Equal: return traitValue == Convert.ToInt64(condition.Value);
+                case Constants.NotEqual: return traitValue != Convert.ToInt64(condition.Value);
+                case Constants.GreaterThan: return traitValue > Convert.ToInt64(condition.Value);
+                case Constants.GreaterThanInclusive: return traitValue >= Convert.ToInt64(condition.Value);
+                case Constants.LessThan: return traitValue < Convert.ToInt64(condition.Value);
+                case Constants.LessThanInclusive: return traitValue <= Convert.ToInt64(condition.Value);
+                case Constants.In: return condition.Value.Split(',').Contains(traitValue.ToString());
                 default: throw new ArgumentException("Invalid Operator");
             }
         }
 
         static bool intOperations(long traitValue, SegmentConditionModel condition)
         {
-            var currentValue = Convert.ToInt32(condition.Value);
             switch (condition.Operator)
             {
-                case Constants.Equal: return traitValue == currentValue;
-                case Constants.NotEqual: return traitValue != currentValue;
-                case Constants.GreaterThan: return traitValue > currentValue;
-                case Constants.GreaterThanInclusive: return traitValue >= currentValue;
-                case Constants.LessThan: return traitValue < currentValue;
-                case Constants.LessThanInclusive: return traitValue <= currentValue;
+                case Constants.Equal: return traitValue == Convert.ToInt32(condition.Value);
+                case Constants.NotEqual: return traitValue != Convert.ToInt32(condition.Value);
+                case Constants.GreaterThan: return traitValue > Convert.ToInt32(condition.Value);
+                case Constants.GreaterThanInclusive: return traitValue >= Convert.ToInt32(condition.Value);
+                case Constants.LessThan: return traitValue < Convert.ToInt32(condition.Value);
+                case Constants.LessThanInclusive: return traitValue <= Convert.ToInt32(condition.Value);
+                case Constants.In: return condition.Value.Split(',').Contains(traitValue.ToString());
                 default: throw new ArgumentException("Invalid Operator");
             }
         }
 
         static bool doubleOperations(double traitValue, SegmentConditionModel condition)
         {
-            var currentValue = Convert.ToDouble(condition.Value);
             switch (condition.Operator)
             {
-                case Constants.Equal: return traitValue == currentValue;
-                case Constants.NotEqual: return traitValue != currentValue;
-                case Constants.GreaterThan: return traitValue > currentValue;
-                case Constants.GreaterThanInclusive: return traitValue >= currentValue;
-                case Constants.LessThan: return traitValue < currentValue;
-                case Constants.LessThanInclusive: return traitValue <= currentValue;
+                case Constants.Equal: return traitValue == Convert.ToDouble(condition.Value);
+                case Constants.NotEqual: return traitValue != Convert.ToDouble(condition.Value);
+                case Constants.GreaterThan: return traitValue > Convert.ToDouble(condition.Value);
+                case Constants.GreaterThanInclusive: return traitValue >= Convert.ToDouble(condition.Value);
+                case Constants.LessThan: return traitValue < Convert.ToDouble(condition.Value);
+                case Constants.LessThanInclusive: return traitValue <= Convert.ToDouble(condition.Value);
+                case Constants.In: return false;
                 default: throw new ArgumentException("Invalid Operator");
             }
         }
 
         static bool boolOperations(bool traitValue, SegmentConditionModel condition)
         {
-            var currentValue = Convert.ToBoolean(condition.Value);
             switch (condition.Operator)
             {
-                case Constants.Equal: return traitValue == currentValue;
-                case Constants.NotEqual: return traitValue != currentValue;
+                case Constants.Equal: return traitValue == Convert.ToBoolean(condition.Value);
+                case Constants.NotEqual: return traitValue != Convert.ToBoolean(condition.Value);
+                case Constants.In: return false;
                 default: throw new ArgumentException("Invalid Operator");
             }
         }

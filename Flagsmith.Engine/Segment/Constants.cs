@@ -23,5 +23,6 @@ namespace FlagsmithEngine.Segment
         public const string IsSet = "IS_SET";
         public const string IsNotSet = "IS_NOT_SET";
         public const string Modulo = "MODULO";
+        public const string In = "IN";
     }
 }
