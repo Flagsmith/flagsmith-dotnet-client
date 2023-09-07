@@ -92,6 +92,7 @@ namespace Flagsmith
                 _analyticsProcessor = new AnalyticsProcessor(this._httpClient, EnvironmentKey, ApiUrl, Logger, CustomHeaders);
             if (EnableClientSideEvaluation)
             {
+                this.GetAndUpdateEnvironmentFromApi().Wait();
                 _pollingManager = new PollingManager(GetAndUpdateEnvironmentFromApi, EnvironmentRefreshIntervalSeconds);
                 _ = _pollingManager.StartPoll();
             }
