@@ -11,7 +11,7 @@ namespace Flagsmith
         Func<Task> _CallBack;
         int _Interval;
         /// <summary>
-        /// 
+        ///
         /// </summary>
         /// <param name="callBack">Awaitable function that will be polled.</param>
         /// <param name="intervalSeconds">Total delay in seconds between continous exection of callback.</param>
@@ -29,8 +29,8 @@ namespace Flagsmith
             _CancellationTokenSource.Token.ThrowIfCancellationRequested();
             while (true)
             {
-                await _CallBack.Invoke();
                 await Task.Delay(_Interval, _CancellationTokenSource.Token);
+                await _CallBack.Invoke();
                 if (_CancellationTokenSource.Token.IsCancellationRequested)
                     break;
             }
