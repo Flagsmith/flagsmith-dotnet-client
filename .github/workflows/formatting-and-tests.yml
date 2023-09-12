@@ -53,7 +53,7 @@ jobs:
                 submodules: recursive
 
           - name: Set up Dotnet ${{ matrix.dotnet-version }}
-            uses: actions/setup-dotnet@v3
+            uses: actions/setup-dotnet@v2
             with:
                 dotnet-version: ${{ matrix.dotnet-version }}
 
