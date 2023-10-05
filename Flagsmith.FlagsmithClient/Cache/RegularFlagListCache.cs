@@ -4,12 +4,12 @@ namespace Flagsmith.Cache
 {
     internal class RegularFlagListCache : FlagListCache
     {
-        public RegularFlagListCache(IDateTimeProvider dateTimeProvider, Flags flags, int cacheDurationInMinutes) : 
+        public RegularFlagListCache(IDateTimeProvider dateTimeProvider, IFlags flags, int cacheDurationInMinutes) : 
             base(dateTimeProvider, flags, cacheDurationInMinutes)
         {
         }
 
-        public Flags GetLatestFlags(GetRegularFlagsDelegate getFlagsDelegate)
+        public IFlags GetLatestFlags(GetRegularFlagsDelegate getFlagsDelegate)
         {
             if (IsCacheStale())
             {

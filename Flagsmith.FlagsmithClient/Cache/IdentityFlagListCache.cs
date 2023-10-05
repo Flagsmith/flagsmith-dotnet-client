@@ -6,13 +6,13 @@ namespace Flagsmith.Cache
     {
         private readonly IdentityTraitsKey _identityTraitsKey;
 
-        public IdentityFlagListCache(IdentityTraitsKey identityTraitsKey, Flags flags, IDateTimeProvider dateTimeProvider, int cacheDurationInMinutes) : 
+        public IdentityFlagListCache(IdentityTraitsKey identityTraitsKey, IFlags flags, IDateTimeProvider dateTimeProvider, int cacheDurationInMinutes) : 
             base(dateTimeProvider, flags, cacheDurationInMinutes)
         {
             _identityTraitsKey = identityTraitsKey;
         }
 
-        public Flags GetLatestFlags(GetIdentityFlagsDelegate getFlagsDelegate)
+        public IFlags GetLatestFlags(GetIdentityFlagsDelegate getFlagsDelegate)
         {
             if (IsCacheStale())
             {

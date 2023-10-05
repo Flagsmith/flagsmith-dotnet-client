@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
 using System.Text;
@@ -173,11 +172,11 @@ namespace Flagsmith
             return await GetIdentityFlagsFromCorrectSource(identityTraitsKey);
         }
 
-        public async Task<Flags> GetIdentityFlagsFromCorrectSource(IdentityTraitsKey identityTraitsKey)
+        public async Task<IFlags> GetIdentityFlagsFromCorrectSource(IdentityTraitsKey identityTraitsKey)
         {
             if (Environment != null)
             {
-                return GetIdentityFlagsFromDocuments(identityTraitsKey.Identity, identityTraitsKey.Traits);
+                return GetIdentityFlagsFromDocument(identityTraitsKey.Identity, identityTraitsKey.Traits);
             }
 
             return await GetIdentityFlagsFromApi(identityTraitsKey.Identity, identityTraitsKey.Traits);

@@ -7,9 +7,9 @@ namespace Flagsmith
     public class IdentityTraitsKey
     {
         public string Identity { get; set; }
-        public List<Trait> Traits { get; set; }
+        public List<ITrait> Traits { get; set; }
         
-        public IdentityTraitsKey(string identity, List<Trait> traits)
+        public IdentityTraitsKey(string identity, List<ITrait> traits)
         {
             Identity = identity;
             Traits = traits;

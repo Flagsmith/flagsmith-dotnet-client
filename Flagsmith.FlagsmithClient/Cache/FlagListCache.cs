@@ -8,14 +8,14 @@ namespace Flagsmith.Cache
     {
         private readonly int _cacheDurationInMinutes;
         
-        public delegate Task<Flags> GetRegularFlagsDelegate();
-        public delegate Task<Flags> GetIdentityFlagsDelegate(IdentityTraitsKey identityTraitsKey);
+        public delegate Task<IFlags> GetRegularFlagsDelegate();
+        public delegate Task<IFlags> GetIdentityFlagsDelegate(IdentityTraitsKey identityTraitsKey);
 
-        protected Flags _flags;
+        protected IFlags _flags;
         protected readonly IDateTimeProvider _dateTimeProvider;
         protected DateTime _timestamp;
 
-        protected FlagListCache(IDateTimeProvider dateTimeProvider, Flags flags, int cacheDurationInMinutes)
+        protected FlagListCache(IDateTimeProvider dateTimeProvider, IFlags flags, int cacheDurationInMinutes)
         {
             _flags = flags;
             _dateTimeProvider = dateTimeProvider;
