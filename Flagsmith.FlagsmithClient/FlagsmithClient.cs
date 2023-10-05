@@ -16,6 +16,8 @@ using Microsoft.Extensions.Logging;
 using System.Threading;
 using Flagsmith.Extensions;
 using System.Linq;
+using Flagsmith.Cache;
+using Flagsmith.Providers;
 
 namespace Flagsmith
 {
@@ -40,6 +42,8 @@ namespace Flagsmith
         private bool EnableAnalytics { get; set; }
         private double? RequestTimeout { get; set; }
         private int? Retries { get; set; }
+        private bool CachingEnabled { get; set; }
+        private int CacheDurationInMinutes { get; set; }
         private Dictionary<string, string> CustomHeaders { get; set; }
         private EnvironmentModel Environment { get; set; }
         const string DefaultApiUrl = "https://edge.api.flagsmith.com/api/v1/";
@@ -48,6 +52,9 @@ namespace Flagsmith
         private readonly PollingManager _pollingManager;
         private readonly IEngine _engine;
         private readonly AnalyticsProcessor _analyticsProcessor;
+        
+        private readonly RegularFlagListCache _regularFlagListCache;
+        private readonly Dictionary<string, IdentityFlagListCache> _flagListCacheDictionary;
 
         /// <summary>
         /// Create flagsmith client.
@@ -63,6 +70,8 @@ namespace Flagsmith
         /// <param name="retries">Total http retries for every failing request before throwing the final error.</param>
         /// <param name="requestTimeout">Number of seconds to wait for a request to complete before terminating the request</param>
         /// <param name="httpClient">Http client used for flagsmith-API requests</param>
+        /// <param name="cachingEnabled">If the FlagsmithClient use caching</param>
+        /// <param name="cacheDurationInMinutes">How many minutes before cache becomes stale. Default = 5</param>
         public FlagsmithClient(
             string environmentKey,
             string apiUrl = DefaultApiUrl,
@@ -74,7 +83,9 @@ namespace Flagsmith
             Dictionary<string, string> customHeaders = null,
             int retries = 1,
             double? requestTimeout = null,
-            HttpClient httpClient = null)
+            HttpClient httpClient = null,
+            bool cachingEnabled = false,
+            int cacheDurationInMinutes = 5)
         {
             this.EnvironmentKey = environmentKey;
             this.ApiUrl = apiUrl;
@@ -87,6 +98,8 @@ namespace Flagsmith
             this.Retries = retries;
             this.RequestTimeout = requestTimeout;
             this._httpClient = httpClient ?? new HttpClient();
+            this.CachingEnabled = cachingEnabled;
+            this.CacheDurationInMinutes = cacheDurationInMinutes;
             _engine = new Engine();
             if (EnableAnalytics)
                 _analyticsProcessor = new AnalyticsProcessor(this._httpClient, EnvironmentKey, ApiUrl, Logger, CustomHeaders);
@@ -94,6 +107,15 @@ namespace Flagsmith
             {
                 _pollingManager = new PollingManager(GetAndUpdateEnvironmentFromApi, EnvironmentRefreshIntervalSeconds);
                 _ = _pollingManager.StartPoll();
+            }
+            
+            if (CachingEnabled)
+            {
+                _regularFlagListCache = new RegularFlagListCache(new DateTimeProvider(),
+                    GetEnvironmentFlags().Result,
+                    CacheDurationInMinutes);
+                
+                _flagListCacheDictionary = new Dictionary<string, IdentityFlagListCache>();
             }
         }
 
@@ -113,7 +135,19 @@ namespace Flagsmith
         /// Get all the default for flags for the current environment.
         /// </summary>
         public async Task<IFlags> GetEnvironmentFlags()
-            => Environment != null ? GetFeatureFlagsFromDocuments() : await GetFeatureFlagsFromApi();
+        {
+            if (CachingEnabled)
+            {
+                return _regularFlagListCache.GetLatestFlags(GetFeatureFlagsFromCorrectSource);
+            }
+            
+            return await GetFeatureFlagsFromCorrectSource();
+        }
+        
+        private async Task<IFlags> GetFeatureFlagsFromCorrectSource()
+        {
+            return Environment != null ? GetFeatureFlagsFromDocuments() : await GetFeatureFlagsFromApi();
+        }
 
         /// <summary>
         /// Get all the flags for the current environment for a given identity.
@@ -128,12 +162,25 @@ namespace Flagsmith
         /// </summary>
         public async Task<IFlags> GetIdentityFlags(string identity, List<ITrait> traits)
         {
+            IdentityTraitsKey identityTraitsKey = new IdentityTraitsKey(identity, traits);
+            if (CachingEnabled)
+            {
+                var flagListCache = GetFlagListCacheByIdentity(identityTraitsKey);
+
+                return flagListCache.GetLatestFlags(GetIdentityFlagsFromCorrectSource);
+            }
+            
+            return await GetIdentityFlagsFromCorrectSource(identityTraitsKey);
+        }
+
+        public async Task<Flags> GetIdentityFlagsFromCorrectSource(IdentityTraitsKey identityTraitsKey)
+        {
             if (Environment != null)
             {
-                return GetIdentityFlagsFromDocument(identity, traits);
+                return GetIdentityFlagsFromDocuments(identityTraitsKey.Identity, identityTraitsKey.Traits);
             }
 
-            return await GetIdentityFlagsFromApi(identity, traits);
+            return await GetIdentityFlagsFromApi(identityTraitsKey.Identity, identityTraitsKey.Traits);
         }
 
         public List<ISegment> GetIdentitySegments(string identifier)
@@ -152,6 +199,22 @@ namespace Flagsmith
             List<SegmentModel> segmentModels = Evaluator.GetIdentitySegments(this.Environment, identityModel, new List<TraitModel>());
 
             return segmentModels?.Select(t => new Segment(id: t.Id, name: t.Name)).ToList<ISegment>();
+        }
+        
+        private IdentityFlagListCache GetFlagListCacheByIdentity(IdentityTraitsKey identityTraitsKey)
+        {
+            var flagListCache = _flagListCacheDictionary[identityTraitsKey.GenerateUniqueKey()];
+
+            if (flagListCache == null)
+            {
+                flagListCache = new IdentityFlagListCache(identityTraitsKey, 
+                    GetIdentityFlags(identityTraitsKey.Identity, identityTraitsKey.Traits).Result, 
+                    new DateTimeProvider(), 
+                    CacheDurationInMinutes);
+                _flagListCacheDictionary.Add(identityTraitsKey.GenerateUniqueKey(), flagListCache);
+            }
+
+            return flagListCache;
         }
 
         private async Task<string> GetJson(HttpMethod method, string url, string body = null)
