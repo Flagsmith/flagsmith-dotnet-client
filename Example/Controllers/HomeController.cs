@@ -21,7 +21,7 @@ namespace Example.Controllers
         {
             var request = HttpContext.Request;
             string Identifier = request.Query["identifier"].ToString();
-            
+
             IFlags flags;
 
             if (!string.IsNullOrWhiteSpace(Identifier))

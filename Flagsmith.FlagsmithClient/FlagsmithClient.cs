@@ -51,7 +51,6 @@ namespace Flagsmith
         private readonly PollingManager _pollingManager;
         private readonly IEngine _engine;
         private readonly AnalyticsProcessor _analyticsProcessor;
-        
         private readonly RegularFlagListCache _regularFlagListCache;
         private readonly Dictionary<string, IdentityFlagListCache> _flagListCacheDictionary;
 
@@ -107,13 +106,11 @@ namespace Flagsmith
                 _pollingManager = new PollingManager(GetAndUpdateEnvironmentFromApi, EnvironmentRefreshIntervalSeconds);
                 _ = _pollingManager.StartPoll();
             }
-            
             if (CachingEnabled)
             {
                 _regularFlagListCache = new RegularFlagListCache(new DateTimeProvider(),
                     GetEnvironmentFlags().Result,
                     CacheDurationInMinutes);
-                
                 _flagListCacheDictionary = new Dictionary<string, IdentityFlagListCache>();
             }
         }
@@ -139,10 +136,9 @@ namespace Flagsmith
             {
                 return _regularFlagListCache.GetLatestFlags(GetFeatureFlagsFromCorrectSource);
             }
-            
             return await GetFeatureFlagsFromCorrectSource();
         }
-        
+
         private async Task<IFlags> GetFeatureFlagsFromCorrectSource()
         {
             return Environment != null ? GetFeatureFlagsFromDocuments() : await GetFeatureFlagsFromApi();
@@ -168,7 +164,6 @@ namespace Flagsmith
 
                 return flagListCache.GetLatestFlags(GetIdentityFlagsFromCorrectSource);
             }
-            
             return await GetIdentityFlagsFromCorrectSource(identityTraitsKey);
         }
 
@@ -199,16 +194,16 @@ namespace Flagsmith
 
             return segmentModels?.Select(t => new Segment(id: t.Id, name: t.Name)).ToList<ISegment>();
         }
-        
+
         private IdentityFlagListCache GetFlagListCacheByIdentity(IdentityTraitsKey identityTraitsKey)
         {
             var flagListCache = _flagListCacheDictionary[identityTraitsKey.GenerateUniqueKey()];
 
             if (flagListCache == null)
             {
-                flagListCache = new IdentityFlagListCache(identityTraitsKey, 
-                    GetIdentityFlags(identityTraitsKey.Identity, identityTraitsKey.Traits).Result, 
-                    new DateTimeProvider(), 
+                flagListCache = new IdentityFlagListCache(identityTraitsKey,
+                    GetIdentityFlags(identityTraitsKey.Identity, identityTraitsKey.Traits).Result,
+                    new DateTimeProvider(),
                     CacheDurationInMinutes);
                 _flagListCacheDictionary.Add(identityTraitsKey.GenerateUniqueKey(), flagListCache);
             }

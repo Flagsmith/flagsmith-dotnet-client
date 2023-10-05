@@ -6,7 +6,7 @@ namespace Flagsmith.Cache
     {
         private readonly IdentityTraitsKey _identityTraitsKey;
 
-        public IdentityFlagListCache(IdentityTraitsKey identityTraitsKey, IFlags flags, IDateTimeProvider dateTimeProvider, int cacheDurationInMinutes) : 
+        public IdentityFlagListCache(IdentityTraitsKey identityTraitsKey, IFlags flags, IDateTimeProvider dateTimeProvider, int cacheDurationInMinutes) :
             base(dateTimeProvider, flags, cacheDurationInMinutes)
         {
             _identityTraitsKey = identityTraitsKey;
