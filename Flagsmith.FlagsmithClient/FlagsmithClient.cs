@@ -41,8 +41,7 @@ namespace Flagsmith
         private bool EnableAnalytics { get; set; }
         private double? RequestTimeout { get; set; }
         private int? Retries { get; set; }
-        private bool CachingEnabled { get; set; }
-        private int CacheDurationInMinutes { get; set; }
+        private CacheConfig CacheConfig { get; set; }
         private Dictionary<string, string> CustomHeaders { get; set; }
         private EnvironmentModel Environment { get; set; }
         const string DefaultApiUrl = "https://edge.api.flagsmith.com/api/v1/";
@@ -82,8 +81,7 @@ namespace Flagsmith
             int retries = 1,
             double? requestTimeout = null,
             HttpClient httpClient = null,
-            bool cachingEnabled = false,
-            int cacheDurationInMinutes = 5)
+            CacheConfig cacheConfig = null)
         {
             this.EnvironmentKey = environmentKey;
             this.ApiUrl = apiUrl;
@@ -96,8 +94,7 @@ namespace Flagsmith
             this.Retries = retries;
             this.RequestTimeout = requestTimeout;
             this._httpClient = httpClient ?? new HttpClient();
-            this.CachingEnabled = cachingEnabled;
-            this.CacheDurationInMinutes = cacheDurationInMinutes;
+            this.CacheConfig = cacheConfig ?? new CacheConfig(false);
             _engine = new Engine();
             if (EnableAnalytics)
                 _analyticsProcessor = new AnalyticsProcessor(this._httpClient, EnvironmentKey, ApiUrl, Logger, CustomHeaders);
@@ -106,11 +103,11 @@ namespace Flagsmith
                 _pollingManager = new PollingManager(GetAndUpdateEnvironmentFromApi, EnvironmentRefreshIntervalSeconds);
                 _ = _pollingManager.StartPoll();
             }
-            if (CachingEnabled)
+            if (CacheConfig.Enabled)
             {
                 _regularFlagListCache = new RegularFlagListCache(new DateTimeProvider(),
                     GetEnvironmentFlags().Result,
-                    CacheDurationInMinutes);
+                    CacheConfig.DurationInMinutes);
                 _flagListCacheDictionary = new Dictionary<string, IdentityFlagListCache>();
             }
         }
@@ -132,7 +129,7 @@ namespace Flagsmith
         /// </summary>
         public async Task<IFlags> GetEnvironmentFlags()
         {
-            if (CachingEnabled)
+            if (CacheConfig.Enabled)
             {
                 return _regularFlagListCache.GetLatestFlags(GetFeatureFlagsFromCorrectSource);
             }
@@ -147,18 +144,18 @@ namespace Flagsmith
         /// <summary>
         /// Get all the flags for the current environment for a given identity.
         /// </summary>
-        public async Task<IFlags> GetIdentityFlags(string identity)
+        public async Task<IFlags> GetIdentityFlags(string identifier)
         {
-            return await GetIdentityFlags(identity, null);
+            return await GetIdentityFlags(identifier, null);
         }
 
         /// <summary>
         /// Get all the flags for the current environment for a given identity with provided traits.
         /// </summary>
-        public async Task<IFlags> GetIdentityFlags(string identity, List<ITrait> traits)
+        public async Task<IFlags> GetIdentityFlags(string identifier, List<ITrait> traits)
         {
-            IdentityTraitsKey identityTraitsKey = new IdentityTraitsKey(identity, traits);
-            if (CachingEnabled)
+            IdentityTraitsKey identityTraitsKey = new IdentityTraitsKey(identifier, traits);
+            if (CacheConfig.Enabled)
             {
                 var flagListCache = GetFlagListCacheByIdentity(identityTraitsKey);
 
@@ -171,10 +168,10 @@ namespace Flagsmith
         {
             if (Environment != null)
             {
-                return GetIdentityFlagsFromDocument(identityTraitsKey.Identity, identityTraitsKey.Traits);
+                return GetIdentityFlagsFromDocument(identityTraitsKey.Identifier, identityTraitsKey.Traits);
             }
 
-            return await GetIdentityFlagsFromApi(identityTraitsKey.Identity, identityTraitsKey.Traits);
+            return await GetIdentityFlagsFromApi(identityTraitsKey.Identifier, identityTraitsKey.Traits);
         }
 
         public List<ISegment> GetIdentitySegments(string identifier)
@@ -202,9 +199,9 @@ namespace Flagsmith
             if (flagListCache == null)
             {
                 flagListCache = new IdentityFlagListCache(identityTraitsKey,
-                    GetIdentityFlags(identityTraitsKey.Identity, identityTraitsKey.Traits).Result,
+                    GetIdentityFlags(identityTraitsKey.Identifier, identityTraitsKey.Traits).Result,
                     new DateTimeProvider(),
-                    CacheDurationInMinutes);
+                    CacheConfig.DurationInMinutes);
                 _flagListCacheDictionary.Add(identityTraitsKey.GenerateUniqueKey(), flagListCache);
             }
 
