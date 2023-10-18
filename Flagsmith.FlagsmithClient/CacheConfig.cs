@@ -4,7 +4,7 @@
     {
         public bool Enabled { get; set; }
         public int DurationInMinutes { get; set; }
-        
+
         public CacheConfig(bool enabled)
         {
             Enabled = enabled;
