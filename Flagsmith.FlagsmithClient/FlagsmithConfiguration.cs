@@ -52,6 +52,12 @@ namespace Flagsmith
         /// Additional headers to add to requests made to the Flagsmith API
         /// </summary>
         public Dictionary<string, string> CustomHeaders { get; set; }
+        
+        /// <summary>
+        /// If enabled, the SDK will cache the flags for the duration specified in the CacheConfig
+        /// </summary>
+        public CacheConfig CacheConfig { get; set; }
+        
         public bool IsValid()
         {
             return !string.IsNullOrEmpty(ApiUrl) && !string.IsNullOrEmpty(EnvironmentKey);
