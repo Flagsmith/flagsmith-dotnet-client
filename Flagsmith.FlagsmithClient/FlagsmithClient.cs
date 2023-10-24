@@ -118,9 +118,18 @@ namespace Flagsmith
         /// <param name="configuration">Flagsmith client configuration</param>
         /// <param name="httpClient">Http client used for flagsmith-API requests</param>
         public FlagsmithClient(IFlagsmithConfiguration configuration, HttpClient httpClient = null) : this(
-            configuration.EnvironmentKey, configuration.ApiUrl, configuration.Logger, configuration.DefaultFlagHandler,
-            configuration.EnableAnalytics, configuration.EnableClientSideEvaluation, configuration.EnvironmentRefreshIntervalSeconds, configuration.CustomHeaders, configuration.Retries ?? 1,
-            configuration.RequestTimeout, httpClient)
+            configuration.EnvironmentKey,
+            configuration.ApiUrl,
+            configuration.Logger,
+            configuration.DefaultFlagHandler,
+            configuration.EnableAnalytics,
+            configuration.EnableClientSideEvaluation,
+            configuration.EnvironmentRefreshIntervalSeconds,
+            configuration.CustomHeaders,
+            configuration.Retries ?? 1,
+            configuration.RequestTimeout,
+            httpClient,
+            configuration.CacheConfig)
         {
         }
 
@@ -286,7 +295,7 @@ namespace Flagsmith
 
                 if (traits != null && traits.Count > 0)
                 {
-                    jsonBody = JsonConvert.SerializeObject(new { identifier = identity, traits = traits ?? new List<ITrait>() });
+                    jsonBody = JsonConvert.SerializeObject(new { identifier = identity, traits });
                     jsonResponse = await GetJson(HttpMethod.Post, url, body: jsonBody);
                 }
                 else
@@ -296,6 +305,7 @@ namespace Flagsmith
                 }
 
                 var flags = JsonConvert.DeserializeObject<Identity>(jsonResponse)?.flags?.ToList<IFlag>();
+
                 return Flags.FromApiFlag(_analyticsProcessor, DefaultFlagHandler, flags);
             }
             catch (FlagsmithAPIError e)
