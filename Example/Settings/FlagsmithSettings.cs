@@ -17,7 +17,7 @@ namespace Example.Settings
         public Double? RequestTimeout { get; set; }
         public Dictionary<string, string> CustomHeaders { get; set; }
         public int? Retries { get; set; } = 1;
-        public CacheConfig CacheConfig { get; set; } = new (false);
+        public CacheConfig CacheConfig { get; set; } = new(false);
 
         public Func<string, Flag> DefaultFlagHandler { get; set; } = featureName =>
         {
