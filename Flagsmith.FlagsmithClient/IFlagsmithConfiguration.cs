@@ -56,6 +56,11 @@ namespace Flagsmith
         /// </summary>
         Dictionary<string, string> CustomHeaders { get; set; }
 
+        /// <summary>
+        /// If enabled, the SDK will cache the flags for the duration specified in the CacheConfig
+        /// </summary>
+        CacheConfig CacheConfig { get; set; }
+
         bool IsValid();
     }
 }
