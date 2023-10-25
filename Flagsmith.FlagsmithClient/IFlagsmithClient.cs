@@ -13,12 +13,12 @@ namespace Flagsmith
         /// <summary>
         /// Get all the flags for the current environment for a given identity.
         /// </summary>
-        Task<IFlags> GetIdentityFlags(string identity);
+        Task<IFlags> GetIdentityFlags(string identifier);
 
         /// <summary>
         /// Get all the flags for the current environment for a given identity with provided traits.
         /// </summary>
-        Task<IFlags> GetIdentityFlags(string identity, List<ITrait> traits);
+        Task<IFlags> GetIdentityFlags(string identifier, List<ITrait> traits);
 
         List<ISegment> GetIdentitySegments(string identifier);
         List<ISegment> GetIdentitySegments(string identifier, List<ITrait> traits);

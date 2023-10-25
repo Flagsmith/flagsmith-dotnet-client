@@ -13,7 +13,7 @@ builder.Services.AddSingleton(provider => provider.GetRequiredService<IOptions<F
 builder.Services.AddSingleton<IFlagsmithClient, FlagsmithClient>(provider =>
 {
     var settings = provider.GetService<FlagsmithSettings>();
-    
+
     return new FlagsmithClient(settings);
 });
 
