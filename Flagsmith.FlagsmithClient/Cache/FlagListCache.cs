@@ -18,7 +18,10 @@ namespace Flagsmith.Cache
         {
             _flags = flags;
             _dateTimeProvider = dateTimeProvider;
-            _timestamp = dateTimeProvider.Now();
+
+            //This is to ensure that the cache is stale on first run
+            _timestamp = dateTimeProvider.Now().Subtract(new TimeSpan(0, 0, cacheDurationInMinutes + 1, 0));
+
             _cacheDurationInMinutes = cacheDurationInMinutes;
         }
 
