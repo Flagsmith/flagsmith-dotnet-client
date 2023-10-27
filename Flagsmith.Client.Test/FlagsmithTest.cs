@@ -233,7 +233,7 @@ namespace Flagsmith.FlagsmithClientTest
         }
 
         [Fact]
-        public void testGetIdentitySegmentsNoTraits()
+        public void TestGetIdentitySegmentsNoTraits()
         {
             // Given
             var mockHttpClient = HttpMocker.MockHttpResponse(new HttpResponseMessage
@@ -251,7 +251,7 @@ namespace Flagsmith.FlagsmithClientTest
         }
 
         [Fact]
-        public void testGetIdentitySegmentsWithValidTrait()
+        public void TestGetIdentitySegmentsWithValidTrait()
         {
             // Given
             var mockHttpClient = HttpMocker.MockHttpResponse(new HttpResponseMessage
@@ -270,6 +270,27 @@ namespace Flagsmith.FlagsmithClientTest
             // Then
             Assert.Single(segments);
             Assert.Equal("Test segment", segments[0].Name);
+        }
+
+        [Fact]
+        public void TestFlagsmithClientWithCacheInitialization()
+        {
+            // Given
+            var mockHttpClient = HttpMocker.MockHttpResponse(new HttpResponseMessage
+            {
+                StatusCode = System.Net.HttpStatusCode.OK,
+                Content = new StringContent(Fixtures.JsonObject.ToString())
+            });
+            var flagsmithClient = new FlagsmithClient(Fixtures.ApiKey,
+                httpClient: mockHttpClient.Object,
+                enableClientSideEvaluation: true,
+                cacheConfig: new CacheConfig(true));
+
+            // When
+            var flags = flagsmithClient.GetEnvironmentFlags().Result;
+
+            // Then
+            Assert.NotNull(flags);
         }
     }
 }

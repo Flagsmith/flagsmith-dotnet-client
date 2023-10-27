@@ -4,8 +4,9 @@ namespace Flagsmith.Cache
 {
     internal class RegularFlagListCache : FlagListCache
     {
-        public RegularFlagListCache(IDateTimeProvider dateTimeProvider, IFlags flags, int cacheDurationInMinutes) :
-            base(dateTimeProvider, flags, cacheDurationInMinutes)
+        public RegularFlagListCache(IDateTimeProvider dateTimeProvider,
+            int cacheDurationInMinutes) :
+            base(dateTimeProvider, cacheDurationInMinutes)
         {
         }
 
