@@ -6,8 +6,11 @@ namespace Flagsmith.Cache
     {
         private readonly IdentityWrapper _identityWrapper;
 
-        public IdentityFlagListCache(IdentityWrapper identityWrapper, IFlags flags, IDateTimeProvider dateTimeProvider, int cacheDurationInMinutes) :
-            base(dateTimeProvider, flags, cacheDurationInMinutes)
+        public IdentityFlagListCache(IdentityWrapper identityWrapper,
+            IDateTimeProvider dateTimeProvider,
+            int cacheDurationInMinutes) :
+            base(dateTimeProvider,
+                cacheDurationInMinutes)
         {
             _identityWrapper = identityWrapper;
         }

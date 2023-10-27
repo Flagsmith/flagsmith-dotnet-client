@@ -96,17 +96,19 @@ namespace Flagsmith
             this._httpClient = httpClient ?? new HttpClient();
             this.CacheConfig = cacheConfig ?? new CacheConfig(false);
             _engine = new Engine();
+
             if (EnableAnalytics)
                 _analyticsProcessor = new AnalyticsProcessor(this._httpClient, EnvironmentKey, ApiUrl, Logger, CustomHeaders);
+
             if (EnableClientSideEvaluation)
             {
                 _pollingManager = new PollingManager(GetAndUpdateEnvironmentFromApi, EnvironmentRefreshIntervalSeconds);
                 _ = _pollingManager.StartPoll();
             }
+
             if (CacheConfig.Enabled)
             {
                 _regularFlagListCache = new RegularFlagListCache(new DateTimeProvider(),
-                    GetEnvironmentFlags().Result,
                     CacheConfig.DurationInMinutes);
                 _flagListCacheDictionary = new Dictionary<string, IdentityFlagListCache>();
             }
@@ -142,6 +144,7 @@ namespace Flagsmith
             {
                 return _regularFlagListCache.GetLatestFlags(GetFeatureFlagsFromCorrectSource);
             }
+
             return await GetFeatureFlagsFromCorrectSource();
         }
 
@@ -210,7 +213,6 @@ namespace Flagsmith
             if (flagListCache == null)
             {
                 flagListCache = new IdentityFlagListCache(identityWrapper,
-                    GetIdentityFlags(identityWrapper.Identifier, identityWrapper.Traits).Result,
                     new DateTimeProvider(),
                     CacheConfig.DurationInMinutes);
                 _flagListCacheDictionary.Add(identityWrapper.CacheKey, flagListCache);
