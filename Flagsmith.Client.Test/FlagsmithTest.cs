@@ -281,14 +281,14 @@ namespace Flagsmith.FlagsmithClientTest
                 StatusCode = System.Net.HttpStatusCode.OK,
                 Content = new StringContent(Fixtures.JsonObject.ToString())
             });
-            var flagsmithClient = new FlagsmithClient(Fixtures.ApiKey, 
-                httpClient: mockHttpClient.Object, 
+            var flagsmithClient = new FlagsmithClient(Fixtures.ApiKey,
+                httpClient: mockHttpClient.Object,
                 enableClientSideEvaluation: true,
                 cacheConfig: new CacheConfig(true));
 
             // When
             var flags = flagsmithClient.GetEnvironmentFlags().Result;
-            
+
             // Then
             Assert.NotNull(flags);
         }
