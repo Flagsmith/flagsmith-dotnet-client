@@ -6,7 +6,7 @@
     <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
     <PackageId>Flagsmith</PackageId>
     <Title>Flagsmith</Title>
-    <Version>5.2.0</Version>
+    <Version>5.2.1</Version>
     <Authors>flagsmith</Authors>
     <Company>Flagsmith</Company>
     <PackageDescription>Client SDK for Flagsmith. Ship features with confidence using feature flags and remote config. Host yourself or use our hosted version at https://flagsmith.com/</PackageDescription>
