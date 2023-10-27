@@ -14,9 +14,9 @@ namespace Flagsmith.Cache
         protected readonly IDateTimeProvider _dateTimeProvider;
         protected DateTime? _timestamp;
 
-        protected FlagListCache(IDateTimeProvider dateTimeProvider, IFlags flags, int cacheDurationInMinutes)
+        protected FlagListCache(IDateTimeProvider dateTimeProvider, int cacheDurationInMinutes)
         {
-            _flags = flags;
+            _flags = null;
             _dateTimeProvider = dateTimeProvider;
             _timestamp = null;
             _cacheDurationInMinutes = cacheDurationInMinutes;
@@ -24,12 +24,9 @@ namespace Flagsmith.Cache
 
         protected bool IsCacheStale()
         {
-            if (_timestamp == null)
-            {
-                return true;
-            }
-
-            return _dateTimeProvider.Now().Subtract((DateTime)_timestamp).TotalMinutes > _cacheDurationInMinutes;
+            return _timestamp == null ||
+                   _flags == null ||
+                   _dateTimeProvider.Now().Subtract((DateTime)_timestamp).TotalMinutes > _cacheDurationInMinutes;
         }
     }
 }

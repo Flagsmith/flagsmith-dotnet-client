@@ -109,8 +109,6 @@ namespace Flagsmith
             if (CacheConfig.Enabled)
             {
                 _regularFlagListCache = new RegularFlagListCache(new DateTimeProvider(),
-                    _analyticsProcessor,
-                    DefaultFlagHandler,
                     CacheConfig.DurationInMinutes);
                 _flagListCacheDictionary = new Dictionary<string, IdentityFlagListCache>();
             }
@@ -216,8 +214,6 @@ namespace Flagsmith
             {
                 flagListCache = new IdentityFlagListCache(identityWrapper,
                     new DateTimeProvider(),
-                    _analyticsProcessor,
-                    DefaultFlagHandler,
                     CacheConfig.DurationInMinutes);
                 _flagListCacheDictionary.Add(identityWrapper.CacheKey, flagListCache);
             }
