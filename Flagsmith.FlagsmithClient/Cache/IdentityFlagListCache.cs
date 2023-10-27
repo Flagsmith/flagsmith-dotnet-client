@@ -1,4 +1,6 @@
-﻿using Flagsmith.Providers;
+﻿using System;
+using System.Collections.Generic;
+using Flagsmith.Providers;
 
 namespace Flagsmith.Cache
 {
@@ -6,8 +8,14 @@ namespace Flagsmith.Cache
     {
         private readonly IdentityWrapper _identityWrapper;
 
-        public IdentityFlagListCache(IdentityWrapper identityWrapper, IFlags flags, IDateTimeProvider dateTimeProvider, int cacheDurationInMinutes) :
-            base(dateTimeProvider, flags, cacheDurationInMinutes)
+        public IdentityFlagListCache(IdentityWrapper identityWrapper,
+            IDateTimeProvider dateTimeProvider,
+            AnalyticsProcessor analyticsProcessor,
+            Func<string, IFlag> defaultFlagHandler,
+            int cacheDurationInMinutes) :
+            base(dateTimeProvider,
+                new Flags(new List<IFlag>(), analyticsProcessor, defaultFlagHandler),
+                cacheDurationInMinutes)
         {
             _identityWrapper = identityWrapper;
         }

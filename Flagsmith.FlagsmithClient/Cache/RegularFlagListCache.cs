@@ -1,11 +1,18 @@
-﻿using Flagsmith.Providers;
+﻿using System;
+using System.Collections.Generic;
+using Flagsmith.Providers;
 
 namespace Flagsmith.Cache
 {
     internal class RegularFlagListCache : FlagListCache
     {
-        public RegularFlagListCache(IDateTimeProvider dateTimeProvider, IFlags flags, int cacheDurationInMinutes) :
-            base(dateTimeProvider, flags, cacheDurationInMinutes)
+        public RegularFlagListCache(IDateTimeProvider dateTimeProvider,
+            AnalyticsProcessor analyticsProcessor,
+            Func<string, IFlag> defaultFlagHandler,
+            int cacheDurationInMinutes) :
+            base(dateTimeProvider,
+                new Flags(new List<IFlag>(), analyticsProcessor, defaultFlagHandler),
+                cacheDurationInMinutes)
         {
         }
 

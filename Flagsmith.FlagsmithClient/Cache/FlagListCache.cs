@@ -12,22 +12,24 @@ namespace Flagsmith.Cache
 
         protected IFlags _flags;
         protected readonly IDateTimeProvider _dateTimeProvider;
-        protected DateTime _timestamp;
+        protected DateTime? _timestamp;
 
         protected FlagListCache(IDateTimeProvider dateTimeProvider, IFlags flags, int cacheDurationInMinutes)
         {
             _flags = flags;
             _dateTimeProvider = dateTimeProvider;
-
-            //This is to ensure that the cache is stale on first run
-            _timestamp = dateTimeProvider.Now().Subtract(new TimeSpan(0, 0, cacheDurationInMinutes + 1, 0));
-
+            _timestamp = null;
             _cacheDurationInMinutes = cacheDurationInMinutes;
         }
 
         protected bool IsCacheStale()
         {
-            return _dateTimeProvider.Now().Subtract(_timestamp).TotalMinutes > _cacheDurationInMinutes;
+            if (_timestamp == null)
+            {
+                return true;
+            }
+
+            return _dateTimeProvider.Now().Subtract((DateTime)_timestamp).TotalMinutes > _cacheDurationInMinutes;
         }
     }
 }
