@@ -103,7 +103,7 @@ namespace Flagsmith
             if (EnableClientSideEvaluation)
             {
                 _pollingManager = new PollingManager(GetAndUpdateEnvironmentFromApi, EnvironmentRefreshIntervalSeconds);
-                _ = _pollingManager.StartPoll();
+                _pollingManager.StartPoll().GetAwaiter().GetResult();
             }
 
             if (CacheConfig.Enabled)

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -7,9 +8,10 @@ namespace Flagsmith
 {
     public class PollingManager : IPollingManager
     {
-        CancellationTokenSource _CancellationTokenSource = new CancellationTokenSource();
-        Func<Task> _CallBack;
-        int _Interval;
+        private Timer _timer;
+        private readonly CancellationTokenSource _CancellationTokenSource = new CancellationTokenSource();
+        readonly Func<Task> _CallBack;
+        readonly int _Interval;
         /// <summary>
         /// 
         /// </summary>
@@ -21,19 +23,23 @@ namespace Flagsmith
             _Interval = intervalSeconds * 1000; //convert to milliseconds
         }
         /// <summary>
-        /// Start calling callback continously after provided interval
+        /// Start calling callback continuously after provided interval
         /// </summary>
         /// <returns>Task</returns>
         public async Task StartPoll()
         {
+            // Force a first call of the callback at least once and synchronously if it is awaited.
+            await _CallBack.Invoke();
             _CancellationTokenSource.Token.ThrowIfCancellationRequested();
-            while (true)
+            _timer = new Timer(async (object state) =>
             {
-                await _CallBack.Invoke();
-                await Task.Delay(_Interval, _CancellationTokenSource.Token);
                 if (_CancellationTokenSource.Token.IsCancellationRequested)
-                    break;
-            }
+                {
+                    _timer.Dispose();
+                    return;
+                }
+                await _CallBack.Invoke();
+            }, null, _Interval, _Interval);
         }
         /// <summary>
         /// Stop continously exectuing callback
