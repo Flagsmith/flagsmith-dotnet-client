@@ -242,7 +242,7 @@ namespace Flagsmith
                     }
 
                     var cancellationTokenSource = new CancellationTokenSource(TimeSpan.FromSeconds(RequestTimeout ?? 100));
-                    HttpResponseMessage response = await _httpClient.SendAsync(request, cancellationTokenSource.Token);
+                    HttpResponseMessage response = await _httpClient.SendAsync(request, cancellationTokenSource.Token).ConfigureAwait(false);
                     return response.EnsureSuccessStatusCode();
                 })).Content.ReadAsStringAsync();
             }
