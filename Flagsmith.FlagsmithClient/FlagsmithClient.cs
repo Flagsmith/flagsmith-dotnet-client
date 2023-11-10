@@ -208,7 +208,7 @@ namespace Flagsmith
 
         private IdentityFlagListCache GetFlagListCacheByIdentity(IdentityWrapper identityWrapper)
         {
-            var flagListCache = _flagListCacheDictionary[identityWrapper.CacheKey];
+            _flagListCacheDictionary.TryGetValue(identityWrapper.CacheKey, out var flagListCache);
 
             if (flagListCache == null)
             {
