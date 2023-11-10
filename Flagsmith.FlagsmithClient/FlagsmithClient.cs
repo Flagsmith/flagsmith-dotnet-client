@@ -208,17 +208,16 @@ namespace Flagsmith
 
         private IdentityFlagListCache GetFlagListCacheByIdentity(IdentityWrapper identityWrapper)
         {
+            _flagListCacheDictionary.TryGetValue(identityWrapper.CacheKey, out var flagListCache);
 
-            if (_flagListCacheDictionary.TryGetValue(identityWrapper.CacheKey, out var flagListCache) && flagListCache != null)
+            if (flagListCache != null)
             {
                 flagListCache = new IdentityFlagListCache(identityWrapper,
                     new DateTimeProvider(),
                     CacheConfig.DurationInMinutes);
                 _flagListCacheDictionary.Add(identityWrapper.CacheKey, flagListCache);
-                return flagListCache;
             }
-
-            return null;
+            return flagListCache;
         }
 
         private async Task<string> GetJson(HttpMethod method, string url, string body = null)
