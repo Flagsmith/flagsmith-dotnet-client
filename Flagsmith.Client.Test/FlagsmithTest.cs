@@ -2,10 +2,11 @@
 using System.Collections.Generic;
 using System.Net.Http;
 using System.Threading.Tasks;
-using System.Threading;
 using Xunit;
 using FlagsmithEngine.Environment.Models;
-using FlagsmithEngine.Segment.Models;
+using OfflineHandler;
+using Newtonsoft.Json.Linq;
+using System.IO;
 
 namespace Flagsmith.FlagsmithClientTest
 {
@@ -292,6 +293,36 @@ namespace Flagsmith.FlagsmithClientTest
             // Then
             Assert.NotNull(flags);
         }
+
+        [Fact]
+        public async Task TestOfflineMode_IntegrationTest()
+        {
+            // Given
+            var environment = JObject
+                .Parse(File.ReadAllText("../../../data/offline-environment.json"))
+                .ToObject<EnvironmentModel>();
+
+            var expectedPath = "../../../data/offline-environment.json";
+
+            var localFileHandler = new LocalFileHandler(expectedPath);
+
+            // When
+            var flagsmithClient = new FlagsmithClient(
+                offlineMode: true,
+                offlineHandler: localFileHandler
+            );
+
+            // Then
+            // we can request the flags from the client successfully
+            var environmentFlags = await flagsmithClient.GetEnvironmentFlags();
+            var flag = await environmentFlags.GetFlag("some_feature");
+            Assert.True(flag.Enabled);
+            Assert.Equal("offline-value", flag.Value);
+
+            var identityFlags = await flagsmithClient.GetIdentityFlags("identity");
+            flag = await identityFlags.GetFlag("some_feature");
+            Assert.True(flag.Enabled);
+            Assert.Equal("offline-value", flag.Value);
+        }
     }
 }
-
