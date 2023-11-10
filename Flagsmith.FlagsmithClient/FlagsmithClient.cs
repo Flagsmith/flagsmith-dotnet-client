@@ -217,6 +217,7 @@ namespace Flagsmith
                     CacheConfig.DurationInMinutes);
                 _flagListCacheDictionary.Add(identityWrapper.CacheKey, flagListCache);
             }
+
             return flagListCache;
         }
 
