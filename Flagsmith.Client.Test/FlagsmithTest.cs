@@ -328,12 +328,57 @@ namespace Flagsmith.FlagsmithClientTest
         }
 
         [Fact]
+        public async Task TestFlagsmithUsesOfflineHandlerIfSetAndNoAPIResponse()
+        {
+            // Given
+            var environment = JObject
+                .Parse(File.ReadAllText("../../../data/offline-environment.json"))
+                .ToObject<EnvironmentModel>();
+
+            var apiUrl = "http://some.flagsmith.com/api/v1/";
+            var mockOfflineHandler = new Mock<BaseOfflineHandler>();
+            var mockFlagsmithClient = new Mock<IFlagsmithClient>();
+
+            mockOfflineHandler.Setup(h => h.GetEnvironment()).Returns(environment);
+
+            var mockHttpClient = HttpMocker.MockHttpResponse(new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.InternalServerError
+            });
+
+            var flagsmithClientTest = new FlagsmithClient(
+                environmentKey: "some-key",
+                httpClient: mockHttpClient.Object,
+                apiUrl: apiUrl,
+                offlineHandler: mockOfflineHandler.Object
+                );
+
+            // When
+            mockFlagsmithClient.Setup(f => f.GetEnvironmentFlags()).ReturnsAsync(await flagsmithClientTest.GetEnvironmentFlags());
+            mockFlagsmithClient.Setup(f => f.GetIdentityFlags("identity")).ReturnsAsync(await flagsmithClientTest.GetIdentityFlags("identity"));
+
+            // Then
+            mockOfflineHandler.Verify(h => h.GetEnvironment(), Times.AtMost(2));
+            mockFlagsmithClient.Verify(h => h.GetEnvironmentFlags(), Times.AtMostOnce());
+            mockFlagsmithClient.Verify(h => h.GetIdentityFlags("identity"), Times.AtMostOnce());
+
+            var environmentFlags = await flagsmithClientTest.GetEnvironmentFlags();
+            var identityFlags = await flagsmithClientTest.GetIdentityFlags("identity");
+
+            Assert.True(await environmentFlags.IsFeatureEnabled("some_feature"));
+            Assert.Equal("offline-value", await environmentFlags.GetFeatureValue("some_feature"));
+
+            Assert.True(await identityFlags.IsFeatureEnabled("some_feature"));
+            Assert.Equal("offline-value", await identityFlags.GetFeatureValue("some_feature"));
+        }
+
+        [Fact]
         public void TestCannotUseOfflineModeWithoutOfflineHandler()
         {
-            // Arrange and Act
+            // When
             Action createFlagsmith = () => new FlagsmithClient(offlineMode: true, offlineHandler: null );
 
-            // Assert
+            // Then
             var exception = Assert.Throws<Exception>(() => createFlagsmith());
             Assert.Equal("ValueError: offlineHandler must be provided to use offline mode.", exception.Message);
         }
@@ -346,13 +391,13 @@ namespace Flagsmith.FlagsmithClientTest
             var expectedPath = "../../../data/offline-environment.json";
             var localFileHandler = new LocalFileHandler(expectedPath);
 
-            // Arrange and Act
+            // When
             Action createFlagsmith = () => new FlagsmithClient(
                     offlineHandler: localFileHandler,
                     defaultFlagHandler: (string name) => defaultFlag
                 );
 
-            // Assert
+            // Then
             var exception = Assert.Throws<Exception>(() => createFlagsmith());
             Assert.Equal("ValueError: Cannot use both defaultFlagHandler and offlineHandler.", exception.Message);
         }
@@ -360,10 +405,10 @@ namespace Flagsmith.FlagsmithClientTest
         [Fact]
         public void TestCannotCreateFlagsmithClientInRemoteEvaluationWithoutAPIKey()
         {
-            // Arrange and Act
+            // When
             Action createFlagsmith = () => new FlagsmithClient();
 
-            // Assert
+            // Then
             var exception = Assert.Throws<Exception>(() => createFlagsmith());
             Assert.Equal("ValueError: environmentKey is required", exception.Message);
         }
