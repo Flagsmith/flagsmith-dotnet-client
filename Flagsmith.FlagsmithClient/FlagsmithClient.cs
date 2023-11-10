@@ -135,7 +135,7 @@ namespace Flagsmith
             {
                 if (string.IsNullOrEmpty(EnvironmentKey))
                 {
-                    throw new Exception("environmentKey is required");
+                    throw new Exception("ValueError: environmentKey is required");
                 }
 
                 var _apiUrl = apiUrl ?? DefaultApiUrl;

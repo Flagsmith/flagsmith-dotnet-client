@@ -7,6 +7,8 @@ using FlagsmithEngine.Environment.Models;
 using OfflineHandler;
 using Newtonsoft.Json.Linq;
 using System.IO;
+using System;
+using System.Net;
 
 namespace Flagsmith.FlagsmithClientTest
 {
@@ -323,6 +325,47 @@ namespace Flagsmith.FlagsmithClientTest
             flag = await identityFlags.GetFlag("some_feature");
             Assert.True(flag.Enabled);
             Assert.Equal("offline-value", flag.Value);
+        }
+
+        [Fact]
+        public void TestCannotUseOfflineModeWithoutOfflineHandler()
+        {
+            // Arrange and Act
+            Action createFlagsmith = () => new FlagsmithClient(offlineMode: true, offlineHandler: null );
+
+            // Assert
+            var exception = Assert.Throws<Exception>(() => createFlagsmith());
+            Assert.Equal("ValueError: offlineHandler must be provided to use offline mode.", exception.Message);
+        }
+
+        [Fact]
+        public void TestCannotUseBothDefaultHandlerAndOfflineHandler()
+        {
+            // Given
+            var defaultFlag = new Flag(null, true, "some-default-value");
+            var expectedPath = "../../../data/offline-environment.json";
+            var localFileHandler = new LocalFileHandler(expectedPath);
+
+            // Arrange and Act
+            Action createFlagsmith = () => new FlagsmithClient(
+                    offlineHandler: localFileHandler,
+                    defaultFlagHandler: (string name) => defaultFlag
+                );
+
+            // Assert
+            var exception = Assert.Throws<Exception>(() => createFlagsmith());
+            Assert.Equal("ValueError: Cannot use both defaultFlagHandler and offlineHandler.", exception.Message);
+        }
+
+        [Fact]
+        public void TestCannotCreateFlagsmithClientInRemoteEvaluationWithoutAPIKey()
+        {
+            // Arrange and Act
+            Action createFlagsmith = () => new FlagsmithClient();
+
+            // Assert
+            var exception = Assert.Throws<Exception>(() => createFlagsmith());
+            Assert.Equal("ValueError: environmentKey is required", exception.Message);
         }
     }
 }
