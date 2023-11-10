@@ -210,7 +210,7 @@ namespace Flagsmith
         {
             _flagListCacheDictionary.TryGetValue(identityWrapper.CacheKey, out var flagListCache);
 
-            if (flagListCache != null)
+            if (flagListCache == null)
             {
                 flagListCache = new IdentityFlagListCache(identityWrapper,
                     new DateTimeProvider(),
