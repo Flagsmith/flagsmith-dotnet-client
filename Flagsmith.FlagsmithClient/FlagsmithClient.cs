@@ -47,7 +47,7 @@ namespace Flagsmith
         private CacheConfig CacheConfig { get; set; }
         private Dictionary<string, string>? CustomHeaders { get; set; }
         private EnvironmentModel? Environment { get; set; }
-        private bool OfflineMode {get; set; }
+        private bool OfflineMode { get; set; }
         const string DefaultApiUrl = "https://edge.api.flagsmith.com/api/v1/";
 
         private readonly HttpClient _httpClient;
@@ -84,7 +84,7 @@ namespace Flagsmith
         /// <exception cref="FlagsmithClientOfflineError">
         /// A general exception with a error message. Example: Feature not found, etc.
         /// </exception>
-        
+
         public FlagsmithClient(
             string? environmentKey = null,
             string apiUrl = DefaultApiUrl,
@@ -146,11 +146,12 @@ namespace Flagsmith
 
                 if (EnableClientSideEvaluation)
                 {
-                    if (!EnvironmentKey!.StartsWith("ser.")) {
-                    Console.WriteLine(
-                        "In order to use local evaluation, please generate a server key in the environment settings page."
-                    );
-                }
+                    if (!EnvironmentKey!.StartsWith("ser."))
+                    {
+                        Console.WriteLine(
+                            "In order to use local evaluation, please generate a server key in the environment settings page."
+                        );
+                    }
 
                     _pollingManager = new PollingManager(GetAndUpdateEnvironmentFromApi, EnvironmentRefreshIntervalSeconds);
                     _pollingManager.StartPoll().GetAwaiter().GetResult();
@@ -226,10 +227,8 @@ namespace Flagsmith
                 return flagListCache.GetLatestFlags(GetIdentityFlagsFromCorrectSource);
             }
 
-            if (this.OfflineMode) {
+            if (this.OfflineMode)
                 return this.GetIdentityFlagsFromDocument(identifier, traits ?? null);
-            }
-
 
             return await GetIdentityFlagsFromCorrectSource(identityWrapper);
         }
@@ -339,7 +338,7 @@ namespace Flagsmith
             }
             catch (FlagsmithAPIError e)
             {
-                if(Environment != null)
+                if (Environment != null)
                 {
                     return this.GetFeatureFlagsFromDocument();
                 }
@@ -372,7 +371,8 @@ namespace Flagsmith
             }
             catch (FlagsmithAPIError e)
             {
-                if (Environment != null) {
+                if (Environment != null)
+                {
                     return this.GetIdentityFlagsFromDocument(identity, traits);
                 }
                 return DefaultFlagHandler != null ? Flags.FromApiFlag(_analyticsProcessor, DefaultFlagHandler, null) : throw e;

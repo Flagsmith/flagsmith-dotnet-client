@@ -376,7 +376,7 @@ namespace Flagsmith.FlagsmithClientTest
         public void TestCannotUseOfflineModeWithoutOfflineHandler()
         {
             // When
-            Action createFlagsmith = () => new FlagsmithClient(offlineMode: true, offlineHandler: null );
+            Action createFlagsmith = () => new FlagsmithClient(offlineMode: true, offlineHandler: null);
 
             // Then
             var exception = Assert.Throws<Exception>(() => createFlagsmith());

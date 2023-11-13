@@ -41,7 +41,7 @@ namespace OfflineHandlerTests
             Assert.Equal(expectedEnvironment.ApiKey, actualEnvironment.ApiKey);
             mockFileManager.Verify(fileManager => fileManager.StreamReader(expectedPath), Times.Once);
             mockFileManager.VerifyNoOtherCalls();
-            fakeMemoryStream.Dispose();            
+            fakeMemoryStream.Dispose();
         }
     }
 }
