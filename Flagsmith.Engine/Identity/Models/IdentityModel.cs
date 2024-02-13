@@ -29,7 +29,7 @@ namespace FlagsmithEngine.Identity.Models
         public string GenerateCompositeKey(string envKey, string identifier) => $"{envKey}_{identifier}";
         public void UpdateTraits(List<TraitModel> traits)
         {
-            var existingModels = IdentityTraits.ToDictionary(x => x.TraitKey);
+            var existingModels = IdentityTraits?.Count > 0 ? IdentityTraits.ToDictionary(x => x.TraitKey) : new Dictionary<string, TraitModel>();
             traits.ForEach(trait =>
             {
                 if (trait.TraitValue is null)

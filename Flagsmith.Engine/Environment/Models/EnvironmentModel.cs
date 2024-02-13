@@ -3,6 +3,7 @@ using Newtonsoft.Json;
 using System.Collections.Generic;
 using FlagsmithEngine.Project.Models;
 using FlagsmithEngine.Feature.Models;
+using FlagsmithEngine.Identity.Models;
 
 namespace FlagsmithEngine.Environment.Models
 {
@@ -17,10 +18,7 @@ namespace FlagsmithEngine.Environment.Models
         public ProjectModel Project { get; set; }
         [JsonProperty(PropertyName = "feature_states")]
         public List<FeatureStateModel> FeatureStates { get; set; }
-        public IntegrationModel AmplitudeConfig { get; set; }
-        public IntegrationModel SegmentConfig { get; set; }
-        public IntegrationModel MixpanelConfig { get; set; }
-        public IntegrationModel HeapConfig { get; set; }
-
+        [JsonProperty(PropertyName = "identity_overrides")]
+        public List<IdentityModel> IdentityOverrides { get; set; }
     }
 }

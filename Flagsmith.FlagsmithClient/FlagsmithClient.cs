@@ -47,6 +47,7 @@ namespace Flagsmith
         private CacheConfig CacheConfig { get; set; }
         private Dictionary<string, string>? CustomHeaders { get; set; }
         private EnvironmentModel? Environment { get; set; }
+        private Dictionary<string, IdentityModel>? IdentitiesWithOverridesByIdentifier { get; set; }
         private bool OfflineMode { get; set; }
         const string DefaultApiUrl = "https://edge.api.flagsmith.com/api/v1/";
 
@@ -319,6 +320,7 @@ namespace Flagsmith
             {
                 var json = await GetJson(HttpMethod.Get, ApiUrl + "environment-document/");
                 Environment = JsonConvert.DeserializeObject<EnvironmentModel>(json);
+                IdentitiesWithOverridesByIdentifier = Environment?.IdentityOverrides != null ? Environment.IdentityOverrides.ToDictionary(identity => identity.Identifier) : new Dictionary<string, IdentityModel>();
                 Logger?.LogInformation("Local Environment updated: " + json);
             }
             catch (FlagsmithAPIError ex)
@@ -390,13 +392,19 @@ namespace Flagsmith
                 ? traits.Select(t => new TraitModel { TraitKey = t.GetTraitKey(), TraitValue = t.GetTraitValue() }).ToList()
                 : new List<TraitModel>();
 
-            IdentityModel identity = new IdentityModel
+            if (IdentitiesWithOverridesByIdentifier?.TryGetValue(identifier, out var identity) ?? false)
             {
-                EnvironmentApiKey = Environment!.ApiKey,
-                Identifier = identifier,
-                IdentityTraits = traitModels
-            };
-
+                identity.UpdateTraits(traitModels);
+            }
+            else
+            {
+                identity = new IdentityModel
+                {
+                    EnvironmentApiKey = Environment!.ApiKey,
+                    Identifier = identifier,
+                    IdentityTraits = traitModels,
+                };
+            }
             return Flags.FromFeatureStateModel(_analyticsProcessor, DefaultFlagHandler, _engine.GetIdentityFeatureStates(Environment, identity), identity.CompositeKey);
         }
 
