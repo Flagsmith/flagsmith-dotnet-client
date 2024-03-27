@@ -126,6 +126,25 @@ namespace Flagsmith.FlagsmithClientTest
             mockHttpClient.verifyHttpRequest(HttpMethod.Get, "/api/v1/environment-document/", Times.Once);
         }
         [Fact]
+        public async Task TestGetIdentityFlagsUsesLocalIdentityOverridesWhenAvailable()
+        {
+            var mockHttpClient = HttpMocker.MockHttpResponse(new HttpResponseMessage
+            {
+                StatusCode = System.Net.HttpStatusCode.OK,
+                Content = new StringContent(Fixtures.JsonObject.ToString())
+            });
+
+            var traits = new List<ITrait> { new Trait("foo", "bar") };
+
+            var flagsmithClientTest = new FlagsmithClient(Fixtures.ApiKey, enableClientSideEvaluation: true, httpClient: mockHttpClient.Object);
+            mockHttpClient.verifyHttpRequest(HttpMethod.Get, "/api/v1/environment-document/", Times.Once);
+
+            var flags = await flagsmithClientTest.GetIdentityFlags("overridden-id", traits);
+            var flag = await flags.GetFlag("some_feature");
+            Assert.False(flag.Enabled);
+            Assert.Equal("some-overridden-value", flag.Value);
+        }
+        [Fact]
         public async Task TestRequestConnectionErrorRaisesFlagsmithApiError()
         {
             var mockHttpClient = HttpMocker.MockHttpThrowConnectionError();
