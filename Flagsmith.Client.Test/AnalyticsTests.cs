@@ -6,6 +6,7 @@ using Moq;
 using Xunit;
 using Newtonsoft.Json.Linq;
 using System.Threading;
+using System.Collections.Generic;
 
 namespace Flagsmith.FlagsmithClientTest
 {
@@ -71,6 +72,35 @@ namespace Flagsmith.FlagsmithClientTest
             await Task.Delay(12 * 1000);
             await analyticsProcessor.TrackFeature("myFeature");
             mockHttpClient.verifyHttpRequest(HttpMethod.Post, "/api/v1/analytics/flags/", Times.Once);
+        }
+
+        [Fact]
+        public async Task TestAnalyticsProcessorDataConcurrentAccess()
+        {
+        // Given
+        var mockHttpClient = HttpMocker.MockHttpResponse(new HttpResponseMessage
+        {
+            StatusCode = System.Net.HttpStatusCode.OK,
+        });
+        var analyticsProcessor = new AnalyticsProcessorTest(mockHttpClient.Object, null, null);
+        const int numberOfCalls = 100000;
+
+        // When 
+        var tasks = new Task[numberOfCalls];
+
+        for(int i = 0; i < tasks.Length; i++)
+        {
+            var local = i;
+            tasks[i] = Task.Run(async () => 
+            {
+                await analyticsProcessor.TrackFeature($"Feature {local}");
+            });
+        }
+
+        await Task.WhenAll(tasks);
+
+        // Then
+        Assert.True(true);
         }
     }
 }
