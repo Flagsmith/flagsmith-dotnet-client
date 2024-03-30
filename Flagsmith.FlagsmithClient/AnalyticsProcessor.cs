@@ -8,6 +8,7 @@ using Newtonsoft.Json;
 using System.Threading;
 using Microsoft.Extensions.Logging;
 using Flagsmith.Extensions;
+using System.Collections.Concurrent;
 
 namespace Flagsmith
 {
@@ -18,7 +19,7 @@ namespace Flagsmith
         readonly string _EnvironmentKey;
         readonly int _TimeOut;
         DateTime _LastFlushed;
-        protected Dictionary<string, int> AnalyticsData;
+        protected ConcurrentDictionary <string, int> AnalyticsData;
         HttpClient _HttpClient;
         ILogger _Logger;
         Dictionary<string, string> _CustomHeaders;
@@ -28,7 +29,7 @@ namespace Flagsmith
             _AnalyticsEndPoint = baseApiUrl + "analytics/flags/";
             _TimeOut = timeOut;
             _LastFlushed = DateTime.Now;
-            AnalyticsData = new Dictionary<string, int>();
+            AnalyticsData = new ConcurrentDictionary <string, int>();
             _HttpClient = httpClient;
             _Logger = logger;
             _FlushIntervalSeconds = flushIntervalSeconds;
