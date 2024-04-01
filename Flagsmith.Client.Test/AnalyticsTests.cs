@@ -116,7 +116,7 @@ namespace Flagsmith.FlagsmithClientTest
             for (int i = 1; i <= 10; i++)
             {
                 featuresDictionary.TryAdd($"Feature_{i}", 0);
-            }    
+            }
 
             var analyticsProcessor = new AnalyticsProcessorTest(mockHttpClient.Object, null, baseApiUrl: _defaultApiUrl);
             const int numberOfThreads = 1000;
@@ -134,7 +134,7 @@ namespace Flagsmith.FlagsmithClientTest
                     features[j] = feature;
                     featuresDictionary[feature]++;
                 }
-                
+
                 tasks[i] = Task.Run(async () =>
                 {
                     foreach (var feature in features)
@@ -154,6 +154,7 @@ namespace Flagsmith.FlagsmithClientTest
                 totalCallsMade += analyticsData[feature.Key];
                 Assert.Equal(feature.Value, analyticsData[feature.Key]);
             }
-            Assert.Equal(numberOfThreads * callsPerThread, totalCallsMade);        }
+            Assert.Equal(numberOfThreads * callsPerThread, totalCallsMade);
+        }
     }
 }

@@ -41,12 +41,12 @@ namespace Flagsmith
 
         public static AnalyticsProcessor GetInstance(HttpClient httpClient, string environmentKey, string baseApiUrl, ILogger logger = null, Dictionary<string, string> customHeaders = null, int timeOut = 3, int flushIntervalSeconds = 10)
         {
-            if(_Instance == null)
-                {
+            if (_Instance == null)
+            {
                 _Instance = new AnalyticsProcessor(httpClient, environmentKey, baseApiUrl, logger, customHeaders, timeOut, flushIntervalSeconds);
-                }
+            }
 
-                return _Instance;
+            return _Instance;
         }
 
         /// <summary>

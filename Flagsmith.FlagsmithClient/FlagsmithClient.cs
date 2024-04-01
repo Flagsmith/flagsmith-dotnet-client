@@ -408,7 +408,7 @@ namespace Flagsmith
             return Flags.FromFeatureStateModel(_analyticsProcessor, DefaultFlagHandler, _engine.GetIdentityFeatureStates(Environment, identity), identity.CompositeKey);
         }
 
-        public Dictionary<string, int> aggregatedAnalytics => _analyticsProcessor != null ? _analyticsProcessor.GetAggregatedAnalytics(): new Dictionary<string, int>();
+        public Dictionary<string, int> aggregatedAnalytics => _analyticsProcessor != null ? _analyticsProcessor.GetAggregatedAnalytics() : new Dictionary<string, int>();
 
         ~FlagsmithClient() => _pollingManager?.StopPoll();
     }
