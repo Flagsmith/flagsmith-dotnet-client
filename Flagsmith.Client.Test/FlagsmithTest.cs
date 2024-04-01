@@ -431,5 +431,62 @@ namespace Flagsmith.FlagsmithClientTest
             var exception = Assert.Throws<Exception>(() => createFlagsmith());
             Assert.Equal("ValueError: environmentKey is required", exception.Message);
         }
+
+        [Fact]
+        public async Task TestAnalyticsDataConsistencyWithConcurrentCallsToGetFlags()
+        {
+            // Given
+            var mockHttpClient = HttpMocker.MockHttpResponse(new HttpResponseMessage
+            {
+                StatusCode = System.Net.HttpStatusCode.OK,
+                Content = new StringContent(Fixtures.ApiFlagResponseWithTenFlags)
+            });
+            var flagsmithClientTest = new FlagsmithClient(Fixtures.ApiKey, httpClient: mockHttpClient.Object, enableAnalytics: true);
+            var flags = await flagsmithClientTest.GetEnvironmentFlags();
+
+            Dictionary<string, int> featuresDictionary = new Dictionary<string, int>();
+
+            for (int i = 1; i <= 10; i++)
+            {
+                featuresDictionary.TryAdd($"Feature_{i}", 0);
+            }
+
+            const int numberOfThreads = 1000;
+            const int callsPerThread = 1000;
+
+            // When 
+            var tasks = new Task[numberOfThreads];
+            for (int i = 0; i < tasks.Length; i++)
+            {
+                var local = i;
+                string[] features = new string[callsPerThread];
+                for (int j = 0; j < callsPerThread; j++)
+                {
+                    string feature = $"Feature_{new Random().Next(1, featuresDictionary.Count + 1)}";
+                    features[j] = feature;
+                    featuresDictionary[feature]++;
+                }
+
+                tasks[i] = Task.Run(async () =>
+                {
+                    foreach (var feature in features)
+                    {
+                        await flags.IsFeatureEnabled(feature);
+                    }
+                });
+            }
+
+            await Task.WhenAll(tasks);
+
+            // Then
+            Dictionary<string, int> analyticsData = flagsmithClientTest.aggregatedAnalytics;
+            int totalCallsMade = 0;
+            foreach (var feature in featuresDictionary)
+            {
+                totalCallsMade += analyticsData[feature.Key];
+                Assert.Equal(feature.Value, analyticsData[feature.Key]);
+            }
+            Assert.Equal(numberOfThreads * callsPerThread, totalCallsMade);
+        }
     }
 }

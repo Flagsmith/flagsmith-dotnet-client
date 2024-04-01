@@ -17,10 +17,10 @@ namespace Flagsmith.FlagsmithClientTest
         public void TestAnalyticsProcessorTrackFeatureUpdatesAnalyticsData()
         {
             var analyticsProcessor = Fixtures.GetAnalyticalProcessorTest();
-            _ = analyticsProcessor.TrackFeature("myFeature");
-            Assert.Equal(1, analyticsProcessor["myFeature"]);
-            _ = analyticsProcessor.TrackFeature("myFeature");
-            Assert.Equal(2, analyticsProcessor["myFeature"]);
+            _ = analyticsProcessor.TrackFeature("TestAnalyticsProcessorTrackFeatureUpdatesAnalyticsDataFeature");
+            Assert.Equal(1, analyticsProcessor["TestAnalyticsProcessorTrackFeatureUpdatesAnalyticsDataFeature"]);
+            _ = analyticsProcessor.TrackFeature("TestAnalyticsProcessorTrackFeatureUpdatesAnalyticsDataFeature");
+            Assert.Equal(2, analyticsProcessor["TestAnalyticsProcessorTrackFeatureUpdatesAnalyticsDataFeature"]);
         }
         [Fact]
         public async Task TestAnalyticsProcessorFlushClearsAnalyticsData()
@@ -30,7 +30,7 @@ namespace Flagsmith.FlagsmithClientTest
                 StatusCode = System.Net.HttpStatusCode.OK,
             });
             var analyticsProcessor = new AnalyticsProcessorTest(mockHttpClient.Object, null, null);
-            await analyticsProcessor.TrackFeature("myFeature");
+            await analyticsProcessor.TrackFeature("TestAnalyticsProcessorFlushClearsAnalyticsDataFeature");
             await analyticsProcessor.Flush();
             Assert.False(analyticsProcessor.HasTrackingItemsInCache());
         }
@@ -42,13 +42,13 @@ namespace Flagsmith.FlagsmithClientTest
                 StatusCode = System.Net.HttpStatusCode.OK,
             });
             var analyticsProcessor = new AnalyticsProcessorTest(mockHttpClient.Object, null, baseApiUrl: _defaultApiUrl);
-            await analyticsProcessor.TrackFeature("myFeature1");
-            await analyticsProcessor.TrackFeature("myFeature2");
+            await analyticsProcessor.TrackFeature("TestAnalyticsProcessorFlushPostRequestDataMatchAnanlyticsDataFeature1");
+            await analyticsProcessor.TrackFeature("TestAnalyticsProcessorFlushPostRequestDataMatchAnanlyticsDataFeature2");
             var jObject = JObject.Parse(analyticsProcessor.ToString());
             await analyticsProcessor.Flush();
             mockHttpClient.verifyHttpRequest(HttpMethod.Post, "/api/v1/analytics/flags/", Times.Once);
-            Assert.Equal(1, jObject["myFeature1"].Value<int>());
-            Assert.Equal(1, jObject["myFeature2"].Value<int>());
+            Assert.Equal(1, jObject["TestAnalyticsProcessorFlushPostRequestDataMatchAnanlyticsDataFeature1"].Value<int>());
+            Assert.Equal(1, jObject["TestAnalyticsProcessorFlushPostRequestDataMatchAnanlyticsDataFeature2"].Value<int>());
         }
         [Fact]
         public async Task TestAnalyticsProcessorFlushEarlyExitIfAnalyticsDataIsEmpty()
@@ -70,37 +70,90 @@ namespace Flagsmith.FlagsmithClientTest
             });
             var analyticsProcessor = new AnalyticsProcessorTest(mockHttpClient.Object, null, baseApiUrl: _defaultApiUrl);
             await Task.Delay(12 * 1000);
-            await analyticsProcessor.TrackFeature("myFeature");
+            await analyticsProcessor.TrackFeature("TestAnalyticsProcessorCallingTrackFeatureCallsFlushWhenTimerRunsOutFeature");
             mockHttpClient.verifyHttpRequest(HttpMethod.Post, "/api/v1/analytics/flags/", Times.Once);
         }
 
         [Fact]
         public async Task TestAnalyticsProcessorDataConcurrentAccess()
         {
-        // Given
-        var mockHttpClient = HttpMocker.MockHttpResponse(new HttpResponseMessage
-        {
-            StatusCode = System.Net.HttpStatusCode.OK,
-        });
-        var analyticsProcessor = new AnalyticsProcessorTest(mockHttpClient.Object, null, null);
-        const int numberOfCalls = 100000;
-
-        // When 
-        var tasks = new Task[numberOfCalls];
-
-        for(int i = 0; i < tasks.Length; i++)
-        {
-            var local = i;
-            tasks[i] = Task.Run(async () => 
+            // Given
+            var mockHttpClient = HttpMocker.MockHttpResponse(new HttpResponseMessage
             {
-                await analyticsProcessor.TrackFeature($"Feature {local}");
+                StatusCode = System.Net.HttpStatusCode.OK,
             });
+            var analyticsProcessor = new AnalyticsProcessorTest(mockHttpClient.Object, null, null);
+            const int numberOfCalls = 100000;
+
+            // When 
+            var tasks = new Task[numberOfCalls];
+
+            for (int i = 0; i < tasks.Length; i++)
+            {
+                var local = i;
+                tasks[i] = Task.Run(async () =>
+                {
+                    await analyticsProcessor.TrackFeature($"Feature {local}");
+                });
+            }
+
+            await Task.WhenAll(tasks);
+
+            // Then
+            Assert.True(true);
         }
 
-        await Task.WhenAll(tasks);
+        [Fact]
+        public async Task TestAnalyticsProcessorDataConcurrentConsistency()
+        {
+            // Given
+            var mockHttpClient = HttpMocker.MockHttpResponse(new HttpResponseMessage
+            {
+                StatusCode = System.Net.HttpStatusCode.OK,
+            });
 
-        // Then
-        Assert.True(true);
-        }
+            Dictionary<string, int> featuresDictionary = new Dictionary<string, int>();
+            for (int i = 1; i <= 10; i++)
+            {
+                featuresDictionary.TryAdd($"Feature_{i}", 0);
+            }    
+
+            var analyticsProcessor = new AnalyticsProcessorTest(mockHttpClient.Object, null, baseApiUrl: _defaultApiUrl);
+            const int numberOfThreads = 1000;
+            const int callsPerThread = 1000;
+
+            // When 
+            var tasks = new Task[numberOfThreads];
+            for (int i = 0; i < tasks.Length; i++)
+            {
+                var local = i;
+                string[] features = new string[callsPerThread];
+                for (int j = 0; j < callsPerThread; j++)
+                {
+                    string feature = $"Feature_{new Random().Next(1, featuresDictionary.Count + 1)}";
+                    features[j] = feature;
+                    featuresDictionary[feature]++;
+                }
+                
+                tasks[i] = Task.Run(async () =>
+                {
+                    foreach (var feature in features)
+                    {
+                        await analyticsProcessor.TrackFeature(feature);
+                    }
+                });
+            }
+
+            await Task.WhenAll(tasks);
+
+            // Then
+            Dictionary<string, int> analyticsData = analyticsProcessor.GetAggregatedAnalytics();
+            int totalCallsMade = 0;
+            foreach (var feature in featuresDictionary)
+            {
+                totalCallsMade += analyticsData[feature.Key];
+                Assert.Equal(feature.Value, analyticsData[feature.Key]);
+            }
+            Assert.Equal(numberOfThreads * callsPerThread, totalCallsMade);        }
     }
 }

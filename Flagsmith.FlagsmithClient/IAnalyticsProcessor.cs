@@ -1,4 +1,5 @@
-﻿using System.Threading.Tasks;
+﻿using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace Flagsmith
 {
@@ -16,5 +17,11 @@ namespace Flagsmith
         /// <param name="featureId"></param>
         /// <returns></returns>
         Task TrackFeature(string featureName);
+
+        /// <summary>
+        /// Get aggregated analytics data.
+        /// </summary>
+        /// <returns>Dictionary of feature name and usage count</returns>
+        public Dictionary<string, int> GetAggregatedAnalytics();
     }
 }
