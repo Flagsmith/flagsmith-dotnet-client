@@ -433,6 +433,13 @@ namespace Flagsmith.FlagsmithClientTest
         }
 
         [Fact]
+        /// <summary>
+        /// Test that analytics data is consistent with concurrent calls to get flags.
+        /// A huge number of threads are spawned to ensure that the issues related with
+        /// concurrency are systematically reproduced even in machines with good resources.
+        /// Tested with a MacBook Pro M2 with 16GB of RAM and a Core i7 PC with 48 GB of RAM.
+        /// The increment on execution time in the CI runners is not significant.
+        /// </summary>
         public async Task TestAnalyticsDataConsistencyWithConcurrentCallsToGetFlags()
         {
             // Given
@@ -446,13 +453,14 @@ namespace Flagsmith.FlagsmithClientTest
 
             Dictionary<string, int> featuresDictionary = new Dictionary<string, int>();
 
-            for (int i = 1; i <= 10; i++)
+            const int numberOfFeatures = 10;
+            const int numberOfThreads = 1000;
+            const int callsPerThread = 1000;
+
+            for (int i = 1; i <= numberOfFeatures; i++)
             {
                 featuresDictionary.TryAdd($"Feature_{i}", 0);
             }
-
-            const int numberOfThreads = 1000;
-            const int callsPerThread = 1000;
 
             // When 
             var tasks = new Task[numberOfThreads];
@@ -462,9 +470,9 @@ namespace Flagsmith.FlagsmithClientTest
                 string[] features = new string[callsPerThread];
                 for (int j = 0; j < callsPerThread; j++)
                 {
-                    string feature = $"Feature_{new Random().Next(1, featuresDictionary.Count + 1)}";
-                    features[j] = feature;
-                    featuresDictionary[feature]++;
+                    string featureName = $"Feature_{new Random().Next(1, featuresDictionary.Count + 1)}";
+                    features[j] = featureName;
+                    featuresDictionary[featureName]++;
                 }
 
                 tasks[i] = Task.Run(async () =>

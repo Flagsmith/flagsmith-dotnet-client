@@ -153,10 +153,10 @@ namespace Flagsmith.FlagsmithClientTest
                 {
                     object flag = new
                     {
-                        id = 1,
+                        id = i,
                         feature = new
                         {
-                            id = 1,
+                            id = i,
                             name = $"Feature_{i}",
                             created_date = "2019-08-27T14 =53 =45.698555Z",
                             default_enabled = false,

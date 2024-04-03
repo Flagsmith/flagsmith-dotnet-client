@@ -88,7 +88,8 @@ namespace Flagsmith
             _LastFlushed = DateTime.Now;
         }
         /// <summary>
-        /// Send analytics to server about feature usage.
+        /// Record analytics about feature usage and call Flush() to send them to the server after the configured time interval.
+        /// This implementation supports multi-threading and parallel processing by storing the analytics data in a separated Dictionary per thread.
         /// </summary>
         /// <param name="featureId"></param>
         /// <returns></returns>
@@ -103,7 +104,7 @@ namespace Flagsmith
                 AnalyticsDataThreads[threadId] = threadAnalyticsData;
             }
 
-            // Increment local count
+            // Increment local thread count of the feature.
             int count;
             if (!threadAnalyticsData.TryGetValue(featureName, out count))
             {
@@ -119,24 +120,26 @@ namespace Flagsmith
         }
 
         /// <summary>
-        /// Get aggregated analytics data.
+        /// Gets aggregated analytics data.
+        /// This method is thread safe.
+        /// It will aggregate the analytics data from all threads registered in AnalyticsDataThreads.
         /// </summary>
         /// <returns>Dictionary of feature name and usage count</returns>
         public Dictionary<string, int> GetAggregatedAnalytics()
         {
             Dictionary<string, int> aggregatedAnalytics = new Dictionary<string, int>();
-            foreach (var threadCount in AnalyticsDataThreads.Values)
+            foreach (var threadAnalyticsData in AnalyticsDataThreads.Values)
             {
-                foreach (var featureCount in threadCount)
+                foreach (var trackedFeatureData in threadAnalyticsData)
                 {
                     int count;
-                    if (aggregatedAnalytics.TryGetValue(featureCount.Key, out count))
+                    if (aggregatedAnalytics.TryGetValue(trackedFeatureData.Key, out count))
                     {
-                        aggregatedAnalytics[featureCount.Key] = count + featureCount.Value;
+                        aggregatedAnalytics[trackedFeatureData.Key] = count + trackedFeatureData.Value;
                     }
                     else
                     {
-                        aggregatedAnalytics[featureCount.Key] = featureCount.Value;
+                        aggregatedAnalytics[trackedFeatureData.Key] = trackedFeatureData.Value;
                     }
                 }
             }
