@@ -464,17 +464,23 @@ namespace Flagsmith.FlagsmithClientTest
 
             // When 
             var tasks = new Task[numberOfThreads];
-            for (int i = 0; i < tasks.Length; i++)
+
+            // Create numberOfThreads threads.
+            for (int i = 0; i < numberOfThreads; i++)
             {
                 var local = i;
                 string[] features = new string[callsPerThread];
+
+                // Prepare an array of feature names of length callsPerThread.
                 for (int j = 0; j < callsPerThread; j++)
                 {
+                    // The feature names are randomly picked from the featuresDictionary which contains numberOfFeatures feature names.
                     string featureName = $"Feature_{new Random().Next(1, featuresDictionary.Count + 1)}";
                     features[j] = featureName;
                     featuresDictionary[featureName]++;
                 }
 
+                // Each thread will call IsFeatureEnabled for callsPerThread times.
                 tasks[i] = Task.Run(async () =>
                 {
                     foreach (var feature in features)
