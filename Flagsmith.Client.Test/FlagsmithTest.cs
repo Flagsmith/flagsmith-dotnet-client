@@ -474,12 +474,11 @@ namespace Flagsmith.FlagsmithClientTest
                 // Prepare an array of feature names of length callsPerThread.
                 for (int j = 0; j < callsPerThread; j++)
                 {
-                    ```suggestion
                     // The feature names are randomly selected from the featuresDictionary and added to the 
                     // list of features, which represents the features that have been evaluated.  
                     string featureName = $"Feature_{new Random().Next(1, featuresDictionary.Count + 1)}";
                     features[j] = featureName;
-                    
+
                     // The relevant key in the featuresDictionary is incremented to simulate an evaluation
                     // to track for that feature. 
                     featuresDictionary[featureName]++;
