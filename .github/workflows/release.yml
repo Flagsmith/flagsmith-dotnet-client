@@ -39,8 +39,7 @@ jobs:
         if-no-files-found: error
         retention-days: 7
         path: |
-            !${{ env.NuGetDirectory }}/Flasgmith.Engine.*.nupkg
-            ${{ env.NuGetDirectory }}/Flasgmith.*.nupkg
+            ${{ env.NuGetDirectory }}/Flagsmith.?.?.?.nuget
 
   validate_nuget:
     runs-on: ubuntu-latest
