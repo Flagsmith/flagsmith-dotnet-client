@@ -1,0 +1,93 @@
+name: Publish Release
+
+on:
+  release:
+    types:
+      - published
+
+env:
+  DOTNET_SKIP_FIRST_TIME_EXPERIENCE: 1
+  DOTNET_NOLOGO: true
+  NuGetDirectory: ${{ github.workspace }}/nuget
+
+defaults:
+  run:
+    shell: pwsh
+
+jobs:
+  create_nuget:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        fetch-depth: 0
+
+    # Install the .NET SDK indicated in the global.json file
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+
+    # Create the NuGet package in the folder from the environment variable NuGetDirectory
+    - run: dotnet pack --configuration Release --output ${{ env.NuGetDirectory }}
+
+    # Publish the NuGet package as an artifact, so they can be used in the following jobs
+    - uses: actions/upload-artifact@v3
+      with:
+        name: nuget
+        if-no-files-found: error
+        retention-days: 7
+        path: ${{ env.NuGetDirectory }}/*.nupkg
+
+  validate_nuget:
+    runs-on: ubuntu-latest
+    needs:
+        - create_nuget
+    steps:
+      # Install the .NET SDK indicated in the global.json file
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+
+      # Download the NuGet package created in the previous job
+      - uses: actions/download-artifact@v3
+        with:
+          name: nuget
+          path: ${{ env.NuGetDirectory }}
+
+      - name: Install nuget validator
+        run: dotnet tool update Meziantou.Framework.NuGetPackageValidation.Tool --global
+
+      # Validate metadata and content of the NuGet package
+      # https://www.nuget.org/packages/Meziantou.Framework.NuGetPackageValidation.Tool#readme-body-tab
+      # TODO https://github.com/Flagsmith/flagsmith-dotnet-client/issues/96
+      - name: Validate package
+        run: meziantou.validate-nuget-package (Get-ChildItem "${{ env.NuGetDirectory }}/*.nupkg") --excluded-rule-ids 101,111,74,72,61,12
+
+  publish:
+    runs-on: ubuntu-latest
+    needs:
+        - create_nuget
+        - validate_nuget
+    steps:
+      # Download the NuGet package created in the previous job
+      - uses: actions/download-artifact@v3
+        with:
+          name: nuget
+          path: ${{ env.NuGetDirectory }}
+
+      # Install the .NET SDK indicated in the global.json file
+      - name: Setup .NET Core
+        uses: actions/setup-dotnet@v4
+
+      # Publish all NuGet packages to NuGet.org
+      # Use --skip-duplicate to prevent errors if a package with the same version already exists.
+      # If you retry a failed workflow, already published packages will be skipped without error.
+      - name: Publish NuGet package
+        run: |
+          foreach($file in (Get-ChildItem "${{ env.NuGetDirectory }}" -Recurse -Include *.nupkg)) {
+              dotnet nuget push $file --api-key "${{ secrets.NUGET_APIKEY }}" --source https://api.nuget.org/v3/index.json --skip-duplicate
+          }
+
+      - name: Upload Release Asset
+        uses: shogo82148/actions-upload-release-asset@v1
+        with:
+          upload_url: ${{ github.event.release.upload_url }}
+          asset_path: ${{ env.NuGetDirectory }}/*.nupkg
