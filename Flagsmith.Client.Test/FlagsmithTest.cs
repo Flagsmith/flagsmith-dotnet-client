@@ -431,5 +431,80 @@ namespace Flagsmith.FlagsmithClientTest
             var exception = Assert.Throws<Exception>(() => createFlagsmith());
             Assert.Equal("ValueError: environmentKey is required", exception.Message);
         }
+
+        [Fact]
+        /// <summary>
+        /// Test that analytics data is consistent with concurrent calls to get flags.
+        /// A huge number of threads are spawned to ensure that the issues related with
+        /// concurrency are systematically reproduced even in machines with good resources.
+        /// Tested with a MacBook Pro M2 with 16GB of RAM and a Core i7 PC with 48 GB of RAM.
+        /// The increment on execution time in the CI runners is not significant.
+        /// </summary>
+        public async Task TestAnalyticsDataConsistencyWithConcurrentCallsToGetFlags()
+        {
+            // Given
+            var mockHttpClient = HttpMocker.MockHttpResponse(new HttpResponseMessage
+            {
+                StatusCode = System.Net.HttpStatusCode.OK,
+                Content = new StringContent(Fixtures.ApiFlagResponseWithTenFlags)
+            });
+            var flagsmithClientTest = new FlagsmithClient(Fixtures.ApiKey, httpClient: mockHttpClient.Object, enableAnalytics: true);
+            var flags = await flagsmithClientTest.GetEnvironmentFlags();
+
+            Dictionary<string, int> featuresDictionary = new Dictionary<string, int>();
+
+            const int numberOfFeatures = 10;
+            const int numberOfThreads = 1000;
+            const int callsPerThread = 1000;
+
+            for (int i = 1; i <= numberOfFeatures; i++)
+            {
+                featuresDictionary.TryAdd($"Feature_{i}", 0);
+            }
+
+            // When 
+            var tasks = new Task[numberOfThreads];
+
+            // Create numberOfThreads threads.
+            for (int i = 0; i < numberOfThreads; i++)
+            {
+                var local = i;
+                string[] features = new string[callsPerThread];
+
+                // Prepare an array of feature names of length callsPerThread.
+                for (int j = 0; j < callsPerThread; j++)
+                {
+                    // The feature names are randomly selected from the featuresDictionary and added to the 
+                    // list of features, which represents the features that have been evaluated.  
+                    string featureName = $"Feature_{new Random().Next(1, featuresDictionary.Count + 1)}";
+                    features[j] = featureName;
+
+                    // The relevant key in the featuresDictionary is incremented to simulate an evaluation
+                    // to track for that feature. 
+                    featuresDictionary[featureName]++;
+                }
+
+                // Each thread will call IsFeatureEnabled for callsPerThread times.
+                tasks[i] = Task.Run(async () =>
+                {
+                    foreach (var feature in features)
+                    {
+                        await flags.IsFeatureEnabled(feature);
+                    }
+                });
+            }
+
+            await Task.WhenAll(tasks);
+
+            // Then
+            Dictionary<string, int> analyticsData = flagsmithClientTest.aggregatedAnalytics;
+            int totalCallsMade = 0;
+            foreach (var feature in featuresDictionary)
+            {
+                totalCallsMade += analyticsData[feature.Key];
+                Assert.Equal(feature.Value, analyticsData[feature.Key]);
+            }
+            Assert.Equal(numberOfThreads * callsPerThread, totalCallsMade);
+        }
     }
 }

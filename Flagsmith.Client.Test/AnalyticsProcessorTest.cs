@@ -22,12 +22,12 @@ namespace Flagsmith.FlagsmithClientTest
         /// </summary>
         /// <param name="featureId"></param>
         /// <returns></returns>
-        public int this[string featureName] => AnalyticsData[featureName];
+        public int this[string featureName] => GetAggregatedAnalytics()[featureName];
         /// <summary>
         /// Check if there are any items in analytics cache.
         /// </summary>
         /// <returns></returns>
-        public bool HasTrackingItemsInCache() => AnalyticsData.Any();
-        public override string ToString() => JsonConvert.SerializeObject(AnalyticsData);
+        public bool HasTrackingItemsInCache() => GetAggregatedAnalytics().Any();
+        public override string ToString() => JsonConvert.SerializeObject(GetAggregatedAnalytics());
     }
 }
