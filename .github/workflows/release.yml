@@ -1,9 +1,6 @@
 name: Publish Release
 
 on:
-  push:
-    branches:
-     - chore/fix-release
   release:
     types:
       - published
