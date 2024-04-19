@@ -39,7 +39,7 @@ jobs:
         if-no-files-found: error
         retention-days: 7
         path: |
-            ${{ env.NuGetDirectory }}/*.nuget
+            ${{ env.NuGetDirectory }}/Flagsmith.*.nupkg
             !${{ env.NuGetDirectory }}/Flagsmith.Engine*
 
   validate_nuget:
