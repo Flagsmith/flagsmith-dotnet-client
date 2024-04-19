@@ -1,8 +1,7 @@
-using System;
 using System.Collections.Generic;
 using System.Net.Http;
-using System.Text;
 using FlagsmithEngine.Environment.Models;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
 namespace Flagsmith.FlagsmithClientTest
@@ -144,5 +143,36 @@ namespace Flagsmith.FlagsmithClientTest
     ]
 }";
 
+        public static string ApiFlagResponseWithTenFlags
+        {
+            get
+            {
+                List<object> flags = new List<object>();
+                // Add ten flags named Feature_1, Feature_2, ..., Feature_10
+                for (int i = 1; i <= 10; i++)
+                {
+                    object flag = new
+                    {
+                        id = i,
+                        feature = new
+                        {
+                            id = i,
+                            name = $"Feature_{i}",
+                            created_date = "2019-08-27T14 =53 =45.698555Z",
+                            default_enabled = false,
+                            type = "STANDARD",
+                            project = 1
+                        },
+                        feature_state_value = "some-value",
+                        enabled = true,
+                        environment = 1,
+                    };
+                    flags.Add(flag);
+                };
+                var json = JsonConvert.SerializeObject(flags);
+                // Return the JSON string representation of the flags list
+                return json;
+            }
+        }
     }
 }
