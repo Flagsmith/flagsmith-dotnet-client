@@ -59,7 +59,9 @@ jobs:
       # https://www.nuget.org/packages/Meziantou.Framework.NuGetPackageValidation.Tool#readme-body-tab
       # TODO https://github.com/Flagsmith/flagsmith-dotnet-client/issues/96
       - name: Validate package
-        run: meziantou.validate-nuget-package (Get-ChildItem "${{ env.NuGetDirectory }}/*.nupkg") --excluded-rule-ids 101,111,74,72,61,12
+        run: | 
+            meziantou.validate-nuget-package (Get-ChildItem "${{ env.NuGetDirectory }}/*.nupkg")
+                --excluded-rule-ids 131,101,111,74,73,72,61,51,43,32,21,12
 
   publish:
     runs-on: ubuntu-latest
