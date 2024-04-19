@@ -1,6 +1,9 @@
 name: Publish Release
 
 on:
+  push:
+    branches:
+     - chore/fix-release
   release:
     types:
       - published
@@ -36,8 +39,8 @@ jobs:
         if-no-files-found: error
         retention-days: 7
         path: |
-            ${{ env.NuGetDirectory }}/Flasgmith.*.nupkg
             !${{ env.NuGetDirectory }}/Flasgmith.Engine.*.nupkg
+            ${{ env.NuGetDirectory }}/Flasgmith.*.nupkg
 
   validate_nuget:
     runs-on: ubuntu-latest
