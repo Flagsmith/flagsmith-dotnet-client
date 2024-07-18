@@ -198,12 +198,12 @@ namespace Flagsmith
                 return _regularFlagListCache!.GetLatestFlags(GetFeatureFlagsFromCorrectSource);
             }
 
-            return await GetFeatureFlagsFromCorrectSource();
+            return await GetFeatureFlagsFromCorrectSource().ConfigureAwait(false);
         }
 
         private async Task<IFlags> GetFeatureFlagsFromCorrectSource()
         {
-            return Environment != null ? GetFeatureFlagsFromDocument() : await GetFeatureFlagsFromApi();
+            return Environment != null ? GetFeatureFlagsFromDocument() : await GetFeatureFlagsFromApi().ConfigureAwait(false);
         }
 
         /// <summary>
@@ -211,7 +211,7 @@ namespace Flagsmith
         /// </summary>
         public async Task<IFlags> GetIdentityFlags(string identifier)
         {
-            return await GetIdentityFlags(identifier, null);
+            return await GetIdentityFlags(identifier, null).ConfigureAwait(false);
         }
 
         /// <summary>
@@ -231,7 +231,7 @@ namespace Flagsmith
             if (this.OfflineMode)
                 return this.GetIdentityFlagsFromDocument(identifier, traits ?? null);
 
-            return await GetIdentityFlagsFromCorrectSource(identityWrapper);
+            return await GetIdentityFlagsFromCorrectSource(identityWrapper).ConfigureAwait(false);
         }
 
         public async Task<IFlags> GetIdentityFlagsFromCorrectSource(IdentityWrapper identityWrapper)
@@ -241,7 +241,7 @@ namespace Flagsmith
                 return GetIdentityFlagsFromDocument(identityWrapper.Identifier, identityWrapper.Traits);
             }
 
-            return await GetIdentityFlagsFromApi(identityWrapper.Identifier, identityWrapper.Traits);
+            return await GetIdentityFlagsFromApi(identityWrapper.Identifier, identityWrapper.Traits).ConfigureAwait(false);
         }
 
         public List<ISegment>? GetIdentitySegments(string identifier)
@@ -300,7 +300,7 @@ namespace Flagsmith
                     var cancellationTokenSource = new CancellationTokenSource(TimeSpan.FromSeconds(RequestTimeout ?? 100));
                     HttpResponseMessage response = await _httpClient.SendAsync(request, cancellationTokenSource.Token).ConfigureAwait(false);
                     return response.EnsureSuccessStatusCode();
-                })).Content.ReadAsStringAsync();
+                }).ConfigureAwait(false)).Content.ReadAsStringAsync().ConfigureAwait(false);
             }
             catch (HttpRequestException e)
             {
@@ -318,7 +318,7 @@ namespace Flagsmith
         {
             try
             {
-                var json = await GetJson(HttpMethod.Get, ApiUrl + "environment-document/");
+                var json = await GetJson(HttpMethod.Get, ApiUrl + "environment-document/").ConfigureAwait(false);
                 Environment = JsonConvert.DeserializeObject<EnvironmentModel>(json);
                 IdentitiesWithOverridesByIdentifier = Environment?.IdentityOverrides != null ? Environment.IdentityOverrides.ToDictionary(identity => identity.Identifier) : new Dictionary<string, IdentityModel>();
                 Logger?.LogInformation("Local Environment updated: " + json);
@@ -334,7 +334,7 @@ namespace Flagsmith
             try
             {
                 string url = ApiUrl.AppendPath("flags");
-                string json = await GetJson(HttpMethod.Get, url);
+                string json = await GetJson(HttpMethod.Get, url).ConfigureAwait(false);
                 var flags = JsonConvert.DeserializeObject<List<Flag>>(json)?.ToList<IFlag>();
                 return Flags.FromApiFlag(_analyticsProcessor, DefaultFlagHandler, flags);
             }
@@ -359,12 +359,12 @@ namespace Flagsmith
                 if (traits != null && traits.Count > 0)
                 {
                     jsonBody = JsonConvert.SerializeObject(new { identifier = identity, traits });
-                    jsonResponse = await GetJson(HttpMethod.Post, url, body: jsonBody);
+                    jsonResponse = await GetJson(HttpMethod.Post, url, body: jsonBody).ConfigureAwait(false);
                 }
                 else
                 {
                     url += $"?identifier={identity}";
-                    jsonResponse = await GetJson(HttpMethod.Get, url);
+                    jsonResponse = await GetJson(HttpMethod.Get, url).ConfigureAwait(false);
                 }
 
                 var flags = JsonConvert.DeserializeObject<Identity>(jsonResponse)?.flags?.ToList<IFlag>();
