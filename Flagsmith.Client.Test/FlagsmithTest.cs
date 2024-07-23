@@ -28,16 +28,32 @@ namespace Flagsmith.FlagsmithClientTest
         [Fact]
         public async void TestUpdateEnvironmentSetsEnvironment()
         {
-            var mockHttpClient = HttpMocker.MockHttpResponse(new HttpResponseMessage
+            // Given
+            var responses = new Dictionary<string, HttpResponseMessage>
             {
-                StatusCode = System.Net.HttpStatusCode.OK,
-                Content = new StringContent(Fixtures.JsonObject.ToString())
-            });
+                { "/api/v1/environment-document/", new HttpResponseMessage
+                    {
+                        StatusCode = System.Net.HttpStatusCode.OK,
+                        Content = new StringContent(Fixtures.JsonObject.ToString())
+                    }
+                },
+                { "/api/v1/flags/", new HttpResponseMessage
+                    {
+                        StatusCode = System.Net.HttpStatusCode.OK,
+                        Content = new StringContent(Fixtures.ApiFlagResponse)
+                    }
+                }
+            };
+            var mockHttpClient = HttpMocker.MockHttpResponse(responses);
+
+            // When
             var flagsmithClientTest = new FlagsmithClient(Fixtures.ApiKey, enableClientSideEvaluation: true, httpClient: mockHttpClient.Object);
+
+            // Then
             mockHttpClient.verifyHttpRequest(HttpMethod.Get, "/api/v1/environment-document/", Times.Once);
             await flagsmithClientTest.GetEnvironmentFlags();
             mockHttpClient.verifyHttpRequest(HttpMethod.Get, "/api/v1/environment-document/", Times.Once);
-            mockHttpClient.verifyHttpRequest(HttpMethod.Get, "/api/v1/flags/", Times.Never);
+            mockHttpClient.verifyHttpRequest(HttpMethod.Get, "/api/v1/flags/", Times.Once);
         }
         [Fact]
         public async Task TestGetEnvironmentFlagsCallsApiWhenNoLocalEnvironment()
@@ -57,12 +73,28 @@ namespace Flagsmith.FlagsmithClientTest
         [Fact]
         public async Task TestGetEnvironmentFlagsUsesLocalEnvironmentWhenAvailable()
         {
-            var mockHttpClient = HttpMocker.MockHttpResponse(new HttpResponseMessage
+            // Given
+            var responses = new Dictionary<string, HttpResponseMessage>
             {
-                StatusCode = System.Net.HttpStatusCode.OK,
-                Content = new StringContent(Fixtures.JsonObject.ToString())
-            });
+                { "/api/v1/environment-document/", new HttpResponseMessage
+                    {
+                        StatusCode = System.Net.HttpStatusCode.OK,
+                        Content = new StringContent(Fixtures.JsonObject.ToString())
+                    }
+                },
+                { "/api/v1/flags/", new HttpResponseMessage
+                    {
+                        StatusCode = System.Net.HttpStatusCode.OK,
+                        Content = new StringContent(Fixtures.ApiFlagResponse)
+                    }
+                }
+            };
+            var mockHttpClient = HttpMocker.MockHttpResponse(responses);
+
+            // When
             var flagsmithClientTest = new FlagsmithClient(Fixtures.ApiKey, enableClientSideEvaluation: true, httpClient: mockHttpClient.Object);
+
+            // Then
             mockHttpClient.verifyHttpRequest(HttpMethod.Get, "/api/v1/environment-document/", Times.Once);
             var flags = (await flagsmithClientTest.GetEnvironmentFlags()).AllFlags();
             var fs = Fixtures.Environment.FeatureStates[0];
@@ -298,11 +330,22 @@ namespace Flagsmith.FlagsmithClientTest
         public void TestFlagsmithClientWithCacheInitialization()
         {
             // Given
-            var mockHttpClient = HttpMocker.MockHttpResponse(new HttpResponseMessage
+            var responses = new Dictionary<string, HttpResponseMessage>
             {
-                StatusCode = System.Net.HttpStatusCode.OK,
-                Content = new StringContent(Fixtures.JsonObject.ToString())
-            });
+                { "/api/v1/environment-document/", new HttpResponseMessage
+                    {
+                        StatusCode = System.Net.HttpStatusCode.OK,
+                        Content = new StringContent(Fixtures.JsonObject.ToString())
+                    }
+                },
+                { "/api/v1/flags/", new HttpResponseMessage
+                    {
+                        StatusCode = System.Net.HttpStatusCode.OK,
+                        Content = new StringContent(Fixtures.ApiFlagResponse)
+                    }
+                }
+            };
+            var mockHttpClient = HttpMocker.MockHttpResponse(responses);
             var flagsmithClient = new FlagsmithClient(Fixtures.ApiKey,
                 httpClient: mockHttpClient.Object,
                 enableClientSideEvaluation: true,
@@ -389,6 +432,31 @@ namespace Flagsmith.FlagsmithClientTest
 
             Assert.True(await identityFlags.IsFeatureEnabled("some_feature"));
             Assert.Equal("offline-value", await identityFlags.GetFeatureValue("some_feature"));
+        }
+
+        [Fact]
+        public async Task TestFlagsmithUsesTheAPIResponseEvenIfTheOfflineHandlerIsSet()
+        {
+            // Given
+            var environment = JObject
+                .Parse(File.ReadAllText("../../../data/offline-environment.json"))
+                .ToObject<EnvironmentModel>();
+
+            var mockOfflineHandler = new Mock<BaseOfflineHandler>();
+            mockOfflineHandler.Setup(h => h.GetEnvironment()).Returns(environment);
+            var mockHttpClient = HttpMocker.MockHttpResponse(new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.OK,
+                Content = new StringContent(Fixtures.ApiFlagResponse),
+            });
+
+            // When
+            FlagsmithClient flagsmithClientTest = new FlagsmithClient(Fixtures.ApiKey, httpClient: mockHttpClient.Object, offlineHandler: mockOfflineHandler.Object);
+
+            // Then
+            var environmentFlags = await flagsmithClientTest.GetEnvironmentFlags();
+            Assert.True(await environmentFlags.IsFeatureEnabled("some_feature"));
+            Assert.Equal("some-value", await environmentFlags.GetFeatureValue("some_feature"));
         }
 
         [Fact]

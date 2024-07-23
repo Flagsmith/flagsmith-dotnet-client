@@ -203,7 +203,7 @@ namespace Flagsmith
 
         private async Task<IFlags> GetFeatureFlagsFromCorrectSource()
         {
-            return Environment != null ? GetFeatureFlagsFromDocument() : await GetFeatureFlagsFromApi().ConfigureAwait(false);
+            return OfflineMode && Environment != null ? GetFeatureFlagsFromDocument() : await GetFeatureFlagsFromApi().ConfigureAwait(false);
         }
 
         /// <summary>
