@@ -53,7 +53,7 @@ namespace Flagsmith.FlagsmithClientTest
             mockHttpClient.verifyHttpRequest(HttpMethod.Get, "/api/v1/environment-document/", Times.Once);
             await flagsmithClientTest.GetEnvironmentFlags();
             mockHttpClient.verifyHttpRequest(HttpMethod.Get, "/api/v1/environment-document/", Times.Once);
-            mockHttpClient.verifyHttpRequest(HttpMethod.Get, "/api/v1/flags/", Times.Once);
+            mockHttpClient.verifyHttpRequest(HttpMethod.Get, "/api/v1/flags/", Times.Never);
         }
         [Fact]
         public async Task TestGetEnvironmentFlagsCallsApiWhenNoLocalEnvironment()
@@ -78,13 +78,13 @@ namespace Flagsmith.FlagsmithClientTest
             {
                 { "/api/v1/environment-document/", new HttpResponseMessage
                     {
-                        StatusCode = System.Net.HttpStatusCode.OK,
+                        StatusCode = HttpStatusCode.OK,
                         Content = new StringContent(Fixtures.JsonObject.ToString())
                     }
                 },
                 { "/api/v1/flags/", new HttpResponseMessage
                     {
-                        StatusCode = System.Net.HttpStatusCode.OK,
+                        StatusCode = HttpStatusCode.OK,
                         Content = new StringContent(Fixtures.ApiFlagResponse)
                     }
                 }
