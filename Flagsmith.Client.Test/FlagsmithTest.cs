@@ -506,5 +506,39 @@ namespace Flagsmith.FlagsmithClientTest
             }
             Assert.Equal(numberOfThreads * callsPerThread, totalCallsMade);
         }
+
+        [Fact]
+        public async Task TestGetIdentityFlagsTransientIdentityCallsExpected()
+        {
+            string identifier = "transient_identity";
+            bool transient = true;
+            var traits = new List<ITrait> { new Trait("some_trait", "some_value") };
+            var mockHttpClient = HttpMocker.MockHttpResponse(new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.OK,
+                Content = new StringContent(Fixtures.ApiTransientIdentityResponse)
+            });
+            var flagsmithClient = new FlagsmithClient(Fixtures.ApiKey, httpClient: mockHttpClient.Object);
+            var identityFlags = await flagsmithClient.GetIdentityFlags(identifier ,traits, transient);
+            Assert.True(await identityFlags.IsFeatureEnabled("some_feature"));
+            Assert.Equal("some-identity-trait-value", await identityFlags.GetFeatureValue("some_feature"));
+        }
+
+        [Fact]
+        public async Task TestGetIdentityFlagsTransientTraitKeysCallsExpected()
+        {
+            string identifier = "test_identity_with_transient_traits";
+            var traits = new List<ITrait> { new Trait("transient_trait", "transient_trait_value", true) };
+            
+            var mockHttpClient = HttpMocker.MockHttpResponse(new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.OK,
+                Content = new StringContent(Fixtures.ApiIdentityWithTransientTraitsResponse)
+            });
+            var flagsmithClient = new FlagsmithClient(Fixtures.ApiKey, httpClient: mockHttpClient.Object);
+            var identityFlags = await flagsmithClient.GetIdentityFlags(identifier, traits);
+            Assert.True(await identityFlags.IsFeatureEnabled("some_feature"));
+            Assert.Equal("some-transient-trait-value", await identityFlags.GetFeatureValue("some_feature"));
+        }
     }
 }

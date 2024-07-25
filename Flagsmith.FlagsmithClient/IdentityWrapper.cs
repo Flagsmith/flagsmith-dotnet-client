@@ -12,6 +12,8 @@ namespace Flagsmith
 
         public List<ITrait> Traits { get; }
 
+        public bool Transient { get; }
+
         public string CacheKey
         {
             get
@@ -25,10 +27,11 @@ namespace Flagsmith
             }
         }
 
-        public IdentityWrapper(string identifier, List<ITrait> traits)
+        public IdentityWrapper(string identifier, List<ITrait> traits, bool transient = false)
         {
             Identifier = identifier;
             Traits = traits;
+            Transient = transient;
         }
     }
 }

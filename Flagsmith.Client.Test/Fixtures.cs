@@ -174,5 +174,71 @@ namespace Flagsmith.FlagsmithClientTest
                 return json;
             }
         }
+
+        public static string ApiIdentityWithTransientTraitsResponse => @"{
+      'traits': [
+          {
+              'id': 1,
+              'trait_key': 'some_trait',
+              'trait_value': 'some_value'
+          },
+          {
+              'id': 2,
+              'trait_key': 'transient_trait',
+              'trait_value': 'transient_trait_value',
+              'transient': true
+          }
+      ],
+      'flags': [
+          {
+              'id': 1,
+              'feature': {
+                  'id': 1,
+                  'name': 'some_feature',
+                  'created_date': '2019-08-27T14:53:45.698555Z',
+                  'initial_value': null,
+                  'description': null,
+                  'default_enabled': false,
+                  'type': 'STANDARD',
+                  'project': 1
+              },
+              'feature_state_value': 'some-transient-trait-value',
+              'enabled': true,
+              'environment': 1,
+              'identity': null,
+              'feature_segment': null
+          }
+      ]
+  }";
+
+          public static string ApiTransientIdentityResponse => @"{
+      'traits': [
+        {
+          'id': 1,
+          'trait_key': 'some_trait',
+          'trait_value': 'some_value'
+        },
+      ],
+      'flags': [
+          {
+              'id': 1,
+              'feature': {
+                  'id': 1,
+                  'name': 'some_feature',
+                  'created_date': '2019-08-27T14:53:45.698555Z',
+                  'initial_value': null,
+                  'description': null,
+                  'default_enabled': false,
+                  'type': 'STANDARD',
+                  'project': 1
+              },
+              'feature_state_value': 'some-identity-trait-value',
+              'enabled': true,
+              'environment': 1,
+              'identity': null,
+              'feature_segment': null
+          }
+      ]
+  }";
     }
 }
