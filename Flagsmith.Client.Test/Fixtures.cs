@@ -211,7 +211,7 @@ namespace Flagsmith.FlagsmithClientTest
       ]
   }";
 
-          public static string ApiTransientIdentityResponse => @"{
+        public static string ApiTransientIdentityResponse => @"{
       'traits': [
         {
           'id': 1,

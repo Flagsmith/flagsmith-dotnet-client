@@ -519,7 +519,7 @@ namespace Flagsmith.FlagsmithClientTest
                 Content = new StringContent(Fixtures.ApiTransientIdentityResponse)
             });
             var flagsmithClient = new FlagsmithClient(Fixtures.ApiKey, httpClient: mockHttpClient.Object);
-            var identityFlags = await flagsmithClient.GetIdentityFlags(identifier ,traits, transient);
+            var identityFlags = await flagsmithClient.GetIdentityFlags(identifier, traits, transient);
             Assert.True(await identityFlags.IsFeatureEnabled("some_feature"));
             Assert.Equal("some-identity-trait-value", await identityFlags.GetFeatureValue("some_feature"));
         }
@@ -529,7 +529,7 @@ namespace Flagsmith.FlagsmithClientTest
         {
             string identifier = "test_identity_with_transient_traits";
             var traits = new List<ITrait> { new Trait("transient_trait", "transient_trait_value", true) };
-            
+
             var mockHttpClient = HttpMocker.MockHttpResponse(new HttpResponseMessage
             {
                 StatusCode = HttpStatusCode.OK,
