@@ -455,7 +455,9 @@ namespace Flagsmith.FlagsmithClientTest
 
             // Then
             var environmentFlags = await flagsmithClientTest.GetEnvironmentFlags();
+            mockHttpClient.verifyHttpRequest(HttpMethod.Get, "/api/v1/flags/", Times.Once);
             Assert.True(await environmentFlags.IsFeatureEnabled("some_feature"));
+            Assert.NotEqual("offline-value", await environmentFlags.GetFeatureValue("some_feature"));
             Assert.Equal("some-value", await environmentFlags.GetFeatureValue("some_feature"));
         }
 
