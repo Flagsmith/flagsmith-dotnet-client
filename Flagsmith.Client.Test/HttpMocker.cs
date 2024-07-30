@@ -7,6 +7,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Web;
+using System.Net;
 
 namespace Flagsmith.FlagsmithClientTest
 {
@@ -58,6 +59,25 @@ namespace Flagsmith.FlagsmithClientTest
            req.RequestUri.AbsolutePath == url &&
            ((req.Content != null && req.Content.ReadAsStringAsync().Result == expectedBodyJson) || (expectedBodyJson == null)) &&
            (queryString == "" || req.RequestUri.Query.Equals($"?{queryString}"))), It.IsAny<CancellationToken>()), times);
+        }
+        public static Mock<HttpClient> MockHttpResponse(Dictionary<string, HttpResponseMessage> responses)
+        {
+            var httpClientMock = new Mock<HttpClient>();
+
+            httpClientMock.Setup(x => x.SendAsync(It.IsAny<HttpRequestMessage>(), It.IsAny<CancellationToken>()))
+                .Returns((HttpRequestMessage request, CancellationToken token) =>
+                {
+                    var url = request.RequestUri.PathAndQuery;
+
+                    if (responses.TryGetValue(url, out var response))
+                    {
+                        return Task.FromResult(response);
+                    }
+
+                    return Task.FromResult(new HttpResponseMessage(HttpStatusCode.NotFound));
+                });
+
+            return httpClientMock;
         }
     }
 }

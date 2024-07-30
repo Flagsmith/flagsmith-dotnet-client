@@ -203,7 +203,7 @@ namespace Flagsmith
 
         private async Task<IFlags> GetFeatureFlagsFromCorrectSource()
         {
-            return Environment != null ? GetFeatureFlagsFromDocument() : await GetFeatureFlagsFromApi().ConfigureAwait(false);
+            return (OfflineMode || EnableClientSideEvaluation) && Environment != null ? GetFeatureFlagsFromDocument() : await GetFeatureFlagsFromApi().ConfigureAwait(false);
         }
 
         /// <summary>
@@ -236,7 +236,7 @@ namespace Flagsmith
 
         public async Task<IFlags> GetIdentityFlagsFromCorrectSource(IdentityWrapper identityWrapper)
         {
-            if (Environment != null)
+            if ((OfflineMode || EnableClientSideEvaluation) && Environment != null)
             {
                 return GetIdentityFlagsFromDocument(identityWrapper.Identifier, identityWrapper.Traits);
             }
