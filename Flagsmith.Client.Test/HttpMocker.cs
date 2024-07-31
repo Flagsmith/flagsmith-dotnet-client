@@ -42,6 +42,11 @@ namespace Flagsmith.FlagsmithClientTest
             verifyHttpRequest(mockHttpClient, httpMethod, url, times, null, expectedBodyJson);
         }
 
+        public static void verifyHttpRequestWithParams(this Mock<HttpClient> mockHttpClient, HttpMethod httpMethod, string url, System.Func<Moq.Times> times, Dictionary<string, string> queryParams)
+        {
+            verifyHttpRequest(mockHttpClient, httpMethod, url, times, queryParams);
+        }
+
         public static void verifyHttpRequest(this Mock<HttpClient> mockHttpClient, HttpMethod httpMethod, string url, System.Func<Moq.Times> times, Dictionary<string, string> queryParams, string expectedBodyJson = null)
         {
             var query = HttpUtility.ParseQueryString(string.Empty);

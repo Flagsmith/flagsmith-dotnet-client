@@ -363,7 +363,7 @@ namespace Flagsmith
                 }
                 else
                 {
-                    url += $"?identifier={identity}";
+                    url += $"?identifier={identity}{(transient ? $"&transient={transient}" : "")}";
                     jsonResponse = await GetJson(HttpMethod.Get, url).ConfigureAwait(false);
                 }
 

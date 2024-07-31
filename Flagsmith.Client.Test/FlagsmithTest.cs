@@ -581,6 +581,7 @@ namespace Flagsmith.FlagsmithClientTest
         [Fact]
         public async Task TestGetIdentityFlagsTransientIdentityCallsExpected()
         {
+            // Given
             string identifier = "transient_identity";
             bool transient = true;
             var traits = new List<ITrait> { new Trait("some_trait", "some_value") };
@@ -589,8 +590,11 @@ namespace Flagsmith.FlagsmithClientTest
                 StatusCode = HttpStatusCode.OK,
                 Content = new StringContent(Fixtures.ApiTransientIdentityResponse)
             });
+            // When
             var flagsmithClient = new FlagsmithClient(Fixtures.ApiKey, httpClient: mockHttpClient.Object);
             var identityFlags = await flagsmithClient.GetIdentityFlags(identifier, traits, transient);
+            // Then
+            mockHttpClient.verifyHttpRequest(HttpMethod.Post, "/api/v1/identities/", Times.Once, "{\"identifier\":\"transient_identity\",\"traits\":[{\"trait_key\":\"some_trait\",\"trait_value\":\"some_value\",\"transient\":false}],\"transient\":true}");
             Assert.True(await identityFlags.IsFeatureEnabled("some_feature"));
             Assert.Equal("some-identity-trait-value", await identityFlags.GetFeatureValue("some_feature"));
         }
@@ -598,6 +602,7 @@ namespace Flagsmith.FlagsmithClientTest
         [Fact]
         public async Task TestGetIdentityFlagsTransientTraitKeysCallsExpected()
         {
+            // Given
             string identifier = "test_identity_with_transient_traits";
             var traits = new List<ITrait> { new Trait("transient_trait", "transient_trait_value", true) };
 
@@ -606,10 +611,37 @@ namespace Flagsmith.FlagsmithClientTest
                 StatusCode = HttpStatusCode.OK,
                 Content = new StringContent(Fixtures.ApiIdentityWithTransientTraitsResponse)
             });
+            // When
             var flagsmithClient = new FlagsmithClient(Fixtures.ApiKey, httpClient: mockHttpClient.Object);
             var identityFlags = await flagsmithClient.GetIdentityFlags(identifier, traits);
+            // Then
+            mockHttpClient.verifyHttpRequest(HttpMethod.Post, "/api/v1/identities/", Times.Once, "{\"identifier\":\"test_identity_with_transient_traits\",\"traits\":[{\"trait_key\":\"transient_trait\",\"trait_value\":\"transient_trait_value\",\"transient\":true}],\"transient\":false}");
             Assert.True(await identityFlags.IsFeatureEnabled("some_feature"));
             Assert.Equal("some-transient-trait-value", await identityFlags.GetFeatureValue("some_feature"));
+        }
+        [Fact]
+        public async Task TestGetIdentityFlagsTransientIdentityWitoutTraitCallsExpected()
+        {
+            // Given
+            string identifier = "transient_identity";
+            bool transient = true;
+            var mockHttpClient = HttpMocker.MockHttpResponse(new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.OK,
+                Content = new StringContent(Fixtures.ApiTransientIdentityResponse)
+            });
+            var queryParams = new Dictionary<string, string>
+            {
+                { "identifier", "transient_identity" },
+                { "transient", "True" }
+            };
+            // When
+            var flagsmithClient = new FlagsmithClient(Fixtures.ApiKey, httpClient: mockHttpClient.Object);
+            var identityFlags = await flagsmithClient.GetIdentityFlags(identifier, null, transient);
+            // Then
+            mockHttpClient.verifyHttpRequestWithParams(HttpMethod.Get, "/api/v1/identities/", Times.Once, (Dictionary<string, string>)queryParams);
+            Assert.True(await identityFlags.IsFeatureEnabled("some_feature"));
+            Assert.Equal("some-identity-trait-value", await identityFlags.GetFeatureValue("some_feature"));
         }
     }
 }
