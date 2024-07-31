@@ -217,9 +217,9 @@ namespace Flagsmith
         /// <summary>
         /// Get all the flags for the current environment for a given identity with provided traits.
         /// </summary>
-        public async Task<IFlags> GetIdentityFlags(string identifier, List<ITrait>? traits)
+        public async Task<IFlags> GetIdentityFlags(string identifier, List<ITrait>? traits, bool transient = false)
         {
-            var identityWrapper = new IdentityWrapper(identifier, traits);
+            var identityWrapper = new IdentityWrapper(identifier, traits, transient);
 
             if (CacheConfig.Enabled)
             {
@@ -241,7 +241,7 @@ namespace Flagsmith
                 return GetIdentityFlagsFromDocument(identityWrapper.Identifier, identityWrapper.Traits);
             }
 
-            return await GetIdentityFlagsFromApi(identityWrapper.Identifier, identityWrapper.Traits).ConfigureAwait(false);
+            return await GetIdentityFlagsFromApi(identityWrapper.Identifier, identityWrapper.Traits, identityWrapper.Transient).ConfigureAwait(false);
         }
 
         public List<ISegment>? GetIdentitySegments(string identifier)
@@ -348,7 +348,7 @@ namespace Flagsmith
             }
         }
 
-        private async Task<IFlags> GetIdentityFlagsFromApi(string identity, List<ITrait> traits)
+        private async Task<IFlags> GetIdentityFlagsFromApi(string identity, List<ITrait> traits, bool transient = false)
         {
             try
             {
@@ -358,12 +358,12 @@ namespace Flagsmith
 
                 if (traits != null && traits.Count > 0)
                 {
-                    jsonBody = JsonConvert.SerializeObject(new { identifier = identity, traits });
+                    jsonBody = JsonConvert.SerializeObject(new { identifier = identity, traits, transient });
                     jsonResponse = await GetJson(HttpMethod.Post, url, body: jsonBody).ConfigureAwait(false);
                 }
                 else
                 {
-                    url += $"?identifier={identity}";
+                    url += $"?identifier={identity}{(transient ? $"&transient={transient}" : "")}";
                     jsonResponse = await GetJson(HttpMethod.Get, url).ConfigureAwait(false);
                 }
 

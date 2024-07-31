@@ -37,7 +37,17 @@ namespace Flagsmith.FlagsmithClientTest
             verifyHttpRequest(mockHttpClient, httpMethod, url, times, null);
         }
 
-        public static void verifyHttpRequest(this Mock<HttpClient> mockHttpClient, HttpMethod httpMethod, string url, System.Func<Moq.Times> times, Dictionary<string, string> queryParams)
+        public static void verifyHttpRequest(this Mock<HttpClient> mockHttpClient, HttpMethod httpMethod, string url, System.Func<Moq.Times> times, string expectedBodyJson = null)
+        {
+            verifyHttpRequest(mockHttpClient, httpMethod, url, times, null, expectedBodyJson);
+        }
+
+        public static void verifyHttpRequestWithParams(this Mock<HttpClient> mockHttpClient, HttpMethod httpMethod, string url, System.Func<Moq.Times> times, Dictionary<string, string> queryParams)
+        {
+            verifyHttpRequest(mockHttpClient, httpMethod, url, times, queryParams);
+        }
+
+        public static void verifyHttpRequest(this Mock<HttpClient> mockHttpClient, HttpMethod httpMethod, string url, System.Func<Moq.Times> times, Dictionary<string, string> queryParams, string expectedBodyJson = null)
         {
             var query = HttpUtility.ParseQueryString(string.Empty);
             if (queryParams != null)
@@ -50,11 +60,11 @@ namespace Flagsmith.FlagsmithClientTest
             string queryString = query.ToString();
 
             mockHttpClient.Verify(x => x.SendAsync(It.Is<HttpRequestMessage>(req =>
-          req.Method == httpMethod &&
-          req.RequestUri.AbsolutePath == url &&
-          (queryString == "" || req.RequestUri.Query.Equals($"?{queryString}"))), It.IsAny<CancellationToken>()), times);
+           req.Method == httpMethod &&
+           req.RequestUri.AbsolutePath == url &&
+           ((req.Content != null && req.Content.ReadAsStringAsync().Result == expectedBodyJson) || (expectedBodyJson == null)) &&
+           (queryString == "" || req.RequestUri.Query.Equals($"?{queryString}"))), It.IsAny<CancellationToken>()), times);
         }
-
         public static Mock<HttpClient> MockHttpResponse(Dictionary<string, HttpResponseMessage> responses)
         {
             var httpClientMock = new Mock<HttpClient>();

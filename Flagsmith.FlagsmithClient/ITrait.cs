@@ -5,5 +5,6 @@
         string ToString();
         string GetTraitKey();
         dynamic GetTraitValue();
+        bool GetTransient();
     }
 }
