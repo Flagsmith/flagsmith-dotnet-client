@@ -71,7 +71,7 @@ namespace Flagsmith
                 _CustomHeaders?.ForEach(kvp => request.Headers.Add(kvp.Key, kvp.Value));
                 var tokenSource = new CancellationTokenSource();
                 tokenSource.CancelAfter(TimeSpan.FromSeconds(_TimeOut));
-                var response = await _HttpClient.SendAsync(request, tokenSource.Token);
+                var response = await _HttpClient.SendAsync(request, tokenSource.Token).ConfigureAwait(false);
                 response.EnsureSuccessStatusCode();
                 _Logger?.LogInformation("Analytics posted: " + analyticsJson);
                 AnalyticsDataThreads.Clear();
