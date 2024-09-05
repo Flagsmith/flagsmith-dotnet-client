@@ -116,7 +116,7 @@ namespace Flagsmith
             int _LastFlushedInterval = (DateTime.Now - _LastFlushed).Seconds;
 
             if (_LastFlushedInterval > _FlushIntervalSeconds)
-                await Flush();
+                await Flush().ConfigureAwait(false);
         }
 
         /// <summary>
