@@ -155,7 +155,7 @@ namespace Flagsmith
                     }
 
                     _pollingManager = new PollingManager(GetAndUpdateEnvironmentFromApi, EnvironmentRefreshIntervalSeconds);
-                    _pollingManager.StartPoll().GetAwaiter().GetResult();
+                    Task.Run(async () => await _pollingManager.StartPoll()).GetAwaiter().GetResult();
                 }
             }
 
