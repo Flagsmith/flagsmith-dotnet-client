@@ -22,7 +22,7 @@ namespace FlagsmithEngine.Feature.Models
         [JsonProperty(PropertyName = "multivariate_feature_state_values")]
         public List<MultivariateFeatureStateValueModel> MultivariateFeatureStateValues { get; set; }
         [JsonProperty(PropertyName = "django_id")]
-        public int DjangoId { get; set; }
+        public int? DjangoId { get; set; }
         public string FeatureStateUUID { get; set; } = new Guid().ToString();
         [JsonProperty(PropertyName = "feature_segment")]
         public FeatureSegmentModel FeatureSegment { get; set; } = null;
@@ -33,7 +33,7 @@ namespace FlagsmithEngine.Feature.Models
         {
             var percentageValue = Hashing.GetHashedPercentageForObjectIds(new List<string>
             {
-              DjangoId != 0 ? DjangoId.ToString() : FeatureStateUUID,
+              DjangoId != null ? DjangoId.ToString() : FeatureStateUUID,
               identityId.ToString()
             });
             var startPercentage = 0.0;
