@@ -84,6 +84,7 @@ namespace Flagsmith.FlagsmithClientTest
           'featurestate_uuid': '1bddb9a5-7e59-42c6-9be9-625fa369749f',
           'feature_state_value': 'some-overridden-value',
           'enabled': false,
+          'django_id': null,
           'environment': 1,
           'identity': null,
           'feature_segment': null
