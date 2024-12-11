@@ -6,7 +6,7 @@ namespace Flagsmith.Providers
     {
         public DateTime Now()
         {
-            return DateTime.Now;
+            return DateTime.UtcNow;
         }
     }
 }

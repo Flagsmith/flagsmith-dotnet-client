@@ -31,7 +31,7 @@ namespace Flagsmith
             _EnvironmentKey = environmentKey;
             _AnalyticsEndPoint = baseApiUrl + "analytics/flags/";
             _TimeOut = timeOut;
-            _LastFlushed = DateTime.Now;
+            _LastFlushed = DateTime.UtcNow;
             _HttpClient = httpClient;
             _Logger = logger;
             _FlushIntervalSeconds = flushIntervalSeconds;
@@ -85,7 +85,7 @@ namespace Flagsmith
             {
                 _Logger?.LogWarning("Analytics request cancelled: Api request takes too long to respond");
             }
-            _LastFlushed = DateTime.Now;
+            _LastFlushed = DateTime.UtcNow;
         }
         /// <summary>
         /// Record analytics about feature usage and call Flush() to send them to the server after the configured time interval.
@@ -113,7 +113,7 @@ namespace Flagsmith
             count++;
             threadAnalyticsData[featureName] = count;
 
-            int _LastFlushedInterval = (DateTime.Now - _LastFlushed).Seconds;
+            int _LastFlushedInterval = (DateTime.UtcNow - _LastFlushed).Seconds;
 
             if (_LastFlushedInterval > _FlushIntervalSeconds)
                 await Flush().ConfigureAwait(false);
