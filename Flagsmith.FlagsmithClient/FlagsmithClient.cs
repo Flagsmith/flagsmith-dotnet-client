@@ -279,23 +279,26 @@ namespace Flagsmith
         {
             try
             {
-                HttpRequestMessage request = new HttpRequestMessage(method, url)
+                var policy = HttpPolicies.GetRetryPolicyAwaitable(Retries);
+                return await (await policy.ExecuteAsync(async () =>
                 {
-                    Headers =
+                    HttpRequestMessage request = new HttpRequestMessage(method, url)
                     {
-                        { "X-Environment-Key", EnvironmentKey }
+                        Headers =
+                        {
+                            { "X-Environment-Key", EnvironmentKey }
+                        }
+                    };
+                    CustomHeaders?.ForEach(kvp => request.Headers.Add(kvp.Key, kvp.Value));
+                    if (body != null)
+                    {
+                        request.Content = new StringContent(body, Encoding.UTF8, "application/json");
                     }
-                };
-                CustomHeaders?.ForEach(kvp => request.Headers.Add(kvp.Key, kvp.Value));
-                if (body != null)
-                {
-                    request.Content = new StringContent(body, Encoding.UTF8, "application/json");
-                }
 
-                var cancellationTokenSource = new CancellationTokenSource(TimeSpan.FromSeconds(RequestTimeout ?? 100));
-                HttpResponseMessage response = await _httpClient.SendAsync(request, cancellationTokenSource.Token).ConfigureAwait(false);
-                response = response.EnsureSuccessStatusCode();
-                return await response.Content.ReadAsStringAsync().ConfigureAwait(false);
+                    var cancellationTokenSource = new CancellationTokenSource(TimeSpan.FromSeconds(RequestTimeout ?? 100));
+                    HttpResponseMessage response = await _httpClient.SendAsync(request, cancellationTokenSource.Token).ConfigureAwait(false);
+                    return response.EnsureSuccessStatusCode();
+                }).ConfigureAwait(false)).Content.ReadAsStringAsync().ConfigureAwait(false);
             }
             catch (HttpRequestException e)
             {
@@ -306,11 +309,6 @@ namespace Flagsmith
             catch (TaskCanceledException)
             {
                 throw new FlagsmithAPIError("Request cancelled: Api server takes too long to respond");
-            }
-            catch (Exception ex)
-            {
-                var bob = 1;
-                throw;
             }
         }
 
