@@ -1,14 +1,16 @@
-using Moq;
-using System.Collections.Generic;
-using System.Net.Http;
-using System.Threading.Tasks;
-using Xunit;
-using FlagsmithEngine.Environment.Models;
-using OfflineHandler;
-using Newtonsoft.Json.Linq;
-using System.IO;
 using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
 using System.Net;
+using System.Net.Http;
+using System.Threading;
+using System.Threading.Tasks;
+using FlagsmithEngine.Environment.Models;
+using Moq;
+using Newtonsoft.Json.Linq;
+using OfflineHandler;
+using Xunit;
 
 namespace Flagsmith.FlagsmithClientTest
 {
@@ -104,9 +106,26 @@ namespace Flagsmith.FlagsmithClientTest
             mockHttpClient.verifyHttpRequest(HttpMethod.Get, "/api/v1/environment-document/", Times.Once);
         }
         [Fact]
-        public async Task TestGetIdentityFlagsCallsGetApiWhenNoLocalEnvironmentNoTraits()
+        public async Task TestThatCacheDictionaryDoesNotThrowUnderLoad()
         {
-            string identifier = "identifier";
+            const int numberOfThreads = 1000;
+
+            ThreadPool.SetMinThreads(numberOfThreads, numberOfThreads);
+
+            var mockHttpClient = HttpMocker.MockHttpResponse(System.Net.HttpStatusCode.OK, Fixtures.ApiIdentityResponse);
+
+            var flagsmithClientTest = new FlagsmithClient(Fixtures.ApiKey, httpClient: mockHttpClient.Object, cacheConfig: new CacheConfig(true));
+
+            var token = new CancellationToken();
+            await Parallel.ForEachAsync(Enumerable.Range(1, numberOfThreads), token, async (item, token) => {
+                var flags = (await flagsmithClientTest.GetIdentityFlags(item.ToString())).AllFlags();
+            });
+        }
+        [Theory]
+        [InlineData("identifier")]
+        [InlineData("identifier&h=g")]
+        public async Task TestGetIdentityFlagsCallsGetApiWhenNoLocalEnvironmentNoTraits(string identifier)
+        {
             var mockHttpClient = HttpMocker.MockHttpResponse(new HttpResponseMessage
             {
                 StatusCode = System.Net.HttpStatusCode.OK,
@@ -118,7 +137,6 @@ namespace Flagsmith.FlagsmithClientTest
             Assert.Equal("some-value", flags[0].Value);
             Assert.Equal("some_feature", flags[0].GetFeatureName());
             mockHttpClient.verifyHttpRequest(HttpMethod.Get, "/api/v1/identities/", Times.Once, new Dictionary<string, string> { { "identifier", identifier } });
-
         }
         [Fact]
         public async Task TestGetIdentityFlagsCallsPostApiWhenNoLocalEnvironmentWithTraits()
@@ -521,12 +539,13 @@ namespace Flagsmith.FlagsmithClientTest
             });
             var flagsmithClientTest = new FlagsmithClient(Fixtures.ApiKey, httpClient: mockHttpClient.Object, enableAnalytics: true);
             var flags = await flagsmithClientTest.GetEnvironmentFlags();
-
-            Dictionary<string, int> featuresDictionary = new Dictionary<string, int>();
+            var featuresDictionary = new Dictionary<string, int>();
 
             const int numberOfFeatures = 10;
             const int numberOfThreads = 1000;
             const int callsPerThread = 1000;
+
+            ThreadPool.SetMinThreads(numberOfThreads, numberOfThreads);
 
             for (int i = 1; i <= numberOfFeatures; i++)
             {

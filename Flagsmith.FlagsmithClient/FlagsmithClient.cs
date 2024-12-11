@@ -1,24 +1,26 @@
 #nullable enable
 
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Linq;
+using System.Net;
 using System.Net.Http;
-using System.Threading.Tasks;
 using System.Text;
-using Newtonsoft.Json;
-using FlagsmithEngine.Environment.Models;
+using System.Threading;
+using System.Threading.Tasks;
+using Flagsmith.Cache;
+using Flagsmith.Extensions;
+using Flagsmith.Providers;
 using FlagsmithEngine;
-using FlagsmithEngine.Interfaces;
+using FlagsmithEngine.Environment.Models;
 using FlagsmithEngine.Identity.Models;
+using FlagsmithEngine.Interfaces;
 using FlagsmithEngine.Segment;
 using FlagsmithEngine.Segment.Models;
 using FlagsmithEngine.Trait.Models;
 using Microsoft.Extensions.Logging;
-using System.Threading;
-using Flagsmith.Extensions;
-using System.Linq;
-using Flagsmith.Cache;
-using Flagsmith.Providers;
+using Newtonsoft.Json;
 using OfflineHandler;
 
 namespace Flagsmith
@@ -55,8 +57,7 @@ namespace Flagsmith
         private readonly PollingManager? _pollingManager;
         private readonly IEngine _engine;
         private readonly AnalyticsProcessor? _analyticsProcessor;
-        private readonly RegularFlagListCache? _regularFlagListCache;
-        private readonly Dictionary<string, IdentityFlagListCache>? _flagListCacheDictionary;
+        private readonly RegularFlagListCache? _regularFlagListCache; private readonly ConcurrentDictionary<string, IdentityFlagListCache>? _flagListCacheDictionary;
         private readonly BaseOfflineHandler? _offlineHandler;
 
         /// <summary>
@@ -163,7 +164,7 @@ namespace Flagsmith
             {
                 _regularFlagListCache = new RegularFlagListCache(new DateTimeProvider(),
                     CacheConfig.DurationInMinutes);
-                _flagListCacheDictionary = new Dictionary<string, IdentityFlagListCache>();
+                _flagListCacheDictionary = new ConcurrentDictionary<string, IdentityFlagListCache>();
             }
         }
 
@@ -264,15 +265,12 @@ namespace Flagsmith
 
         private IdentityFlagListCache GetFlagListCacheByIdentity(IdentityWrapper identityWrapper)
         {
-            _flagListCacheDictionary!.TryGetValue(identityWrapper.CacheKey, out var flagListCache);
-
-            if (flagListCache == null)
+            var flagListCache = _flagListCacheDictionary!.GetOrAdd(identityWrapper.CacheKey, (key) =>
             {
-                flagListCache = new IdentityFlagListCache(identityWrapper,
+                return new IdentityFlagListCache(identityWrapper,
                     new DateTimeProvider(),
                     CacheConfig.DurationInMinutes);
-                _flagListCacheDictionary.Add(identityWrapper.CacheKey, flagListCache);
-            }
+            });
 
             return flagListCache;
         }
@@ -281,26 +279,23 @@ namespace Flagsmith
         {
             try
             {
-                var policy = HttpPolicies.GetRetryPolicyAwaitable(Retries);
-                return await (await policy.ExecuteAsync(async () =>
+                HttpRequestMessage request = new HttpRequestMessage(method, url)
                 {
-                    HttpRequestMessage request = new HttpRequestMessage(method, url)
+                    Headers =
                     {
-                        Headers =
-                        {
-                            { "X-Environment-Key", EnvironmentKey }
-                        }
-                    };
-                    CustomHeaders?.ForEach(kvp => request.Headers.Add(kvp.Key, kvp.Value));
-                    if (body != null)
-                    {
-                        request.Content = new StringContent(body, Encoding.UTF8, "application/json");
+                        { "X-Environment-Key", EnvironmentKey }
                     }
+                };
+                CustomHeaders?.ForEach(kvp => request.Headers.Add(kvp.Key, kvp.Value));
+                if (body != null)
+                {
+                    request.Content = new StringContent(body, Encoding.UTF8, "application/json");
+                }
 
-                    var cancellationTokenSource = new CancellationTokenSource(TimeSpan.FromSeconds(RequestTimeout ?? 100));
-                    HttpResponseMessage response = await _httpClient.SendAsync(request, cancellationTokenSource.Token).ConfigureAwait(false);
-                    return response.EnsureSuccessStatusCode();
-                }).ConfigureAwait(false)).Content.ReadAsStringAsync().ConfigureAwait(false);
+                var cancellationTokenSource = new CancellationTokenSource(TimeSpan.FromSeconds(RequestTimeout ?? 100));
+                HttpResponseMessage response = await _httpClient.SendAsync(request, cancellationTokenSource.Token).ConfigureAwait(false);
+                response = response.EnsureSuccessStatusCode();
+                return await response.Content.ReadAsStringAsync().ConfigureAwait(false);
             }
             catch (HttpRequestException e)
             {
@@ -311,6 +306,11 @@ namespace Flagsmith
             catch (TaskCanceledException)
             {
                 throw new FlagsmithAPIError("Request cancelled: Api server takes too long to respond");
+            }
+            catch (Exception ex)
+            {
+                var bob = 1;
+                throw;
             }
         }
 
@@ -363,7 +363,8 @@ namespace Flagsmith
                 }
                 else
                 {
-                    url += $"?identifier={identity}{(transient ? $"&transient={transient}" : "")}";
+                    url += $"?identifier={WebUtility.UrlEncode(identity)}{(transient ? $"&transient={transient}" : "")}";
+                    //url += $"?identifier={identity}{(transient ? $"&transient={transient}" : "")}";
                     jsonResponse = await GetJson(HttpMethod.Get, url).ConfigureAwait(false);
                 }
 

@@ -1,18 +1,27 @@
-﻿using Moq;
-using System;
-using System.Collections.Generic;
-using System.Linq;
+﻿using System.Collections.Generic;
+using System.Net;
 using System.Net.Http;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Web;
-using System.Net;
+using Moq;
 
 namespace Flagsmith.FlagsmithClientTest
 {
     internal static class HttpMocker
     {
+        public static Mock<HttpClient> MockHttpResponse(HttpStatusCode statusCode, string content)
+        {
+            var httpClientMock = new Mock<HttpClient>();
+            httpClientMock.Setup(x => x.SendAsync(It.IsAny<HttpRequestMessage>(), It.IsAny<CancellationToken>()))
+                .Returns(() => Task.FromResult(new HttpResponseMessage()
+                {
+                    StatusCode = statusCode,
+                    Content = new StringContent(content),
+                }));
+
+            return httpClientMock;
+        }
         public static Mock<HttpClient> MockHttpResponse(HttpResponseMessage httpResponseMessage)
         {
             var httpClientMock = new Mock<HttpClient>();
@@ -63,8 +72,18 @@ namespace Flagsmith.FlagsmithClientTest
            req.Method == httpMethod &&
            req.RequestUri.AbsolutePath == url &&
            ((req.Content != null && req.Content.ReadAsStringAsync().Result == expectedBodyJson) || (expectedBodyJson == null)) &&
-           (queryString == "" || req.RequestUri.Query.Equals($"?{queryString}"))), It.IsAny<CancellationToken>()), times);
+           (queryString == "" || QueryStringsMatch(req, queryString))), It.IsAny<CancellationToken>()), times);
         }
+
+        private static bool QueryStringsMatch(HttpRequestMessage req, string expectedQueryString)
+        {
+            // We can't just compare the querystring directly, since .NET sometimes encodes `=`
+            // as %3d and sometimes as %3D. So by parsing, we normalise and sidestep that problem.
+            var query = HttpUtility.ParseQueryString(req.RequestUri.Query);
+
+            return query.ToString() == expectedQueryString;
+        }
+
         public static Mock<HttpClient> MockHttpResponse(Dictionary<string, HttpResponseMessage> responses)
         {
             var httpClientMock = new Mock<HttpClient>();
