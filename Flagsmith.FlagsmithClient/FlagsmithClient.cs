@@ -362,7 +362,6 @@ namespace Flagsmith
                 else
                 {
                     url += $"?identifier={WebUtility.UrlEncode(identity)}{(transient ? $"&transient={transient}" : "")}";
-                    //url += $"?identifier={identity}{(transient ? $"&transient={transient}" : "")}";
                     jsonResponse = await GetJson(HttpMethod.Get, url).ConfigureAwait(false);
                 }
 
