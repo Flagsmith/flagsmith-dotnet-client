@@ -25,7 +25,7 @@ namespace Flagsmith.FlagsmithClientTest
                 Content = new StringContent(Fixtures.JsonObject.ToString())
             });
             var flagsmithClientTest = new FlagsmithClient(Fixtures.ApiKey, httpClient: mockHttpClient.Object, enableClientSideEvaluation: true);
-            mockHttpClient.verifyHttpRequest(HttpMethod.Get, "/api/v1/environment-document/", Times.Once);
+            mockHttpClient.VerifyHttpRequest(HttpMethod.Get, "/api/v1/environment-document/", Times.Once);
         }
         [Fact]
         public async void TestUpdateEnvironmentSetsEnvironment()
@@ -52,10 +52,10 @@ namespace Flagsmith.FlagsmithClientTest
             var flagsmithClientTest = new FlagsmithClient(Fixtures.ApiKey, enableClientSideEvaluation: true, httpClient: mockHttpClient.Object);
 
             // Then
-            mockHttpClient.verifyHttpRequest(HttpMethod.Get, "/api/v1/environment-document/", Times.Once);
+            mockHttpClient.VerifyHttpRequest(HttpMethod.Get, "/api/v1/environment-document/", Times.Once);
             await flagsmithClientTest.GetEnvironmentFlags();
-            mockHttpClient.verifyHttpRequest(HttpMethod.Get, "/api/v1/environment-document/", Times.Once);
-            mockHttpClient.verifyHttpRequest(HttpMethod.Get, "/api/v1/flags/", Times.Never);
+            mockHttpClient.VerifyHttpRequest(HttpMethod.Get, "/api/v1/environment-document/", Times.Once);
+            mockHttpClient.VerifyHttpRequest(HttpMethod.Get, "/api/v1/flags/", Times.Never);
         }
         [Fact]
         public async Task TestGetEnvironmentFlagsCallsApiWhenNoLocalEnvironment()
@@ -67,7 +67,7 @@ namespace Flagsmith.FlagsmithClientTest
             });
             var flagsmithClientTest = new FlagsmithClient(Fixtures.ApiKey, httpClient: mockHttpClient.Object);
             var flags = (await flagsmithClientTest.GetEnvironmentFlags()).AllFlags();
-            mockHttpClient.verifyHttpRequest(HttpMethod.Get, "/api/v1/flags/", Times.Once);
+            mockHttpClient.VerifyHttpRequest(HttpMethod.Get, "/api/v1/flags/", Times.Once);
             Assert.True(flags[0].Enabled);
             Assert.Equal("some-value", flags[0].Value);
             Assert.Equal("some_feature", flags[0].GetFeatureName());
@@ -97,13 +97,13 @@ namespace Flagsmith.FlagsmithClientTest
             var flagsmithClientTest = new FlagsmithClient(Fixtures.ApiKey, enableClientSideEvaluation: true, httpClient: mockHttpClient.Object);
 
             // Then
-            mockHttpClient.verifyHttpRequest(HttpMethod.Get, "/api/v1/environment-document/", Times.Once);
+            mockHttpClient.VerifyHttpRequest(HttpMethod.Get, "/api/v1/environment-document/", Times.Once);
             var flags = (await flagsmithClientTest.GetEnvironmentFlags()).AllFlags();
             var fs = Fixtures.Environment.FeatureStates[0];
             Assert.Equal(fs.Enabled, flags[0].Enabled);
             Assert.Equal(fs.GetValue(), flags[0].Value);
             Assert.Equal(fs.Feature.Name, flags[0].GetFeatureName());
-            mockHttpClient.verifyHttpRequest(HttpMethod.Get, "/api/v1/environment-document/", Times.Once);
+            mockHttpClient.VerifyHttpRequest(HttpMethod.Get, "/api/v1/environment-document/", Times.Once);
         }
         [Fact]
         public async Task TestThatCacheDictionaryDoesNotThrowUnderLoad()
@@ -117,14 +117,15 @@ namespace Flagsmith.FlagsmithClientTest
             var flagsmithClientTest = new FlagsmithClient(Fixtures.ApiKey, httpClient: mockHttpClient.Object, cacheConfig: new CacheConfig(true));
 
             var token = new CancellationToken();
-            await Parallel.ForEachAsync(Enumerable.Range(1, numberOfThreads), token, async (item, token) => {
+            await Parallel.ForEachAsync(Enumerable.Range(1, numberOfThreads), token, async (item, token) =>
+            {
                 var flags = (await flagsmithClientTest.GetIdentityFlags(item.ToString())).AllFlags();
             });
         }
         [Theory]
-        [InlineData("identifier")]
-        [InlineData("identifier&h=g")]
-        public async Task TestGetIdentityFlagsCallsGetApiWhenNoLocalEnvironmentNoTraits(string identifier)
+        [InlineData("identifier", "{\"identifier\":\"identifier\",\"traits\":[],\"transient\":false}")]
+        [InlineData("identifier&h=g", "{\"identifier\":\"identifier&h=g\",\"traits\":[],\"transient\":false}")]
+        public async Task TestGetIdentityFlagsCallsPostApiWhenNoLocalEnvironmentNoTraits(string identifier, string expectedJson)
         {
             var mockHttpClient = HttpMocker.MockHttpResponse(new HttpResponseMessage
             {
@@ -136,7 +137,8 @@ namespace Flagsmith.FlagsmithClientTest
             Assert.True(flags[0].Enabled);
             Assert.Equal("some-value", flags[0].Value);
             Assert.Equal("some_feature", flags[0].GetFeatureName());
-            mockHttpClient.verifyHttpRequest(HttpMethod.Get, "/api/v1/identities/", Times.Once, new Dictionary<string, string> { { "identifier", identifier } });
+
+            mockHttpClient.VerifyHttpRequest(HttpMethod.Post, "/api/v1/identities/", Times.Once, expectedJson);
         }
         [Fact]
         public async Task TestGetIdentityFlagsCallsPostApiWhenNoLocalEnvironmentWithTraits()
@@ -154,7 +156,7 @@ namespace Flagsmith.FlagsmithClientTest
             Assert.True(flags[0].Enabled);
             Assert.Equal("some-value", flags[0].Value);
             Assert.Equal("some_feature", flags[0].GetFeatureName());
-            mockHttpClient.verifyHttpRequest(HttpMethod.Post, "/api/v1/identities/", Times.Once);
+            mockHttpClient.VerifyHttpRequest(HttpMethod.Post, "/api/v1/identities/", Times.Once);
 
         }
         [Fact]
@@ -169,11 +171,11 @@ namespace Flagsmith.FlagsmithClientTest
             var traits = new List<ITrait> { new Trait("foo", "bar") };
 
             var flagsmithClientTest = new FlagsmithClient(Fixtures.ApiKey, enableClientSideEvaluation: true, httpClient: mockHttpClient.Object);
-            mockHttpClient.verifyHttpRequest(HttpMethod.Get, "/api/v1/environment-document/", Times.Once);
+            mockHttpClient.VerifyHttpRequest(HttpMethod.Get, "/api/v1/environment-document/", Times.Once);
 
             _ = await flagsmithClientTest.GetIdentityFlags("identifier", new List<ITrait>() { new Trait("foo", "bar") });
 
-            mockHttpClient.verifyHttpRequest(HttpMethod.Get, "/api/v1/environment-document/", Times.Once);
+            mockHttpClient.VerifyHttpRequest(HttpMethod.Get, "/api/v1/environment-document/", Times.Once);
         }
         [Fact]
         public async Task TestGetIdentityFlagsUsesLocalIdentityOverridesWhenAvailable()
@@ -187,7 +189,7 @@ namespace Flagsmith.FlagsmithClientTest
             var traits = new List<ITrait> { new Trait("foo", "bar") };
 
             var flagsmithClientTest = new FlagsmithClient(Fixtures.ApiKey, enableClientSideEvaluation: true, httpClient: mockHttpClient.Object);
-            mockHttpClient.verifyHttpRequest(HttpMethod.Get, "/api/v1/environment-document/", Times.Once);
+            mockHttpClient.VerifyHttpRequest(HttpMethod.Get, "/api/v1/environment-document/", Times.Once);
 
             var flags = await flagsmithClientTest.GetIdentityFlags("overridden-id", traits);
             var flag = await flags.GetFlag("some_feature");
@@ -300,7 +302,7 @@ namespace Flagsmith.FlagsmithClientTest
 
             var flags = await flagsmithClient.GetIdentityFlags(identifier, traits);
 
-            mockHttpClient.verifyHttpRequest(HttpMethod.Post, "/api/v1/identities/", Times.Once);
+            mockHttpClient.VerifyHttpRequest(HttpMethod.Post, "/api/v1/identities/", Times.Once);
             // TODO: verify the body is correct - I've verified manually but can't verify programmatically
         }
 
@@ -474,7 +476,7 @@ namespace Flagsmith.FlagsmithClientTest
 
             // Then
             var environmentFlags = await flagsmithClientTest.GetEnvironmentFlags();
-            mockHttpClient.verifyHttpRequest(HttpMethod.Get, "/api/v1/flags/", Times.Once);
+            mockHttpClient.VerifyHttpRequest(HttpMethod.Get, "/api/v1/flags/", Times.Once);
             Assert.True(await environmentFlags.IsFeatureEnabled("some_feature"));
             Assert.NotEqual("offline-value", await environmentFlags.GetFeatureValue("some_feature"));
             Assert.Equal("some-value", await environmentFlags.GetFeatureValue("some_feature"));
@@ -613,7 +615,7 @@ namespace Flagsmith.FlagsmithClientTest
             var flagsmithClient = new FlagsmithClient(Fixtures.ApiKey, httpClient: mockHttpClient.Object);
             var identityFlags = await flagsmithClient.GetIdentityFlags(identifier, traits, transient);
             // Then
-            mockHttpClient.verifyHttpRequest(HttpMethod.Post, "/api/v1/identities/", Times.Once, "{\"identifier\":\"transient_identity\",\"traits\":[{\"trait_key\":\"some_trait\",\"trait_value\":\"some_value\",\"transient\":false}],\"transient\":true}");
+            mockHttpClient.VerifyHttpRequest(HttpMethod.Post, "/api/v1/identities/", Times.Once, "{\"identifier\":\"transient_identity\",\"traits\":[{\"trait_key\":\"some_trait\",\"trait_value\":\"some_value\",\"transient\":false}],\"transient\":true}");
             Assert.True(await identityFlags.IsFeatureEnabled("some_feature"));
             Assert.Equal("some-identity-trait-value", await identityFlags.GetFeatureValue("some_feature"));
         }
@@ -634,12 +636,12 @@ namespace Flagsmith.FlagsmithClientTest
             var flagsmithClient = new FlagsmithClient(Fixtures.ApiKey, httpClient: mockHttpClient.Object);
             var identityFlags = await flagsmithClient.GetIdentityFlags(identifier, traits);
             // Then
-            mockHttpClient.verifyHttpRequest(HttpMethod.Post, "/api/v1/identities/", Times.Once, "{\"identifier\":\"test_identity_with_transient_traits\",\"traits\":[{\"trait_key\":\"transient_trait\",\"trait_value\":\"transient_trait_value\",\"transient\":true}],\"transient\":false}");
+            mockHttpClient.VerifyHttpRequest(HttpMethod.Post, "/api/v1/identities/", Times.Once, "{\"identifier\":\"test_identity_with_transient_traits\",\"traits\":[{\"trait_key\":\"transient_trait\",\"trait_value\":\"transient_trait_value\",\"transient\":true}],\"transient\":false}");
             Assert.True(await identityFlags.IsFeatureEnabled("some_feature"));
             Assert.Equal("some-transient-trait-value", await identityFlags.GetFeatureValue("some_feature"));
         }
         [Fact]
-        public async Task TestGetIdentityFlagsTransientIdentityWitoutTraitCallsExpected()
+        public async Task TestGetIdentityFlagsTransientIdentityWithoutTraitCallsExpected()
         {
             // Given
             string identifier = "transient_identity";
@@ -658,7 +660,7 @@ namespace Flagsmith.FlagsmithClientTest
             var flagsmithClient = new FlagsmithClient(Fixtures.ApiKey, httpClient: mockHttpClient.Object);
             var identityFlags = await flagsmithClient.GetIdentityFlags(identifier, null, transient);
             // Then
-            mockHttpClient.verifyHttpRequestWithParams(HttpMethod.Get, "/api/v1/identities/", Times.Once, (Dictionary<string, string>)queryParams);
+            mockHttpClient.VerifyHttpRequest(HttpMethod.Post, "/api/v1/identities/", Times.Once, "{\"identifier\":\"transient_identity\",\"traits\":[],\"transient\":true}");
             Assert.True(await identityFlags.IsFeatureEnabled("some_feature"));
             Assert.Equal("some-identity-trait-value", await identityFlags.GetFeatureValue("some_feature"));
         }

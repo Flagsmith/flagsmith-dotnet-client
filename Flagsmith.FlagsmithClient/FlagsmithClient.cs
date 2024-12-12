@@ -350,21 +350,10 @@ namespace Flagsmith
         {
             try
             {
-                string url = ApiUrl.AppendPath("identities");
-                string jsonBody;
-                string jsonResponse;
-
-                if (traits != null && traits.Count > 0)
-                {
-                    jsonBody = JsonConvert.SerializeObject(new { identifier = identity, traits, transient });
-                    jsonResponse = await GetJson(HttpMethod.Post, url, body: jsonBody).ConfigureAwait(false);
-                }
-                else
-                {
-                    url += $"?identifier={WebUtility.UrlEncode(identity)}{(transient ? $"&transient={transient}" : "")}";
-                    jsonResponse = await GetJson(HttpMethod.Get, url).ConfigureAwait(false);
-                }
-
+                traits = traits ?? new List<ITrait>();
+                var url = ApiUrl.AppendPath("identities");
+                var jsonBody = JsonConvert.SerializeObject(new { identifier = identity, traits, transient });
+                var jsonResponse = await GetJson(HttpMethod.Post, url, body: jsonBody).ConfigureAwait(false);
                 var flags = JsonConvert.DeserializeObject<Identity>(jsonResponse)?.flags?.ToList<IFlag>();
 
                 return Flags.FromApiFlag(_analyticsProcessor, DefaultFlagHandler, flags);

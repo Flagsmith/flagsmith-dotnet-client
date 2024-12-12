@@ -38,7 +38,7 @@ namespace Flagsmith.FlagsmithClientTest
                 await analyticsProcessor.Flush();
             });
 
-            var payloads = HttpMocker.PayloadsSubmitted.Select(z =>
+            var totalTrackedFeatureCount = HttpMocker.PayloadsSubmitted.Select(z =>
             {
                 var data = JsonConvert.DeserializeObject<Dictionary<string, int>>(z);
 
@@ -46,7 +46,7 @@ namespace Flagsmith.FlagsmithClientTest
             }).Sum();
 
             // Assert that the volume of entries flushed was as expected
-            Assert.Equal(7 * numberOfThreads, payloads);
+            Assert.Equal(numberOfTracksPerThread * numberOfThreads, totalTrackedFeatureCount);
 
             await Task.Delay(11000);
             // Make sure that Flush on track doesn't lock up
@@ -86,7 +86,7 @@ namespace Flagsmith.FlagsmithClientTest
             await analyticsProcessor.TrackFeature("TestAnalyticsProcessorFlushPostRequestDataMatchAnanlyticsDataFeature2");
             var jObject = JObject.Parse(analyticsProcessor.ToString());
             await analyticsProcessor.Flush();
-            mockHttpClient.verifyHttpRequest(HttpMethod.Post, "/api/v1/analytics/flags/", Times.Once);
+            mockHttpClient.VerifyHttpRequest(HttpMethod.Post, "/api/v1/analytics/flags/", Times.Once);
             Assert.Equal(1, jObject["TestAnalyticsProcessorFlushPostRequestDataMatchAnanlyticsDataFeature1"].Value<int>());
             Assert.Equal(1, jObject["TestAnalyticsProcessorFlushPostRequestDataMatchAnanlyticsDataFeature2"].Value<int>());
         }
@@ -111,7 +111,7 @@ namespace Flagsmith.FlagsmithClientTest
             var analyticsProcessor = new AnalyticsProcessorTest(mockHttpClient.Object, null, baseApiUrl: _defaultApiUrl);
             await Task.Delay(12 * 1000);
             await analyticsProcessor.TrackFeature("TestAnalyticsProcessorCallingTrackFeatureCallsFlushWhenTimerRunsOutFeature");
-            mockHttpClient.verifyHttpRequest(HttpMethod.Post, "/api/v1/analytics/flags/", Times.Once);
+            mockHttpClient.VerifyHttpRequest(HttpMethod.Post, "/api/v1/analytics/flags/", Times.Once);
         }
 
         [Fact]

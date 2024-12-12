@@ -64,22 +64,22 @@ namespace Flagsmith.FlagsmithClientTest
             return httpClientMock;
         }
 
-        public static void verifyHttpRequest(this Mock<HttpClient> mockHttpClient, HttpMethod httpMethod, string url, System.Func<Moq.Times> times)
+        public static void VerifyHttpRequest(this Mock<HttpClient> mockHttpClient, HttpMethod httpMethod, string url, System.Func<Moq.Times> times)
         {
-            verifyHttpRequest(mockHttpClient, httpMethod, url, times, null);
+            VerifyHttpRequest(mockHttpClient, httpMethod, url, times, null);
         }
 
-        public static void verifyHttpRequest(this Mock<HttpClient> mockHttpClient, HttpMethod httpMethod, string url, System.Func<Moq.Times> times, string expectedBodyJson = null)
+        public static void VerifyHttpRequest(this Mock<HttpClient> mockHttpClient, HttpMethod httpMethod, string url, System.Func<Moq.Times> times, string expectedBodyJson = null)
         {
-            verifyHttpRequest(mockHttpClient, httpMethod, url, times, null, expectedBodyJson);
+            VerifyHttpRequest(mockHttpClient, httpMethod, url, times, null, expectedBodyJson);
         }
 
-        public static void verifyHttpRequestWithParams(this Mock<HttpClient> mockHttpClient, HttpMethod httpMethod, string url, System.Func<Moq.Times> times, Dictionary<string, string> queryParams)
+        public static void VerifyHttpRequestWithParams(this Mock<HttpClient> mockHttpClient, HttpMethod httpMethod, string url, System.Func<Moq.Times> times, Dictionary<string, string> queryParams)
         {
-            verifyHttpRequest(mockHttpClient, httpMethod, url, times, queryParams);
+            VerifyHttpRequest(mockHttpClient, httpMethod, url, times, queryParams);
         }
 
-        public static void verifyHttpRequest(this Mock<HttpClient> mockHttpClient, HttpMethod httpMethod, string url, System.Func<Moq.Times> times, Dictionary<string, string> queryParams, string expectedBodyJson = null)
+        public static void VerifyHttpRequest(this Mock<HttpClient> mockHttpClient, HttpMethod httpMethod, string url, System.Func<Moq.Times> times, Dictionary<string, string> queryParams, string expectedBodyJson = null)
         {
             var query = HttpUtility.ParseQueryString(string.Empty);
             if (queryParams != null)
@@ -91,11 +91,10 @@ namespace Flagsmith.FlagsmithClientTest
             }
             string queryString = query.ToString();
 
-            mockHttpClient.Verify(x => x.SendAsync(It.Is<HttpRequestMessage>(req =>
-           req.Method == httpMethod &&
-           req.RequestUri.AbsolutePath == url &&
-           ((req.Content != null && req.Content.ReadAsStringAsync().Result == expectedBodyJson) || (expectedBodyJson == null)) &&
-           (queryString == "" || QueryStringsMatch(req, queryString))), It.IsAny<CancellationToken>()), times);
+            mockHttpClient.Verify(x => x.SendAsync(It.Is<HttpRequestMessage>(req => req.Method == httpMethod &&
+                req.RequestUri.AbsolutePath == url &&
+                ((req.Content != null && req.Content.ReadAsStringAsync().Result == expectedBodyJson) || (expectedBodyJson == null)) &&
+                (queryString == "" || QueryStringsMatch(req, queryString))), It.IsAny<CancellationToken>()), times);
         }
 
         private static bool QueryStringsMatch(HttpRequestMessage req, string expectedQueryString)
