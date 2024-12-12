@@ -1,21 +1,23 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using System.Threading.Tasks;
-using System.Linq;
-using System.Net.Http;
-using Newtonsoft.Json;
-using System.Threading;
-using Microsoft.Extensions.Logging;
-using Flagsmith.Extensions;
 using System.Collections.Concurrent;
-using System.Diagnostics;
+using System.Collections.Generic;
+using System.Net.Http;
+using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
+using Flagsmith.Extensions;
+using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
 
 namespace Flagsmith
 {
     public class AnalyticsProcessor : IAnalyticsProcessor
     {
+        private static AnalyticsProcessor _Instance;
+        private static readonly object _staticLock = new object();
+
         private int _FlushIntervalSeconds = 10;
+        private readonly DisposableLock _lock = new DisposableLock();
         private readonly string _AnalyticsEndPoint;
         private readonly string _EnvironmentKey;
         private readonly int _TimeOut;
@@ -23,7 +25,6 @@ namespace Flagsmith
         private HttpClient _HttpClient;
         private ILogger _Logger;
         private Dictionary<string, string> _CustomHeaders;
-        private static AnalyticsProcessor _Instance;
         private ConcurrentDictionary<string, Dictionary<string, int>> AnalyticsDataThreads;
 
         public AnalyticsProcessor(HttpClient httpClient, string environmentKey, string baseApiUrl, ILogger logger = null, Dictionary<string, string> customHeaders = null, int timeOut = 3, int flushIntervalSeconds = 10)
@@ -41,12 +42,15 @@ namespace Flagsmith
 
         public static AnalyticsProcessor GetInstance(HttpClient httpClient, string environmentKey, string baseApiUrl, ILogger logger = null, Dictionary<string, string> customHeaders = null, int timeOut = 3, int flushIntervalSeconds = 10)
         {
-            if (_Instance == null)
+            lock (_staticLock)
             {
-                _Instance = new AnalyticsProcessor(httpClient, environmentKey, baseApiUrl, logger, customHeaders, timeOut, flushIntervalSeconds);
-            }
+                if (_Instance == null)
+                {
+                    _Instance = new AnalyticsProcessor(httpClient, environmentKey, baseApiUrl, logger, customHeaders, timeOut, flushIntervalSeconds);
+                }
 
-            return _Instance;
+                return _Instance;
+            }
         }
 
         /// <summary>
@@ -55,17 +59,24 @@ namespace Flagsmith
         /// <returns></returns>
         public async Task Flush()
         {
-            if (AnalyticsDataThreads?.Any() == false)
+            using (_lock.AcquireLock())
+                await FlushWithoutLock().ConfigureAwait(false);
+        }
+
+        private async Task FlushWithoutLock()
+        {
+            if (AnalyticsDataThreads.IsEmpty)
                 return;
+
             try
             {
-                var analyticsJson = JsonConvert.SerializeObject(GetAggregatedAnalytics());
+                var analyticsJson = JsonConvert.SerializeObject(GetAggregatedAnalyticsWithoutLock());
                 var request = new HttpRequestMessage(HttpMethod.Post, _AnalyticsEndPoint)
                 {
                     Headers =
-                {
-                    { "X-Environment-Key", _EnvironmentKey }
-                },
+                        {
+                            { "X-Environment-Key", _EnvironmentKey }
+                        },
                     Content = new StringContent(analyticsJson, Encoding.UTF8, "application/json")
                 };
                 _CustomHeaders?.ForEach(kvp => request.Headers.Add(kvp.Key, kvp.Value));
@@ -87,6 +98,7 @@ namespace Flagsmith
             }
             _LastFlushed = DateTime.UtcNow;
         }
+
         /// <summary>
         /// Record analytics about feature usage and call Flush() to send them to the server after the configured time interval.
         /// This implementation supports multi-threading and parallel processing by storing the analytics data in a separated Dictionary per thread.
@@ -95,28 +107,31 @@ namespace Flagsmith
         /// <returns></returns>
         public async Task TrackFeature(string featureName)
         {
-            string threadId = Thread.CurrentThread.ManagedThreadId.ToString();
-            // Get thread-specific count dictionary
-            Dictionary<string, int> threadAnalyticsData;
-            if (!AnalyticsDataThreads.TryGetValue(threadId, out threadAnalyticsData))
+            using (_lock.AcquireLock())
             {
-                threadAnalyticsData = new Dictionary<string, int>();
-                AnalyticsDataThreads[threadId] = threadAnalyticsData;
+                string threadId = Thread.CurrentThread.ManagedThreadId.ToString();
+                // Get thread-specific count dictionary
+                Dictionary<string, int> threadAnalyticsData;
+                if (!AnalyticsDataThreads.TryGetValue(threadId, out threadAnalyticsData))
+                {
+                    threadAnalyticsData = new Dictionary<string, int>();
+                    AnalyticsDataThreads[threadId] = threadAnalyticsData;
+                }
+
+                // Increment local thread count of the feature.
+                int count;
+                if (!threadAnalyticsData.TryGetValue(featureName, out count))
+                {
+                    count = 0;
+                }
+                count++;
+                threadAnalyticsData[featureName] = count;
+
+                var lastFlushedInterval = (DateTime.UtcNow - _LastFlushed).Seconds;
+
+                if (lastFlushedInterval > _FlushIntervalSeconds)
+                    await FlushWithoutLock().ConfigureAwait(false);
             }
-
-            // Increment local thread count of the feature.
-            int count;
-            if (!threadAnalyticsData.TryGetValue(featureName, out count))
-            {
-                count = 0;
-            }
-            count++;
-            threadAnalyticsData[featureName] = count;
-
-            int _LastFlushedInterval = (DateTime.UtcNow - _LastFlushed).Seconds;
-
-            if (_LastFlushedInterval > _FlushIntervalSeconds)
-                await Flush().ConfigureAwait(false);
         }
 
         /// <summary>
@@ -124,8 +139,17 @@ namespace Flagsmith
         /// This method is thread safe.
         /// It will aggregate the analytics data from all threads registered in AnalyticsDataThreads.
         /// </summary>
+        /// \
         /// <returns>Dictionary of feature name and usage count</returns>
         public Dictionary<string, int> GetAggregatedAnalytics()
+        {
+            using (_lock.AcquireLock())
+            {
+                return GetAggregatedAnalyticsWithoutLock();
+            }
+        }
+
+        private Dictionary<string, int> GetAggregatedAnalyticsWithoutLock()
         {
             Dictionary<string, int> aggregatedAnalytics = new Dictionary<string, int>();
             foreach (var threadAnalyticsData in AnalyticsDataThreads.Values)

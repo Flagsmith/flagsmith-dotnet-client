@@ -112,7 +112,7 @@ namespace Flagsmith.FlagsmithClientTest
 
             ThreadPool.SetMinThreads(numberOfThreads, numberOfThreads);
 
-            var mockHttpClient = HttpMocker.MockHttpResponse(System.Net.HttpStatusCode.OK, Fixtures.ApiIdentityResponse);
+            var mockHttpClient = HttpMocker.MockHttpResponse(System.Net.HttpStatusCode.OK, Fixtures.ApiIdentityResponse, false);
 
             var flagsmithClientTest = new FlagsmithClient(Fixtures.ApiKey, httpClient: mockHttpClient.Object, cacheConfig: new CacheConfig(true));
 

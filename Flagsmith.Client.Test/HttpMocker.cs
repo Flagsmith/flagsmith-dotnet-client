@@ -1,4 +1,7 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Concurrent;
+using System.Collections.Generic;
+using System.IO;
 using System.Net;
 using System.Net.Http;
 using System.Threading;
@@ -10,15 +13,35 @@ namespace Flagsmith.FlagsmithClientTest
 {
     internal static class HttpMocker
     {
-        public static Mock<HttpClient> MockHttpResponse(HttpStatusCode statusCode, string content)
+        public static ConcurrentBag<string> PayloadsSubmitted { get; set; } = new ConcurrentBag<string>();
+
+        public static Mock<HttpClient> MockHttpResponse(HttpStatusCode statusCode, string content, bool trackPayloads)
         {
+            var payloadTracker = new Action<IInvocation>(item =>
+            {
+                if (trackPayloads)
+                {
+                    var payload = new StreamReader(((item.Arguments[0] as dynamic).Content as StringContent).ReadAsStream()).ReadToEnd();
+
+                    PayloadsSubmitted.Add(payload);
+                }
+            });
+
             var httpClientMock = new Mock<HttpClient>();
             httpClientMock.Setup(x => x.SendAsync(It.IsAny<HttpRequestMessage>(), It.IsAny<CancellationToken>()))
-                .Returns(() => Task.FromResult(new HttpResponseMessage()
+                .Returns(() =>
                 {
-                    StatusCode = statusCode,
-                    Content = new StringContent(content),
-                }));
+                    HttpResponseMessage result = new()
+                    {
+                        StatusCode = statusCode,
+                    };
+                    if (content != null)
+                    {
+                        result.Content = new StringContent(content);
+
+                    }
+                    return Task.FromResult(result);
+                }).Callback(payloadTracker);
 
             return httpClientMock;
         }

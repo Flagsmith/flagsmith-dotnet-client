@@ -1,18 +1,58 @@
 using System;
-using Flagsmith;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Linq;
 using System.Net.Http;
+using System.Threading;
 using System.Threading.Tasks;
 using Moq;
-using Xunit;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using System.Threading;
-using System.Collections.Generic;
+using Xunit;
 
 namespace Flagsmith.FlagsmithClientTest
 {
     public class AnalyticsTests
     {
         const string _defaultApiUrl = "https://edge.api.flagsmith.com/api/v1/";
+
+        [Fact]
+        public async Task TestAnalyticsProcessorDoesNotThrowUnderLoad()
+        {
+            const int numberOfThreads = 10000;
+            const int numberOfTracksPerThread = 7;
+            const string key = "TestAnalyticsProcessorFlushClearsAnalyticsDataFeature";
+
+            ThreadPool.SetMinThreads(numberOfThreads, numberOfThreads);
+            HttpMocker.PayloadsSubmitted = new System.Collections.Concurrent.ConcurrentBag<string>();
+
+            var mockHttpClient = HttpMocker.MockHttpResponse(System.Net.HttpStatusCode.OK, null, true);
+            var analyticsProcessor = new AnalyticsProcessorTest(mockHttpClient.Object, null, null);
+            var token = new CancellationToken();
+            await Parallel.ForEachAsync(Enumerable.Range(1, numberOfThreads), token, async (item, token) =>
+            {
+                for (int i = 0; i < numberOfTracksPerThread; i++)
+                {
+                    await analyticsProcessor.TrackFeature(key);
+                }
+                await analyticsProcessor.Flush();
+            });
+
+            var payloads = HttpMocker.PayloadsSubmitted.Select(z =>
+            {
+                var data = JsonConvert.DeserializeObject<Dictionary<string, int>>(z);
+
+                return data.TryGetValue(key, out var count) ? count : 0;
+            }).Sum();
+
+            // Assert that the volume of entries flushed was as expected
+            Assert.Equal(7 * numberOfThreads, payloads);
+
+            await Task.Delay(11000);
+            // Make sure that Flush on track doesn't lock up
+            await analyticsProcessor.TrackFeature(key);
+        }
+
         [Fact]
         public void TestAnalyticsProcessorTrackFeatureUpdatesAnalyticsData()
         {
