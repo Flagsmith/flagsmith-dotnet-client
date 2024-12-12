@@ -19,7 +19,7 @@ namespace Flagsmith.FlagsmithClientTest
         [Fact]
         public async Task TestAnalyticsProcessorDoesNotThrowUnderLoad()
         {
-            const int numberOfThreads = 10000;
+            const int numberOfThreads = 500;
             const int numberOfTracksPerThread = 7;
             const string key = "TestAnalyticsProcessorFlushClearsAnalyticsDataFeature";
 

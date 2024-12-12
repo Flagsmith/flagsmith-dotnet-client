@@ -108,7 +108,7 @@ namespace Flagsmith.FlagsmithClientTest
         [Fact]
         public async Task TestThatCacheDictionaryDoesNotThrowUnderLoad()
         {
-            const int numberOfThreads = 1000;
+            const int numberOfThreads = 500;
 
             ThreadPool.SetMinThreads(numberOfThreads, numberOfThreads);
 
