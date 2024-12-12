@@ -139,7 +139,6 @@ namespace Flagsmith
         /// This method is thread safe.
         /// It will aggregate the analytics data from all threads registered in AnalyticsDataThreads.
         /// </summary>
-        /// \
         /// <returns>Dictionary of feature name and usage count</returns>
         public Dictionary<string, int> GetAggregatedAnalytics()
         {
