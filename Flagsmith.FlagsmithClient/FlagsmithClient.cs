@@ -1,24 +1,26 @@
 #nullable enable
 
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Linq;
+using System.Net;
 using System.Net.Http;
-using System.Threading.Tasks;
 using System.Text;
-using Newtonsoft.Json;
-using FlagsmithEngine.Environment.Models;
+using System.Threading;
+using System.Threading.Tasks;
+using Flagsmith.Cache;
+using Flagsmith.Extensions;
+using Flagsmith.Providers;
 using FlagsmithEngine;
-using FlagsmithEngine.Interfaces;
+using FlagsmithEngine.Environment.Models;
 using FlagsmithEngine.Identity.Models;
+using FlagsmithEngine.Interfaces;
 using FlagsmithEngine.Segment;
 using FlagsmithEngine.Segment.Models;
 using FlagsmithEngine.Trait.Models;
 using Microsoft.Extensions.Logging;
-using System.Threading;
-using Flagsmith.Extensions;
-using System.Linq;
-using Flagsmith.Cache;
-using Flagsmith.Providers;
+using Newtonsoft.Json;
 using OfflineHandler;
 
 namespace Flagsmith
@@ -55,8 +57,7 @@ namespace Flagsmith
         private readonly PollingManager? _pollingManager;
         private readonly IEngine _engine;
         private readonly AnalyticsProcessor? _analyticsProcessor;
-        private readonly RegularFlagListCache? _regularFlagListCache;
-        private readonly Dictionary<string, IdentityFlagListCache>? _flagListCacheDictionary;
+        private readonly RegularFlagListCache? _regularFlagListCache; private readonly ConcurrentDictionary<string, IdentityFlagListCache>? _flagListCacheDictionary;
         private readonly BaseOfflineHandler? _offlineHandler;
 
         /// <summary>
@@ -163,7 +164,7 @@ namespace Flagsmith
             {
                 _regularFlagListCache = new RegularFlagListCache(new DateTimeProvider(),
                     CacheConfig.DurationInMinutes);
-                _flagListCacheDictionary = new Dictionary<string, IdentityFlagListCache>();
+                _flagListCacheDictionary = new ConcurrentDictionary<string, IdentityFlagListCache>();
             }
         }
 
@@ -264,15 +265,12 @@ namespace Flagsmith
 
         private IdentityFlagListCache GetFlagListCacheByIdentity(IdentityWrapper identityWrapper)
         {
-            _flagListCacheDictionary!.TryGetValue(identityWrapper.CacheKey, out var flagListCache);
-
-            if (flagListCache == null)
+            var flagListCache = _flagListCacheDictionary!.GetOrAdd(identityWrapper.CacheKey, (key) =>
             {
-                flagListCache = new IdentityFlagListCache(identityWrapper,
+                return new IdentityFlagListCache(identityWrapper,
                     new DateTimeProvider(),
                     CacheConfig.DurationInMinutes);
-                _flagListCacheDictionary.Add(identityWrapper.CacheKey, flagListCache);
-            }
+            });
 
             return flagListCache;
         }
@@ -352,21 +350,10 @@ namespace Flagsmith
         {
             try
             {
-                string url = ApiUrl.AppendPath("identities");
-                string jsonBody;
-                string jsonResponse;
-
-                if (traits != null && traits.Count > 0)
-                {
-                    jsonBody = JsonConvert.SerializeObject(new { identifier = identity, traits, transient });
-                    jsonResponse = await GetJson(HttpMethod.Post, url, body: jsonBody).ConfigureAwait(false);
-                }
-                else
-                {
-                    url += $"?identifier={identity}{(transient ? $"&transient={transient}" : "")}";
-                    jsonResponse = await GetJson(HttpMethod.Get, url).ConfigureAwait(false);
-                }
-
+                traits = traits ?? new List<ITrait>();
+                var url = ApiUrl.AppendPath("identities");
+                var jsonBody = JsonConvert.SerializeObject(new { identifier = identity, traits, transient });
+                var jsonResponse = await GetJson(HttpMethod.Post, url, body: jsonBody).ConfigureAwait(false);
                 var flags = JsonConvert.DeserializeObject<Identity>(jsonResponse)?.flags?.ToList<IFlag>();
 
                 return Flags.FromApiFlag(_analyticsProcessor, DefaultFlagHandler, flags);
