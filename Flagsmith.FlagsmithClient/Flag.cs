@@ -15,8 +15,6 @@ namespace Flagsmith
             this.Value = value;
             this.Feature = feature;
         }
-        [JsonProperty("id")]
-        public int Id { get; private set; }
         [JsonProperty("feature")]
         private Feature Feature { get; set; }
 
@@ -26,10 +24,6 @@ namespace Flagsmith
         [JsonProperty("feature_state_value")]
         public string Value { get; private set; }
 
-        public int getFeatureId()
-        {
-            return this.Feature.Id;
-        }
         public string GetFeatureName()
         {
             return this.Feature.Name;
