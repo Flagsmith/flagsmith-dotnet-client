@@ -45,7 +45,7 @@ jobs:
 
         steps:
           - name: Cloning repo
-            uses: actions/checkout@v2
+            uses: actions/checkout@v4
             with:
                 fetch-depth: 0
                 submodules: recursive
@@ -54,6 +54,7 @@ jobs:
             uses: actions/setup-dotnet@v4
             with:
                 dotnet-version: ${{ matrix.dotnet-version }}
+                global-json-file: null
 
           - name: Run Tests
             run: dotnet test
