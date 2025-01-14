@@ -22,6 +22,8 @@ jobs:
 
             - name: Set up Dotnet
               uses: actions/setup-dotnet@v4
+              with:
+                global-json-file: .github/global.json
 
             - name: Install dependencies
               run: dotnet restore
@@ -54,7 +56,6 @@ jobs:
             uses: actions/setup-dotnet@v4
             with:
                 dotnet-version: ${{ matrix.dotnet-version }}
-                global-json-file: null
 
           - name: Run Tests
             run: dotnet test
