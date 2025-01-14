@@ -29,6 +29,11 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
+
+    <!-- currently we duplicate the semver dependency here from Engine project -->
+    <!-- TODO: build the Engine at build time and reference it using a PackageReference -->
+    <PackageReference Include="semver" Version="2.3.0" />
+
     <ProjectReference Include="..\Flagsmith.Engine\Flagsmith.Engine.csproj" PrivateAssets="all" />
     <None Include="LICENSE" Pack="true" PackagePath="" />
     <None Include="icon.png" Pack="true" PackagePath="\" />
