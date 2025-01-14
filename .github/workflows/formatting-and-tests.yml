@@ -16,12 +16,10 @@ jobs:
 
         steps:
             - name: Cloning repo
-              uses: actions/checkout@v2
-              with:
-                  fetch-depth: 0
+              uses: actions/checkout@v4
 
             - name: Set up Dotnet
-              uses: actions/setup-dotnet@v1
+              uses: actions/setup-dotnet@v4
 
             - name: Install dependencies
               run: dotnet restore
@@ -38,28 +36,20 @@ jobs:
         name: Test
 
         strategy:
-            max-parallel: 4
+            max-parallel: 2
             matrix:
                 working-directory: ["Flagsmith.EngineTest","Flagsmith.Client.Test"]
-                dotnet-version: ["6.0.x", "7.0.x", "8.0.x"]
 
         steps:
           - name: Cloning repo
-            uses: actions/checkout@v2
+            uses: actions/checkout@v4
             with:
                 fetch-depth: 0
                 submodules: recursive
 
-          - name: Set up Dotnet ${{ matrix.dotnet-version }}
-            uses: actions/setup-dotnet@v3
-            with:
-                dotnet-version: ${{ matrix.dotnet-version }}
+          - name: Set up Dotnet
+            uses: actions/setup-dotnet@v4
 
           - name: Run Tests
-            # bafflingly adding the below debugging echo / version statements got the workflow to pass
-            run: |
-              echo "Dotnet version: "
-              dotnet --version
-              echo "-------"
-              dotnet test
+            run: dotnet test
             working-directory: ${{ matrix.working-directory }}
