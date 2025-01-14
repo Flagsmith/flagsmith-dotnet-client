@@ -53,5 +53,10 @@ jobs:
               global-json-file: global.json
 
           - name: Run Tests
-            run: dotnet test
+            # bafflingly adding the below debugging echo / version statements got the workflow to pass
+            run: |
+              echo "Dotnet version: "
+              dotnet --version
+              echo "-------"
+              dotnet test
             working-directory: ${{ matrix.working-directory }}
