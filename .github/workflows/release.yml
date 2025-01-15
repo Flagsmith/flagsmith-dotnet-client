@@ -68,33 +68,33 @@ jobs:
       - name: Validate package
         run: meziantou.validate-nuget-package (Get-ChildItem "${{ env.NuGetDirectory }}/*.nupkg") --excluded-rule-ids 101,111,74,72,61,12
 
-  # publish:
-  #   runs-on: ubuntu-latest
-  #   needs:
-  #       - create_nuget
-  #       - validate_nuget
-  #   steps:
-  #     # Download the NuGet package created in the previous job
-  #     - uses: actions/download-artifact@v4
-  #       with:
-  #         name: nuget
-  #         path: ${{ env.NuGetDirectory }}
+  publish:
+    runs-on: ubuntu-latest
+    needs:
+        - create_nuget
+        - validate_nuget
+    steps:
+      # Download the NuGet package created in the previous job
+      - uses: actions/download-artifact@v4
+        with:
+          name: nuget
+          path: ${{ env.NuGetDirectory }}
 
-  #     # Install the .NET SDK indicated in the global.json file
-  #     - name: Setup .NET Core
-  #       uses: actions/setup-dotnet@v4
-  #       with:
-  #         dotnet-version: ${{ env.DOTNET_VERSION }}
+      # Install the .NET SDK indicated in the global.json file
+      - name: Setup .NET Core
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
 
-  #     # Publish all NuGet packages to NuGet.org
-  #     - name: Publish NuGet package
-  #       run: |
-  #         foreach($file in (Get-ChildItem "${{ env.NuGetDirectory }}" -Recurse -Include *.nupkg)) {
-  #             dotnet nuget push $file --api-key "${{ secrets.NUGET_APIKEY }}" --source https://api.nuget.org/v3/index.json
-  #         }
+      # Publish all NuGet packages to NuGet.org
+      - name: Publish NuGet package
+        run: |
+          foreach($file in (Get-ChildItem "${{ env.NuGetDirectory }}" -Recurse -Include *.nupkg)) {
+              dotnet nuget push $file --api-key "${{ secrets.NUGET_APIKEY }}" --source https://api.nuget.org/v3/index.json
+          }
 
-  #     - name: Upload Release Asset
-  #       uses: shogo82148/actions-upload-release-asset@v1
-  #       with:
-  #         upload_url: ${{ github.event.release.upload_url }}
-  #         asset_path: ${{ env.NuGetDirectory }}/*.nupkg
+      - name: Upload Release Asset
+        uses: shogo82148/actions-upload-release-asset@v1
+        with:
+          upload_url: ${{ github.event.release.upload_url }}
+          asset_path: ${{ env.NuGetDirectory }}/*.nupkg
