@@ -4,7 +4,6 @@ on:
   release:
     types:
       - published
-  push:
 
 env:
   DOTNET_SKIP_FIRST_TIME_EXPERIENCE: 1
