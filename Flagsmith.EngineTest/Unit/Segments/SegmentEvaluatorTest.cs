@@ -165,7 +165,7 @@ namespace EngineTest.Unit.Segments
                 new object[] { Fixtures.SegmentToCheckIfTrait1IsNotSet, new List<TraitModel>() { new TraitModel {TraitKey = Fixtures.TraitKey1, TraitValue = "foo"}}, false },
                 new object[] { Fixtures.SegmentToCheckIfTrait1IsNotSet, new List<TraitModel>(), true },
                 new object[] { Fixtures.SegmentToCheckSemVerEquality, new List<TraitModel>() {
-                                    new TraitModel {TraitKey = Fixtures.VersionTraitKey, TraitValue = Fixtures.VersionTraitValue }
+                                    new TraitModel { TraitKey = Fixtures.VersionTraitKey, TraitValue = Fixtures.VersionTraitValue }
                                     }, true
                 }
             };
