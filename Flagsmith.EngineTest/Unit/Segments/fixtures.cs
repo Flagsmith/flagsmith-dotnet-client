@@ -15,6 +15,10 @@ namespace EngineTest.Unit.Segments
 
         public static string TraitKey3 => "date_joined";
         public static string TraitValue3 => "2021-01-01";
+
+        public static string VersionTraitKey = "app_version"
+        public static string VersionTraitValue = "semver:1.2.3"
+
         public static SegmentModel EmptySegment => new SegmentModel() { Id = 1, Name = "empty_segment" };
         public static SegmentModel SegmentSingleCondition => new SegmentModel()
         {
@@ -152,5 +156,22 @@ namespace EngineTest.Unit.Segments
                 }
             }
         };
+
+        public static SegmentModel SegmentToCheckSemVerEquality => new SegmentModel()
+        {
+            Id = 9,
+            Name = "segment_to_check_sem_ver_equality",
+            Rules = new List<SegmentRuleModel> {
+                new SegmentRuleModel {
+                    Type = Constants.AllRule,
+                    Conditions = new List<SegmentConditionModel>
+                    {
+                        new SegmentConditionModel { Operator = Constants.GreaterThanInclusive, Property = VersionTraitKey, Value = VersionTraitValue },
+                        new SegmentConditionModel { Operator = Constants.LessThanInclusive, Property = VersionTraitKey, Value = VersionTraitValue },
+                    }
+                }
+            }
+        }
+
     }
 }
