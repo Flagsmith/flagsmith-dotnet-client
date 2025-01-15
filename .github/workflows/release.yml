@@ -9,7 +9,7 @@ env:
   DOTNET_SKIP_FIRST_TIME_EXPERIENCE: 1
   DOTNET_NOLOGO: true
   NuGetDirectory: ${{ github.workspace }}/nuget
-  DOTNET_VERSION: 7.0.x
+  DOTNET_VERSION: 8.0.x
 
 defaults:
   run:
