@@ -4,7 +4,6 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net;
 using System.Net.Http;
 using System.Text;
 using System.Threading;
@@ -37,35 +36,75 @@ namespace Flagsmith
     /// </exception>
     public class FlagsmithClient : IFlagsmithClient
     {
-        private string? ApiUrl { get; set; }
-        private string? EnvironmentKey { get; set; }
-        private bool EnableClientSideEvaluation { get; set; }
-        private int EnvironmentRefreshIntervalSeconds { get; set; }
-        private Func<string, IFlag>? DefaultFlagHandler { get; set; }
-        private ILogger? Logger { get; set; }
-        private bool EnableAnalytics { get; set; }
-        private double? RequestTimeout { get; set; }
-        private int Retries { get; set; }
-        private CacheConfig CacheConfig { get; set; }
-        private Dictionary<string, string>? CustomHeaders { get; set; }
         private EnvironmentModel? Environment { get; set; }
         private Dictionary<string, IdentityModel>? IdentitiesWithOverridesByIdentifier { get; set; }
-        private bool OfflineMode { get; set; }
-        const string DefaultApiUrl = "https://edge.api.flagsmith.com/api/v1/";
 
-        private readonly HttpClient _httpClient;
-        private readonly PollingManager? _pollingManager;
-        private readonly IEngine _engine;
-        private readonly AnalyticsProcessor? _analyticsProcessor;
-        private readonly RegularFlagListCache? _regularFlagListCache; private readonly ConcurrentDictionary<string, IdentityFlagListCache>? _flagListCacheDictionary;
-        private readonly BaseOfflineHandler? _offlineHandler;
+        private readonly FlagsmithConfiguration _config;
+        private readonly IEngine _engine = new Engine();
+        private PollingManager? _pollingManager;
+        private AnalyticsProcessor? _analyticsProcessor;
+        private RegularFlagListCache? _regularFlagListCache;
+        private ConcurrentDictionary<string, IdentityFlagListCache>? _flagListCacheDictionary;
+
+        private void Initialise()
+        {
+            if (_config.OfflineMode && _config.OfflineHandler is null)
+            {
+                throw new Exception("ValueError: offlineHandler must be provided to use offline mode.");
+            }
+            else if (_config.DefaultFlagHandler != null && _config.OfflineHandler != null)
+            {
+                throw new Exception("ValueError: Cannot use both defaultFlagHandler and offlineHandler.");
+            }
+
+            if (_config.OfflineHandler != null)
+            {
+                Environment = _config.OfflineHandler.GetEnvironment();
+            }
+
+            if (!_config.OfflineMode)
+            {
+                if (string.IsNullOrEmpty(_config.EnvironmentKey))
+                {
+                    throw new Exception("ValueError: environmentKey is required");
+                }
+                if (_config.EnableAnalytics)
+                    _analyticsProcessor = new AnalyticsProcessor(_config.HttpClient, _config.EnvironmentKey, _config.ApiUri.ToString(), _config.Logger, _config.CustomHeaders);
+
+                if (_config.EnableLocalEvaluation)
+                {
+                    if (!_config.EnvironmentKey!.StartsWith("ser."))
+                    {
+                        Console.WriteLine(
+                            "In order to use local evaluation, please generate a server key in the environment settings page."
+                        );
+                    }
+
+                    _pollingManager = new PollingManager(GetAndUpdateEnvironmentFromApi, _config.EnvironmentRefreshIntervalSeconds);
+                    Task.Run(async () => await _pollingManager.StartPoll()).GetAwaiter().GetResult();
+                }
+            }
+
+            if (_config.CacheConfig.Enabled)
+            {
+                _regularFlagListCache = new RegularFlagListCache(new DateTimeProvider(),
+                    _config.CacheConfig.DurationInMinutes);
+                _flagListCacheDictionary = new ConcurrentDictionary<string, IdentityFlagListCache>();
+            }
+        }
+        
+        public FlagsmithClient(FlagsmithConfiguration configuration)
+        {
+            _config = configuration;
+            Initialise();
+        }
 
         /// <summary>
         /// Create flagsmith client.
         /// </summary>
         /// <param name="environmentKey">The environment key obtained from Flagsmith interface. Required unless offlineMode is True</param>
         /// <param name="apiUrl">Override the URL of the Flagsmith API to communicate with. Required unless offlineMode is True</param>
-        /// <param name="logger">Provide logger for logging polling info & errors which is only applicable when client side evalution is enabled and analytics errors.</param>
+        /// <param name="logger">Provide logger for logging polling info and errors which is only applicable when client side evalution is enabled and analytics errors.</param>
         /// <param name="defaultFlagHandler">Callable which will be used in the case where flags cannot be retrieved from the API or a non existent feature is requested.</param>
         /// <param name="enableAnalytics">if enabled, sends additional requests to the Flagsmith API to power flag analytics charts.</param>
         /// <param name="enableClientSideEvaluation">If using local evaluation, specify the interval period between refreshes of local environment data.</param>
@@ -83,13 +122,10 @@ namespace Flagsmith
         /// <exception cref="FlagsmithClientError">
         /// A general exception with a error message. Example: Feature not found, etc.
         /// </exception>
-        /// <exception cref="FlagsmithClientOfflineError">
-        /// A general exception with a error message. Example: Feature not found, etc.
-        /// </exception>
-
+        [Obsolete("Use FlagsmithClient(FlagsmithConfiguration) instead.")]
         public FlagsmithClient(
             string? environmentKey = null,
-            string apiUrl = DefaultApiUrl,
+            string apiUrl = "https://edge.api.flagsmith.com/api/v1/",
             ILogger? logger = null,
             Func<string, IFlag>? defaultFlagHandler = null,
             bool enableAnalytics = false,
@@ -102,91 +138,44 @@ namespace Flagsmith
             CacheConfig? cacheConfig = null,
             bool offlineMode = false,
             BaseOfflineHandler? offlineHandler = null
-            )
+        )
         {
-            this.EnvironmentKey = environmentKey;
-            this.Logger = logger;
-            this.DefaultFlagHandler = defaultFlagHandler;
-            this.EnableAnalytics = enableAnalytics;
-            this.EnableClientSideEvaluation = enableClientSideEvaluation;
-            this.EnvironmentRefreshIntervalSeconds = environmentRefreshIntervalSeconds;
-            this.CustomHeaders = customHeaders;
-            this.Retries = retries;
-            this.RequestTimeout = requestTimeout;
-            this._httpClient = httpClient ?? new HttpClient();
-            this.CacheConfig = cacheConfig ?? new CacheConfig(false);
-            this.OfflineMode = offlineMode;
-            this._offlineHandler = offlineHandler;
-            _engine = new Engine();
-
-            if (OfflineMode && _offlineHandler is null)
+            _config = new FlagsmithConfiguration
             {
-                throw new Exception("ValueError: offlineHandler must be provided to use offline mode.");
-            }
-            else if (DefaultFlagHandler != null && _offlineHandler != null)
+                EnvironmentKey = environmentKey,
+                ApiUri = new Uri(apiUrl),
+                EnvironmentRefreshIntervalSeconds = environmentRefreshIntervalSeconds,
+                EnableLocalEvaluation = enableClientSideEvaluation,
+                Logger = logger,
+                EnableAnalytics = enableAnalytics,
+                RequestTimeout = requestTimeout,
+                Retries = retries,
+                CustomHeaders = customHeaders,
+                CacheConfig = cacheConfig ?? new CacheConfig(false),
+                OfflineMode = offlineMode,
+                OfflineHandler = offlineHandler,
+                HttpClient = httpClient,
+            };
+            // The type of defaultFlagHandler in this constructor is `Func<string, IFlag>?`, but the type of
+            // IFlagsmithConfiguration.DefaultFlagHandler is `Func<string, Flag>`
+            if (defaultFlagHandler != null)
             {
-                throw new Exception("ValueError: Cannot use both defaultFlagHandler and offlineHandler.");
+                Flag Handler(string s) => (defaultFlagHandler(s) as Flag)!;
+                _config.DefaultFlagHandler = Handler;
             }
-
-            if (_offlineHandler != null)
-            {
-                Environment = _offlineHandler.GetEnvironment();
-            }
-
-            if (!OfflineMode)
-            {
-                if (string.IsNullOrEmpty(EnvironmentKey))
-                {
-                    throw new Exception("ValueError: environmentKey is required");
-                }
-
-                var _apiUrl = apiUrl ?? DefaultApiUrl;
-                ApiUrl = _apiUrl.EndsWith("/") ? _apiUrl : $"{_apiUrl}/";
-
-                if (EnableAnalytics)
-                    _analyticsProcessor = new AnalyticsProcessor(this._httpClient, EnvironmentKey, ApiUrl, Logger, CustomHeaders);
-
-                if (EnableClientSideEvaluation)
-                {
-                    if (!EnvironmentKey!.StartsWith("ser."))
-                    {
-                        Console.WriteLine(
-                            "In order to use local evaluation, please generate a server key in the environment settings page."
-                        );
-                    }
-
-                    _pollingManager = new PollingManager(GetAndUpdateEnvironmentFromApi, EnvironmentRefreshIntervalSeconds);
-                    Task.Run(async () => await _pollingManager.StartPoll()).GetAwaiter().GetResult();
-                }
-            }
-
-            if (CacheConfig.Enabled)
-            {
-                _regularFlagListCache = new RegularFlagListCache(new DateTimeProvider(),
-                    CacheConfig.DurationInMinutes);
-                _flagListCacheDictionary = new ConcurrentDictionary<string, IdentityFlagListCache>();
-            }
+            Initialise();
         }
 
         /// <summary>
-        /// Create flagsmith client.
+        /// <para>Creates a Flagsmith client.</para>
+        /// <para>Deprecated since 7.1.0. Use <see cref="FlagsmithClient(FlagsmithConfiguration)"/> instead.</para>
         /// </summary>
-        /// <param name="configuration">Flagsmith client configuration</param>
-        /// <param name="httpClient">Http client used for flagsmith-API requests</param>
-        public FlagsmithClient(IFlagsmithConfiguration configuration, HttpClient? httpClient = null) : this(
-            configuration.EnvironmentKey,
-            configuration.ApiUrl,
-            configuration.Logger,
-            configuration.DefaultFlagHandler,
-            configuration.EnableAnalytics,
-            configuration.EnableClientSideEvaluation,
-            configuration.EnvironmentRefreshIntervalSeconds,
-            configuration.CustomHeaders,
-            configuration.Retries ?? 1,
-            configuration.RequestTimeout,
-            httpClient,
-            configuration.CacheConfig)
+        [Obsolete("This constructor is deprecated. Use FlagsmithClient(IFlagsmithConfiguration) instead.")]
+        public FlagsmithClient(IFlagsmithConfiguration configuration, HttpClient httpClient)
         {
+            _config = (FlagsmithConfiguration)configuration;
+            _config.HttpClient = httpClient;
+            Initialise();
         }
 
         /// <summary>
@@ -194,7 +183,7 @@ namespace Flagsmith
         /// </summary>
         public async Task<IFlags> GetEnvironmentFlags()
         {
-            if (CacheConfig.Enabled)
+            if (_config.CacheConfig.Enabled)
             {
                 return _regularFlagListCache!.GetLatestFlags(GetFeatureFlagsFromCorrectSource);
             }
@@ -204,7 +193,7 @@ namespace Flagsmith
 
         private async Task<IFlags> GetFeatureFlagsFromCorrectSource()
         {
-            return (OfflineMode || EnableClientSideEvaluation) && Environment != null ? GetFeatureFlagsFromDocument() : await GetFeatureFlagsFromApi().ConfigureAwait(false);
+            return (_config.OfflineMode || _config.EnableLocalEvaluation) && Environment != null ? GetFeatureFlagsFromDocument() : await GetFeatureFlagsFromApi().ConfigureAwait(false);
         }
 
         /// <summary>
@@ -222,14 +211,14 @@ namespace Flagsmith
         {
             var identityWrapper = new IdentityWrapper(identifier, traits, transient);
 
-            if (CacheConfig.Enabled)
+            if (_config.CacheConfig.Enabled)
             {
                 var flagListCache = GetFlagListCacheByIdentity(identityWrapper);
 
                 return flagListCache.GetLatestFlags(GetIdentityFlagsFromCorrectSource);
             }
 
-            if (this.OfflineMode)
+            if (_config.OfflineMode)
                 return this.GetIdentityFlagsFromDocument(identifier, traits ?? null);
 
             return await GetIdentityFlagsFromCorrectSource(identityWrapper).ConfigureAwait(false);
@@ -237,7 +226,7 @@ namespace Flagsmith
 
         public async Task<IFlags> GetIdentityFlagsFromCorrectSource(IdentityWrapper identityWrapper)
         {
-            if ((OfflineMode || EnableClientSideEvaluation) && Environment != null)
+            if ((_config.OfflineMode || _config.EnableLocalEvaluation) && Environment != null)
             {
                 return GetIdentityFlagsFromDocument(identityWrapper.Identifier, identityWrapper.Traits);
             }
@@ -252,13 +241,13 @@ namespace Flagsmith
 
         public List<ISegment>? GetIdentitySegments(string identifier, List<ITrait> traits)
         {
-            if (this.Environment == null)
+            if (Environment == null)
             {
                 throw new FlagsmithClientError("Local evaluation required to obtain identity segments.");
             }
 
             IdentityModel identityModel = new IdentityModel { Identifier = identifier, IdentityTraits = traits?.Select(t => new TraitModel { TraitKey = t.GetTraitKey(), TraitValue = t.GetTraitValue() }).ToList() };
-            List<SegmentModel> segmentModels = Evaluator.GetIdentitySegments(this.Environment, identityModel, new List<TraitModel>());
+            List<SegmentModel> segmentModels = Evaluator.GetIdentitySegments(Environment, identityModel, new List<TraitModel>());
 
             return segmentModels?.Select(t => new Segment(id: t.Id, name: t.Name)).ToList<ISegment>();
         }
@@ -269,7 +258,7 @@ namespace Flagsmith
             {
                 return new IdentityFlagListCache(identityWrapper,
                     new DateTimeProvider(),
-                    CacheConfig.DurationInMinutes);
+                    _config.CacheConfig.DurationInMinutes);
             });
 
             return flagListCache;
@@ -279,31 +268,31 @@ namespace Flagsmith
         {
             try
             {
-                var policy = HttpPolicies.GetRetryPolicyAwaitable(Retries);
+                var policy = HttpPolicies.GetRetryPolicyAwaitable(_config.Retries);
                 return await (await policy.ExecuteAsync(async () =>
                 {
                     HttpRequestMessage request = new HttpRequestMessage(method, url)
                     {
                         Headers =
                         {
-                            { "X-Environment-Key", EnvironmentKey }
+                            { "X-Environment-Key", _config.EnvironmentKey }
                         }
                     };
-                    CustomHeaders?.ForEach(kvp => request.Headers.Add(kvp.Key, kvp.Value));
+                    _config.CustomHeaders?.ForEach(kvp => request.Headers.Add(kvp.Key, kvp.Value));
                     if (body != null)
                     {
                         request.Content = new StringContent(body, Encoding.UTF8, "application/json");
                     }
 
-                    var cancellationTokenSource = new CancellationTokenSource(TimeSpan.FromSeconds(RequestTimeout ?? 100));
-                    HttpResponseMessage response = await _httpClient.SendAsync(request, cancellationTokenSource.Token).ConfigureAwait(false);
+                    var cancellationTokenSource = new CancellationTokenSource(_config.Timeout);
+                    HttpResponseMessage response = await _config.HttpClient.SendAsync(request, cancellationTokenSource.Token).ConfigureAwait(false);
                     return response.EnsureSuccessStatusCode();
                 }).ConfigureAwait(false)).Content.ReadAsStringAsync().ConfigureAwait(false);
             }
             catch (HttpRequestException e)
             {
-                Logger?.LogError("\nHTTP Request Exception Caught!");
-                Logger?.LogError("Message :{0} ", e.Message);
+                _config.Logger?.LogError("\nHTTP Request Exception Caught!");
+                _config.Logger?.LogError("Message :{0} ", e.Message);
                 throw new FlagsmithAPIError("Unable to get valid response from Flagsmith API");
             }
             catch (TaskCanceledException)
@@ -316,14 +305,14 @@ namespace Flagsmith
         {
             try
             {
-                var json = await GetJson(HttpMethod.Get, ApiUrl + "environment-document/").ConfigureAwait(false);
+                var json = await GetJson(HttpMethod.Get, new Uri(_config.ApiUri, "environment-document/").AbsoluteUri).ConfigureAwait(false);
                 Environment = JsonConvert.DeserializeObject<EnvironmentModel>(json);
                 IdentitiesWithOverridesByIdentifier = Environment?.IdentityOverrides != null ? Environment.IdentityOverrides.ToDictionary(identity => identity.Identifier) : new Dictionary<string, IdentityModel>();
-                Logger?.LogInformation("Local Environment updated: " + json);
+                _config.Logger?.LogInformation("Local Environment updated: " + json);
             }
             catch (FlagsmithAPIError ex)
             {
-                Logger?.LogError(ex.Message);
+                _config.Logger?.LogError(ex.Message);
             }
         }
 
@@ -331,10 +320,10 @@ namespace Flagsmith
         {
             try
             {
-                string url = ApiUrl.AppendPath("flags");
+                string url = new Uri(_config.ApiUri, "flags/").AbsoluteUri;
                 string json = await GetJson(HttpMethod.Get, url).ConfigureAwait(false);
                 var flags = JsonConvert.DeserializeObject<List<Flag>>(json)?.ToList<IFlag>();
-                return Flags.FromApiFlag(_analyticsProcessor, DefaultFlagHandler, flags);
+                return Flags.FromApiFlag(_analyticsProcessor, _config.DefaultFlagHandler, flags);
             }
             catch (FlagsmithAPIError e)
             {
@@ -342,7 +331,7 @@ namespace Flagsmith
                 {
                     return this.GetFeatureFlagsFromDocument();
                 }
-                return DefaultFlagHandler != null ? Flags.FromApiFlag(_analyticsProcessor, DefaultFlagHandler, null) : throw e;
+                return _config.DefaultFlagHandler != null ? Flags.FromApiFlag(_analyticsProcessor, _config.DefaultFlagHandler, null) : throw e;
             }
         }
 
@@ -351,12 +340,12 @@ namespace Flagsmith
             try
             {
                 traits = traits ?? new List<ITrait>();
-                var url = ApiUrl.AppendPath("identities");
+                var url = new Uri(_config.ApiUri, "/identities/").AbsoluteUri;
                 var jsonBody = JsonConvert.SerializeObject(new { identifier = identity, traits, transient });
                 var jsonResponse = await GetJson(HttpMethod.Post, url, body: jsonBody).ConfigureAwait(false);
                 var flags = JsonConvert.DeserializeObject<Identity>(jsonResponse)?.flags?.ToList<IFlag>();
 
-                return Flags.FromApiFlag(_analyticsProcessor, DefaultFlagHandler, flags);
+                return Flags.FromApiFlag(_analyticsProcessor, _config.DefaultFlagHandler, flags);
             }
             catch (FlagsmithAPIError e)
             {
@@ -364,13 +353,13 @@ namespace Flagsmith
                 {
                     return this.GetIdentityFlagsFromDocument(identity, traits);
                 }
-                return DefaultFlagHandler != null ? Flags.FromApiFlag(_analyticsProcessor, DefaultFlagHandler, null) : throw e;
+                return _config.DefaultFlagHandler != null ? Flags.FromApiFlag(_analyticsProcessor, _config.DefaultFlagHandler, null) : throw e;
             }
         }
 
         private IFlags GetFeatureFlagsFromDocument()
         {
-            return Flags.FromFeatureStateModel(_analyticsProcessor, DefaultFlagHandler, _engine.GetEnvironmentFeatureStates(Environment));
+            return Flags.FromFeatureStateModel(_analyticsProcessor, _config.DefaultFlagHandler, _engine.GetEnvironmentFeatureStates(Environment));
         }
 
         private IFlags GetIdentityFlagsFromDocument(string identifier, List<ITrait>? traits)
@@ -392,7 +381,7 @@ namespace Flagsmith
                     IdentityTraits = traitModels,
                 };
             }
-            return Flags.FromFeatureStateModel(_analyticsProcessor, DefaultFlagHandler, _engine.GetIdentityFeatureStates(Environment, identity), identity.CompositeKey);
+            return Flags.FromFeatureStateModel(_analyticsProcessor, _config.DefaultFlagHandler, _engine.GetIdentityFeatureStates(Environment, identity), identity.CompositeKey);
         }
 
         public Dictionary<string, int> aggregatedAnalytics => _analyticsProcessor != null ? _analyticsProcessor.GetAggregatedAnalytics() : new Dictionary<string, int>();

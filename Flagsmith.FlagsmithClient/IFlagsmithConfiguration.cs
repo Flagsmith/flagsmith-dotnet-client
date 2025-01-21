@@ -1,9 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
 using Microsoft.Extensions.Logging;
+using OfflineHandler;
+using System.Net.Http;
 
 namespace Flagsmith
 {
+    [Obsolete("Use FlagsmithConfiguration instead.")]
     public interface IFlagsmithConfiguration
     {
         /// <summary>
@@ -60,6 +63,21 @@ namespace Flagsmith
         /// If enabled, the SDK will cache the flags for the duration specified in the CacheConfig
         /// </summary>
         CacheConfig CacheConfig { get; set; }
+
+        /// <summary>
+        /// Indicates whether the client is in offline mode.
+        /// </summary>
+        bool OfflineMode { get; set; }
+
+        /// <summary>
+        /// Handler for offline mode operations.
+        /// </summary>
+        BaseOfflineHandler OfflineHandler { get; set; }
+
+        /// <summary>
+        /// HTTP client used for Flagsmith API requests.
+        /// </summary>
+        HttpClient HttpClient { get; set; }
 
         bool IsValid();
     }
