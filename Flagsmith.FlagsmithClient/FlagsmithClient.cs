@@ -340,7 +340,7 @@ namespace Flagsmith
             try
             {
                 traits = traits ?? new List<ITrait>();
-                var url = new Uri(_config.ApiUri, "/identities/").AbsoluteUri;
+                var url = new Uri(_config.ApiUri, "identities/").AbsoluteUri;
                 var jsonBody = JsonConvert.SerializeObject(new { identifier = identity, traits, transient });
                 var jsonResponse = await GetJson(HttpMethod.Post, url, body: jsonBody).ConfigureAwait(false);
                 var flags = JsonConvert.DeserializeObject<Identity>(jsonResponse)?.flags?.ToList<IFlag>();
