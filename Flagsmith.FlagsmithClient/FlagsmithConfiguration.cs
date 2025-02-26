@@ -117,9 +117,10 @@ namespace Flagsmith
         /// </summary>
         public HttpClient HttpClient { get; set; } = new HttpClient();
 
+        [Obsolete("This method will be removed in a future release.")]
         public bool IsValid()
         {
-            return !string.IsNullOrEmpty(ApiUrl) && !string.IsNullOrEmpty(EnvironmentKey);
+            return !string.IsNullOrEmpty(ApiUri.ToString()) && !string.IsNullOrEmpty(EnvironmentKey);
         }
     }
 }
