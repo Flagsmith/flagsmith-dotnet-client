@@ -92,7 +92,7 @@ namespace Flagsmith
                 _flagListCacheDictionary = new ConcurrentDictionary<string, IdentityFlagListCache>();
             }
         }
-        
+
         public FlagsmithClient(FlagsmithConfiguration configuration)
         {
             _config = configuration;

@@ -26,7 +26,7 @@ namespace Flagsmith
         public string ApiUrl
         {
             get => _apiUri.ToString();
-            set => _apiUri = value.EndsWith("/") ? new Uri(value) : new Uri($"{value}/"); 
+            set => _apiUri = value.EndsWith("/") ? new Uri(value) : new Uri($"{value}/");
         }
 
         /// <summary>
