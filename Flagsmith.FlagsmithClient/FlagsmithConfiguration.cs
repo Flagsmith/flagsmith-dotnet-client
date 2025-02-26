@@ -6,7 +6,7 @@ using System.Net.Http;
 
 namespace Flagsmith
 {
-    public class FlagsmithConfiguration : IFlagsmithConfiguration
+    public class FlagsmithConfiguration
     {
         private static readonly Uri DefaultApiUri = new Uri("https://edge.api.flagsmith.com/api/v1/");
         private Uri _apiUri = DefaultApiUri;
