@@ -9,11 +9,10 @@ namespace Flagsmith
     public class FlagsmithConfiguration
     {
         private static readonly Uri DefaultApiUri = new Uri("https://edge.api.flagsmith.com/api/v1/");
-        private Uri _apiUri = DefaultApiUri;
         private TimeSpan _timeout;
         public FlagsmithConfiguration()
         {
-            ApiUrl = "https://edge.api.flagsmith.com/api/v1/";
+            ApiUri = DefaultApiUri;
             EnvironmentKey = string.Empty;
             EnvironmentRefreshIntervalSeconds = 60;
         }
@@ -25,8 +24,8 @@ namespace Flagsmith
         [Obsolete("Use ApiUri instead.")]
         public string ApiUrl
         {
-            get => _apiUri.ToString();
-            set => _apiUri = value.EndsWith("/") ? new Uri(value) : new Uri($"{value}/");
+            get => ApiUri.ToString();
+            set => ApiUri = value.EndsWith("/") ? new Uri(value) : new Uri($"{value}/");
         }
 
         /// <summary>
@@ -34,11 +33,7 @@ namespace Flagsmith
         /// <c>https://edge.api.flagsmith.com/api/v1/</c>.
         /// <example><code>new Uri("https://flagsmith.example.com/api/v1/")</code></example>
         /// </summary>
-        public Uri ApiUri
-        {
-            get => _apiUri;
-            set => _apiUri = value;
-        }
+        public Uri ApiUri { get; set; }
 
         /// <summary>
         /// The environment key obtained from Flagsmith interface.
