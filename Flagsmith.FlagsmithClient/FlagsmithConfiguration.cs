@@ -10,12 +10,6 @@ namespace Flagsmith
     {
         private static readonly Uri DefaultApiUri = new Uri("https://edge.api.flagsmith.com/api/v1/");
         private TimeSpan _timeout;
-        public FlagsmithConfiguration()
-        {
-            ApiUri = DefaultApiUri;
-            EnvironmentKey = string.Empty;
-            EnvironmentRefreshIntervalSeconds = 60;
-        }
 
         /// <summary>
         /// <para>Override the URL of the Flagsmith API to communicate with.</para>
@@ -33,7 +27,7 @@ namespace Flagsmith
         /// <c>https://edge.api.flagsmith.com/api/v1/</c>.
         /// <example><code>new Uri("https://flagsmith.example.com/api/v1/")</code></example>
         /// </summary>
-        public Uri ApiUri { get; set; }
+        public Uri ApiUri { get; set; } = DefaultApiUri;
 
         /// <summary>
         /// The environment key obtained from Flagsmith interface.
@@ -54,6 +48,7 @@ namespace Flagsmith
         /// Enables local evaluation of flags.
         /// </summary>
         public bool EnableLocalEvaluation { get; set; }
+
         /// <summary>
         /// <para>If using local evaluation, specify the interval period between refreshes of local environment data.</para>
         /// <para>Deprecated since 7.1.0. Use <see cref="EnvironmentRefreshInterval"/> instead.</para>

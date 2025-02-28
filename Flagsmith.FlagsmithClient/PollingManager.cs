@@ -23,7 +23,7 @@ namespace Flagsmith
             this._callback = callback;
             _interval = TimeSpan.FromSeconds(intervalSeconds);
         }
-        
+
         /// <param name="callback">Awaitable function that will be polled.</param>
         /// <param name="timespan">Polling interval.</param>
         public PollingManager(Func<Task> callback, TimeSpan timespan)
