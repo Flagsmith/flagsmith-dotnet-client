@@ -9,18 +9,27 @@ namespace Flagsmith
     public class PollingManager : IPollingManager
     {
         private Timer _timer;
-        private readonly CancellationTokenSource _CancellationTokenSource = new CancellationTokenSource();
-        readonly Func<Task> _CallBack;
-        readonly int _Interval;
+        private readonly CancellationTokenSource _cancellationTokenSource = new CancellationTokenSource();
+        private readonly Func<Task> _callback;
+        private readonly TimeSpan _interval;
         /// <summary>
         /// 
         /// </summary>
-        /// <param name="callBack">Awaitable function that will be polled.</param>
-        /// <param name="intervalSeconds">Total delay in seconds between continous exection of callback.</param>
-        public PollingManager(Func<Task> callBack, int intervalSeconds = 10)
+        /// <param name="callback">Awaitable function that will be polled.</param>
+        /// <param name="intervalSeconds">Total delay in seconds between continuous execution of callback.</param>
+        [Obsolete("Use PollingManager(Func<Task>, TimeSpan) instead.")]
+        public PollingManager(Func<Task> callback, int intervalSeconds = 10)
         {
-            _CallBack = callBack;
-            _Interval = intervalSeconds * 1000; //convert to milliseconds
+            this._callback = callback;
+            _interval = TimeSpan.FromSeconds(intervalSeconds);
+        }
+        
+        /// <param name="callback">Awaitable function that will be polled.</param>
+        /// <param name="timespan">Polling interval.</param>
+        public PollingManager(Func<Task> callback, TimeSpan timespan)
+        {
+            this._callback = callback;
+            _interval = timespan;
         }
         /// <summary>
         /// Start calling callback continuously after provided interval
@@ -29,24 +38,24 @@ namespace Flagsmith
         public async Task StartPoll()
         {
             // Force a first call of the callback at least once and synchronously if it is awaited.
-            await _CallBack.Invoke();
-            _CancellationTokenSource.Token.ThrowIfCancellationRequested();
-            _timer = new Timer(async (object state) =>
+            await _callback.Invoke();
+            _cancellationTokenSource.Token.ThrowIfCancellationRequested();
+            _timer = new Timer(state =>
             {
-                if (_CancellationTokenSource.Token.IsCancellationRequested)
+                if (_cancellationTokenSource.Token.IsCancellationRequested)
                 {
                     _timer.Dispose();
                     return;
                 }
-                await _CallBack.Invoke();
-            }, null, _Interval, _Interval);
+                _callback.Invoke().GetAwaiter().GetResult();
+            }, null, _interval, _interval);
         }
         /// <summary>
-        /// Stop continously exectuing callback
+        /// Stop continuously executing callback
         /// </summary>
         public void StopPoll()
         {
-            _CancellationTokenSource.Cancel();
+            _cancellationTokenSource.Cancel();
         }
     }
 }

@@ -55,9 +55,19 @@ namespace Flagsmith
         /// </summary>
         public bool EnableLocalEvaluation { get; set; }
         /// <summary>
+        /// <para>If using local evaluation, specify the interval period between refreshes of local environment data.</para>
+        /// <para>Deprecated since 7.1.0. Use <see cref="EnvironmentRefreshInterval"/> instead.</para>
+        /// </summary>
+        [Obsolete("Use EnvironmentRefreshInterval instead.")]
+        public int EnvironmentRefreshIntervalSeconds
+        {
+            get => EnvironmentRefreshInterval.Seconds;
+            set => EnvironmentRefreshInterval = TimeSpan.FromSeconds(value);
+        }
+        /// <summary>
         /// If using local evaluation, specify the interval period between refreshes of local environment data.
         /// </summary>
-        public int EnvironmentRefreshIntervalSeconds { get; set; }
+        public TimeSpan EnvironmentRefreshInterval { get; set; } = TimeSpan.FromSeconds(60);
         /// <summary>
         /// Callable which will be used in the case where flags cannot be retrieved from the API or a non existent feature is requested.
         /// </summary>

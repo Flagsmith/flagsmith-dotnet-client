@@ -80,7 +80,7 @@ namespace Flagsmith
                         );
                     }
 
-                    _pollingManager = new PollingManager(GetAndUpdateEnvironmentFromApi, _config.EnvironmentRefreshIntervalSeconds);
+                    _pollingManager = new PollingManager(GetAndUpdateEnvironmentFromApi, _config.EnvironmentRefreshInterval);
                     Task.Run(async () => await _pollingManager.StartPoll()).GetAwaiter().GetResult();
                 }
             }
@@ -144,7 +144,7 @@ namespace Flagsmith
             {
                 EnvironmentKey = environmentKey,
                 ApiUri = new Uri(apiUrl),
-                EnvironmentRefreshIntervalSeconds = environmentRefreshIntervalSeconds,
+                EnvironmentRefreshInterval = TimeSpan.FromSeconds(environmentRefreshIntervalSeconds),
                 EnableLocalEvaluation = enableClientSideEvaluation,
                 Logger = logger,
                 EnableAnalytics = enableAnalytics,
