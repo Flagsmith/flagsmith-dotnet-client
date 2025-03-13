@@ -520,11 +520,7 @@ namespace Flagsmith.FlagsmithClientTest
 
             // Then
             var exception = Assert.Throws<Exception>(() => createFlagsmith());
-            Assert.Equal
-            (
-                "ValueError: In order to use local evaluation, please generate a server key in the environment settings page.",
-                exception.Message
-            );
+            Assert.Equal("ValueError: environmentKey is required", exception.Message);
         }
 
         [Fact]
@@ -538,7 +534,11 @@ namespace Flagsmith.FlagsmithClientTest
 
             // Then
             var exception = Assert.Throws<Exception>(() => createFlagsmith());
-            Assert.Equal("ValueError: environmentKey is required", exception.Message);
+            Assert.Equal
+            (
+                "ValueError: In order to use local evaluation, please generate a server key in the environment settings page.",
+                exception.Message
+            );
         }
 
         [Fact]
