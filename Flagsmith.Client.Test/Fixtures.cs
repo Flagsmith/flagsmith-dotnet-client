@@ -8,7 +8,7 @@ namespace Flagsmith.FlagsmithClientTest
 {
     internal class Fixtures
     {
-        public static string ApiKey => "ser.test_key";
+        public static string ApiKey => "test_key";
         public static string ApiUrl => "http://test_url/";
         public static AnalyticsProcessorTest GetAnalyticalProcessorTest() => new(new HttpClient(), ApiKey, ApiUrl);
         public static JObject JsonObject = JObject.Parse(@"{

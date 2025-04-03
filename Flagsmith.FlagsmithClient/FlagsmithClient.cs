@@ -150,8 +150,8 @@ namespace Flagsmith
                 {
                     if (!EnvironmentKey!.StartsWith("ser."))
                     {
-                        throw new Exception(
-                            "ValueError: In order to use local evaluation, please generate a server key in the environment settings page."
+                        Console.WriteLine(
+                            "In order to use local evaluation, please generate a server key in the environment settings page."
                         );
                     }
 
