@@ -653,8 +653,11 @@ namespace Flagsmith.FlagsmithClientTest
         {
             // When
             Action createFlagsmith = () => new FlagsmithClient(
-                environmentKey: "foobar",
-                enableClientSideEvaluation: true
+                new FlagsmithConfiguration
+                {
+                    EnvironmentKey = "foobar",
+                    EnableLocalEvaluation = true
+                }
             );
 
             // Then
