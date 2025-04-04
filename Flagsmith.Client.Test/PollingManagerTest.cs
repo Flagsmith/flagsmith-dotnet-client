@@ -18,7 +18,7 @@ namespace Flagsmith.FlagsmithClientTest
                 isCalled = true;
                 return Task.CompletedTask;
             };
-            var x = new PollingManager(callback);
+            var x = new PollingManager(callback, TimeSpan.Zero);
             _ = x.StartPoll();
             Assert.True(isCalled);
             x.StopPoll();
@@ -32,7 +32,7 @@ namespace Flagsmith.FlagsmithClientTest
                 calledCount += 1;
                 return Task.CompletedTask;
             };
-            var x = new PollingManager(callback, 1);
+            var x = new PollingManager(callback, TimeSpan.FromSeconds(1));
             _ = x.StartPoll();
             await Task.Delay(3000);
             Assert.True(calledCount >= 3); // check pollingmanager polls atlease 3 times.
