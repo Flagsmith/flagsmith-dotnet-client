@@ -284,7 +284,7 @@ namespace Flagsmith
                         request.Content = new StringContent(body, Encoding.UTF8, "application/json");
                     }
 
-                    var cancellationTokenSource = new CancellationTokenSource(_config.Timeout);
+                    var cancellationTokenSource = new CancellationTokenSource(TimeSpan.FromSeconds(_config.RequestTimeout ?? 100));
                     HttpResponseMessage response = await _config.HttpClient.SendAsync(request, cancellationTokenSource.Token).ConfigureAwait(false);
                     return response.EnsureSuccessStatusCode();
                 }).ConfigureAwait(false)).Content.ReadAsStringAsync().ConfigureAwait(false);

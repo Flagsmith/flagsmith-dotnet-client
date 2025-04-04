@@ -86,14 +86,6 @@ namespace Flagsmith
         }
 
         /// <summary>
-        /// Timeout duration to use for HTTP requests.
-        /// </summary>
-        public TimeSpan Timeout
-        {
-            get => _timeout;
-            set => _timeout = value;
-        }
-        /// <summary>
         /// Total http retries for every failing request before throwing the final error.
         /// </summary>
         public int? Retries { get; set; }
