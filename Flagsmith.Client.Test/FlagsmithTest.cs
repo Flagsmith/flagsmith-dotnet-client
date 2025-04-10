@@ -802,5 +802,15 @@ namespace Flagsmith.FlagsmithClientTest
             Assert.True(await identityFlags.IsFeatureEnabled("some_feature"));
             Assert.Equal("some-identity-trait-value", await identityFlags.GetFeatureValue("some_feature"));
         }
+
+        [Fact]
+        public void TestRequestTimeoutInterpretsSecondsCorrectly()
+        {
+            var config = new FlagsmithConfiguration
+            {
+                RequestTimeout = 100
+            };
+            Assert.Equal(100, config.RequestTimeout);
+        }
     }
 }

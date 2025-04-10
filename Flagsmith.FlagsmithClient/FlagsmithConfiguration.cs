@@ -81,7 +81,7 @@ namespace Flagsmith
         /// </summary>
         public Double? RequestTimeout
         {
-            get => _timeout.Seconds;
+            get => _timeout.TotalSeconds;
             set => _timeout = TimeSpan.FromSeconds(value ?? 100);
         }
 
