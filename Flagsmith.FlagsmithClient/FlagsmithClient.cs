@@ -75,8 +75,8 @@ namespace Flagsmith
                 {
                     if (!_config.EnvironmentKey!.StartsWith("ser."))
                     {
-                        Console.WriteLine(
-                            "In order to use local evaluation, please generate a server key in the environment settings page."
+                        throw new Exception(
+                            "ValueError: In order to use local evaluation, please generate a server key in the environment settings page."
                         );
                     }
 
@@ -96,85 +96,6 @@ namespace Flagsmith
         public FlagsmithClient(FlagsmithConfiguration configuration)
         {
             _config = configuration;
-            Initialise();
-        }
-
-        /// <summary>
-        /// Create flagsmith client.
-        /// </summary>
-        /// <param name="environmentKey">The environment key obtained from Flagsmith interface. Required unless offlineMode is True</param>
-        /// <param name="apiUrl">Override the URL of the Flagsmith API to communicate with. Required unless offlineMode is True</param>
-        /// <param name="logger">Provide logger for logging polling info and errors which is only applicable when client side evalution is enabled and analytics errors.</param>
-        /// <param name="defaultFlagHandler">Callable which will be used in the case where flags cannot be retrieved from the API or a non existent feature is requested.</param>
-        /// <param name="enableAnalytics">if enabled, sends additional requests to the Flagsmith API to power flag analytics charts.</param>
-        /// <param name="enableClientSideEvaluation">If using local evaluation, specify the interval period between refreshes of local environment data.</param>
-        /// <param name="environmentRefreshIntervalSeconds"></param>
-        /// <param name="customHeaders">Additional headers to add to requests made to the Flagsmith API</param>
-        /// <param name="retries">Total http retries for every failing request before throwing the final error.</param>
-        /// <param name="requestTimeout">Number of seconds to wait for a request to complete before terminating the request</param>
-        /// <param name="httpClient">Http client used for flagsmith-API requests</param>
-        /// <param name="cacheConfig">Cache configuration. Example new CacheConfig(true) </param>
-        /// <param name="OfflineMode">Sets the client into offline mode. Relies on offlineHandler for evaluating flags.</param>
-        /// <param name="offlineHandler">Offline handler for evaluating flags. Required unless OfflineMode is False.</param>
-        /// <exception cref="FlagsmithAPIError">
-        /// Thrown when error occurs during any http request to Flagsmith api.Not applicable for polling or ananlytics.
-        /// </exception>
-        /// <exception cref="FlagsmithClientError">
-        /// A general exception with a error message. Example: Feature not found, etc.
-        /// </exception>
-        [Obsolete("Use FlagsmithClient(FlagsmithConfiguration) instead.")]
-        public FlagsmithClient(
-            string? environmentKey = null,
-            string apiUrl = "https://edge.api.flagsmith.com/api/v1/",
-            ILogger? logger = null,
-            Func<string, IFlag>? defaultFlagHandler = null,
-            bool enableAnalytics = false,
-            bool enableClientSideEvaluation = false,
-            int environmentRefreshIntervalSeconds = 60,
-            Dictionary<string, string>? customHeaders = null,
-            int retries = 1,
-            double? requestTimeout = null,
-            HttpClient? httpClient = null,
-            CacheConfig? cacheConfig = null,
-            bool offlineMode = false,
-            BaseOfflineHandler? offlineHandler = null
-        )
-        {
-            _config = new FlagsmithConfiguration
-            {
-                EnvironmentKey = environmentKey,
-                ApiUri = new Uri(apiUrl),
-                EnvironmentRefreshInterval = TimeSpan.FromSeconds(environmentRefreshIntervalSeconds),
-                EnableLocalEvaluation = enableClientSideEvaluation,
-                Logger = logger,
-                EnableAnalytics = enableAnalytics,
-                RequestTimeout = requestTimeout,
-                Retries = retries,
-                CustomHeaders = customHeaders,
-                CacheConfig = cacheConfig ?? new CacheConfig(false),
-                OfflineMode = offlineMode,
-                OfflineHandler = offlineHandler,
-                HttpClient = httpClient,
-            };
-            // The type of defaultFlagHandler in this constructor is `Func<string, IFlag>?`, but the type of
-            // IFlagsmithConfiguration.DefaultFlagHandler is `Func<string, Flag>`
-            if (defaultFlagHandler != null)
-            {
-                Flag Handler(string s) => (defaultFlagHandler(s) as Flag)!;
-                _config.DefaultFlagHandler = Handler;
-            }
-            Initialise();
-        }
-
-        /// <summary>
-        /// <para>Creates a Flagsmith client.</para>
-        /// <para>Deprecated since 7.1.0. Use <see cref="FlagsmithClient(FlagsmithConfiguration)"/> instead.</para>
-        /// </summary>
-        [Obsolete("This constructor is deprecated. Use FlagsmithClient(IFlagsmithConfiguration) instead.")]
-        public FlagsmithClient(IFlagsmithConfiguration configuration, HttpClient httpClient)
-        {
-            _config = (FlagsmithConfiguration)configuration;
-            _config.HttpClient = httpClient;
             Initialise();
         }
 

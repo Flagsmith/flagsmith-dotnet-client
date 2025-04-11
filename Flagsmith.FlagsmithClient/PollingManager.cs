@@ -12,18 +12,6 @@ namespace Flagsmith
         private readonly CancellationTokenSource _cancellationTokenSource = new CancellationTokenSource();
         private readonly Func<Task> _callback;
         private readonly TimeSpan _interval;
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="callback">Awaitable function that will be polled.</param>
-        /// <param name="intervalSeconds">Total delay in seconds between continuous execution of callback.</param>
-        [Obsolete("Use PollingManager(Func<Task>, TimeSpan) instead.")]
-        public PollingManager(Func<Task> callback, int intervalSeconds = 10)
-        {
-            this._callback = callback;
-            _interval = TimeSpan.FromSeconds(intervalSeconds);
-        }
-
         /// <param name="callback">Awaitable function that will be polled.</param>
         /// <param name="timespan">Polling interval.</param>
         public PollingManager(Func<Task> callback, TimeSpan timespan)

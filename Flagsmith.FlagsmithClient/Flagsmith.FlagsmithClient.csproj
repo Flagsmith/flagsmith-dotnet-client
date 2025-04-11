@@ -1,42 +1,42 @@
 <Project Sdk="Microsoft.NET.Sdk">
+  
+    <PropertyGroup>
+        <TargetFramework>netstandard2.0</TargetFramework>
+        <LangVersion>8</LangVersion>
+        <DefaultItemExcludes>$(DefaultItemExcludes);example/**;</DefaultItemExcludes>
+        <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+        <PackageId>Flagsmith</PackageId>
+        <Title>Flagsmith</Title>
+        <Version>8.0.0</Version>
+        <Authors>flagsmith</Authors>
+        <Company>Flagsmith</Company>
+        <PackageDescription>Client SDK for Flagsmith. Ship features with confidence using feature flags and remote config. Host yourself or use our hosted version at https://flagsmith.com/</PackageDescription>
+        <Copyright>Copyright © 2023 Bullet Train Ltd</Copyright>
+        <PackageProjectUrl>https://flagsmith.com/</PackageProjectUrl>
+        <PackageIcon>icon.png</PackageIcon>
+        <PackageReleaseNotes>Singleton HTTP client</PackageReleaseNotes>
+        <PackageTags>feature flags remote config toggles</PackageTags>
+        <RepositoryUrl>https://github.com/Flagsmith/flagsmith-dotnet-client</RepositoryUrl>
+        <NeutralLanguage>en-GB</NeutralLanguage>
+        <PackageLicenseFile>LICENSE</PackageLicenseFile>
+    </PropertyGroup>
 
-  <PropertyGroup>
-    <TargetFramework>netstandard2.0</TargetFramework>
-    <LangVersion>8</LangVersion>
-    <DefaultItemExcludes>$(DefaultItemExcludes);example/**;</DefaultItemExcludes>
-    <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
-    <PackageId>Flagsmith</PackageId>
-    <Title>Flagsmith</Title>
-    <Version>7.1.1</Version>
-    <Authors>flagsmith</Authors>
-    <Company>Flagsmith</Company>
-    <PackageDescription>Client SDK for Flagsmith. Ship features with confidence using feature flags and remote config. Host yourself or use our hosted version at https://flagsmith.com/</PackageDescription>
-    <Copyright>Copyright © 2023 Bullet Train Ltd</Copyright>
-    <PackageProjectUrl>https://flagsmith.com/</PackageProjectUrl>
-    <PackageIcon>icon.png</PackageIcon>
-    <PackageReleaseNotes>Singleton HTTP client</PackageReleaseNotes>
-    <PackageTags>feature flags remote config toggles</PackageTags>
-    <RepositoryUrl>https://github.com/Flagsmith/flagsmith-dotnet-client</RepositoryUrl>
-    <NeutralLanguage>en-GB</NeutralLanguage>
-    <PackageLicenseFile>LICENSE</PackageLicenseFile>
-  </PropertyGroup>
+    <ItemGroup>
+        <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="6.0.0"/>
+        <PackageReference Include="Newtonsoft.Json" Version="13.0.1"/>
+        <PackageReference Include="Polly" Version="7.2.3"/>
+        <PackageReference Include="Teronis.MSBuild.Packaging.ProjectBuildInPackage" Version="1.0.0">
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+            <PrivateAssets>all</PrivateAssets>
+        </PackageReference>
 
-  <ItemGroup>
-    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="6.0.0" />
-    <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
-    <PackageReference Include="Polly" Version="7.2.3" />
-    <PackageReference Include="Teronis.MSBuild.Packaging.ProjectBuildInPackage" Version="1.0.0">
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-      <PrivateAssets>all</PrivateAssets>
-    </PackageReference>
+        <!-- currently we duplicate the semver dependency here from Engine project -->
+        <!-- TODO: build the Engine at build time and reference it using a PackageReference -->
+        <PackageReference Include="semver" Version="2.3.0"/>
 
-    <!-- currently we duplicate the semver dependency here from Engine project -->
-    <!-- TODO: build the Engine at build time and reference it using a PackageReference -->
-    <PackageReference Include="semver" Version="2.3.0" />
-
-    <ProjectReference Include="..\Flagsmith.Engine\Flagsmith.Engine.csproj" PrivateAssets="all" />
-    <None Include="LICENSE" Pack="true" PackagePath="" />
-    <None Include="icon.png" Pack="true" PackagePath="\" />
-  </ItemGroup>
+        <ProjectReference Include="..\Flagsmith.Engine\Flagsmith.Engine.csproj" PrivateAssets="all"/>
+        <None Include="LICENSE" Pack="true" PackagePath=""/>
+        <None Include="icon.png" Pack="true" PackagePath="\"/>
+    </ItemGroup>
 
 </Project>

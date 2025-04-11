@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -649,6 +649,27 @@ namespace Flagsmith.FlagsmithClientTest
         }
 
         [Fact]
+        public void TestCannotCreateFlagsmithClientInLocalEvaluationWithoutServerAPIKey()
+        {
+            // When
+            Action createFlagsmith = () => new FlagsmithClient(
+                new FlagsmithConfiguration
+                {
+                    EnvironmentKey = "foobar",
+                    EnableLocalEvaluation = true
+                }
+            );
+
+            // Then
+            var exception = Assert.Throws<Exception>(() => createFlagsmith());
+            Assert.Equal
+            (
+                "ValueError: In order to use local evaluation, please generate a server key in the environment settings page.",
+                exception.Message
+            );
+        }
+
+        [Fact]
         /// <summary>
         /// Test that analytics data is consistent with concurrent calls to get flags.
         /// A huge number of threads are spawned to ensure that the issues related with
@@ -685,7 +706,7 @@ namespace Flagsmith.FlagsmithClientTest
                 featuresDictionary.TryAdd($"Feature_{i}", 0);
             }
 
-            // When 
+            // When
             var tasks = new Task[numberOfThreads];
 
             // Create numberOfThreads threads.
@@ -696,13 +717,13 @@ namespace Flagsmith.FlagsmithClientTest
                 // Prepare an array of feature names of length callsPerThread.
                 for (var j = 0; j < callsPerThread; j++)
                 {
-                    // The feature names are randomly selected from the featuresDictionary and added to the 
-                    // list of features, which represents the features that have been evaluated.  
+                    // The feature names are randomly selected from the featuresDictionary and added to the
+                    // list of features, which represents the features that have been evaluated.
                     string featureName = $"Feature_{new Random().Next(1, featuresDictionary.Count + 1)}";
                     features[j] = featureName;
 
                     // The relevant key in the featuresDictionary is incremented to simulate an evaluation
-                    // to track for that feature. 
+                    // to track for that feature.
                     featuresDictionary[featureName]++;
                 }
 
