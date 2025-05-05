@@ -833,5 +833,11 @@ namespace Flagsmith.FlagsmithClientTest
             };
             Assert.Equal(100, config.RequestTimeout);
         }
+
+        [Fact]
+        public void TestRequestTimeoutHasReasonableDefault()
+        {
+            Assert.True(new FlagsmithConfiguration().RequestTimeout > 1);
+        }
     }
 }

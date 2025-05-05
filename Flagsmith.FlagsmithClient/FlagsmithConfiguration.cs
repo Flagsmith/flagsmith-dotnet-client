@@ -9,7 +9,7 @@ namespace Flagsmith
     public class FlagsmithConfiguration
     {
         private static readonly Uri DefaultApiUri = new Uri("https://edge.api.flagsmith.com/api/v1/");
-        private TimeSpan _timeout;
+        private TimeSpan _timeout = TimeSpan.FromSeconds(5);
 
         /// <summary>
         /// Versioned base Flagsmith API URI to use for all requests. Defaults to
@@ -54,7 +54,7 @@ namespace Flagsmith
         public Double? RequestTimeout
         {
             get => _timeout.TotalSeconds;
-            set => _timeout = TimeSpan.FromSeconds(value ?? 100);
+            set => _timeout = TimeSpan.FromSeconds(value ?? 5);
         }
 
         /// <summary>
