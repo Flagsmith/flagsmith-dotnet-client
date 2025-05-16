@@ -20,17 +20,17 @@ namespace Flagsmith
         }
         public async Task<string> GetFeatureValue(string featureName) => (await GetFlag(featureName)).Value;
         public async Task<bool> IsFeatureEnabled(string featureName) => (await GetFlag(featureName)).Enabled;
-        public async Task<IFlag> GetFlag(string featureName)
+        public Task<IFlag> GetFlag(string featureName)
         {
             var flag = _Flags?.FirstOrDefault(f => f.GetFeatureName().Equals(featureName));
             if (flag == null)
             {
-                return _DefaultFlagHandler?.Invoke(featureName) ?? throw new FlagsmithClientError("Feature does not exist: " + featureName);
+                return Task.FromResult(_DefaultFlagHandler?.Invoke(featureName) ?? throw new FlagsmithClientError("Feature does not exist: " + featureName));
 
             }
             if (_AnalyticsProcessor != null)
-                await _AnalyticsProcessor.TrackFeature(flag.GetFeatureName()).ConfigureAwait(false);
-            return flag;
+                _ = _AnalyticsProcessor.TrackFeature(flag.GetFeatureName())
+            return Task.FromResult(flag);
         }
         public List<IFlag> AllFlags() => _Flags;
         private static IFlag FromFeatureStateModel(FeatureStateModel featureStateModel, string identityId = null) =>
