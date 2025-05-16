@@ -29,7 +29,7 @@ namespace Flagsmith
 
             }
             if (_AnalyticsProcessor != null)
-                _ = _AnalyticsProcessor.TrackFeature(flag.GetFeatureName())
+                _ = _AnalyticsProcessor.TrackFeature(flag.GetFeatureName());
             return Task.FromResult(flag);
         }
         public List<IFlag> AllFlags() => _Flags;
