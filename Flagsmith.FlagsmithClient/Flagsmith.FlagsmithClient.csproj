@@ -18,7 +18,6 @@
         <PackageTags>feature flags remote config toggles</PackageTags>
         <RepositoryUrl>https://github.com/Flagsmith/flagsmith-dotnet-client</RepositoryUrl>
         <NeutralLanguage>en-GB</NeutralLanguage>
-        <PackageLicenseFile>LICENSE</PackageLicenseFile>
         <PackageLicenseExpression>BSD-3</PackageLicenseExpression>
     </PropertyGroup>
 
