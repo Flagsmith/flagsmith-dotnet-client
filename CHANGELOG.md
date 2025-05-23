@@ -1,6 +1,20 @@
 # Changelog
 
-# [v8.0.1](https://github.com/Flagsmith/flagsmith-dotnet-client/releases/tag/v8.0.1) - 06 May 2025
+## [8.0.2](https://github.com/Flagsmith/flagsmith-dotnet-client/compare/v8.0.1...v8.0.2) (2025-05-23)
+
+
+### Bug Fixes
+
+* Analytics update is blocking ([#156](https://github.com/Flagsmith/flagsmith-dotnet-client/issues/156)) ([06afacc](https://github.com/Flagsmith/flagsmith-dotnet-client/commit/06afacc7237e560cb42e5e68669d0e49e747ceb1))
+
+
+### CI
+
+* Add release-please ([#159](https://github.com/Flagsmith/flagsmith-dotnet-client/issues/159)) ([a99ea42](https://github.com/Flagsmith/flagsmith-dotnet-client/commit/a99ea42e8c82dff54029873cdfa9e579a6464200))
+
+## Changelog
+
+## [v8.0.1](https://github.com/Flagsmith/flagsmith-dotnet-client/releases/tag/v8.0.1) - 06 May 2025
 
 ## What's Changed
 * fix: Fix default request timeout being 0 by [@rolodato](https://github.com/rolodato) in https://github.com/Flagsmith/flagsmith-dotnet-client/pull/155
@@ -9,7 +23,7 @@
 
 [Changes][v8.0.1]
 
-# [v8.0.0](https://github.com/Flagsmith/flagsmith-dotnet-client/releases/tag/v8.0.0) - 28 Apr 2025
+## [v8.0.0](https://github.com/Flagsmith/flagsmith-dotnet-client/releases/tag/v8.0.0) - 28 Apr 2025
 
 ## What's Changed
 
@@ -21,7 +35,7 @@
 
 [Changes][v8.0.0]
 
-# [v7.1.1](https://github.com/Flagsmith/flagsmith-dotnet-client/releases/tag/v7.1.1) - 10 Apr 2025
+## [v7.1.1](https://github.com/Flagsmith/flagsmith-dotnet-client/releases/tag/v7.1.1) - 10 Apr 2025
 
 ## What's Changed
 * fix: RequestTimeout would return the seconds component of its TimeSpan instead of the total duration in seconds by [@rolodato](https://github.com/rolodato) in https://github.com/Flagsmith/flagsmith-dotnet-client/pull/149
@@ -30,7 +44,7 @@
 
 [Changes][v7.1.1]
 
-# [v7.1.0](https://github.com/Flagsmith/flagsmith-dotnet-client/releases/tag/v7.1.0) - 04 Apr 2025
+## [v7.1.0](https://github.com/Flagsmith/flagsmith-dotnet-client/releases/tag/v7.1.0) - 04 Apr 2025
 
 ## What's Changed
 
@@ -66,7 +80,7 @@ Instead, use `new PollingManager(callback, TimeSpan.FromSeconds(intervalSeconds)
 
 [Changes][v7.1.0]
 
-# [v7.0.1](https://github.com/Flagsmith/flagsmith-dotnet-client/releases/tag/v7.0.1) - 15 Jan 2025
+## [v7.0.1](https://github.com/Flagsmith/flagsmith-dotnet-client/releases/tag/v7.0.1) - 15 Jan 2025
 
 ## What's Changed
 * ci: fix testing workflow by [@matthewelwell](https://github.com/matthewelwell) in https://github.com/Flagsmith/flagsmith-dotnet-client/pull/132
@@ -78,7 +92,7 @@ Instead, use `new PollingManager(callback, TimeSpan.FromSeconds(intervalSeconds)
 
 [Changes][v7.0.1]
 
-# [v7.0.0](https://github.com/Flagsmith/flagsmith-dotnet-client/releases/tag/v7.0.0) - 18 Dec 2024
+## [v7.0.0](https://github.com/Flagsmith/flagsmith-dotnet-client/releases/tag/v7.0.0) - 18 Dec 2024
 
 ## What's Changed
 * fix!: Remove flag ID properties/methods by [@rolodato](https://github.com/rolodato) in https://github.com/Flagsmith/flagsmith-dotnet-client/pull/129
@@ -91,7 +105,7 @@ Version 7 removes the `Id` methods from the `IFlag` interface and `Flag` class t
 
 [Changes][v7.0.0]
 
-# [v6.0.0](https://github.com/Flagsmith/flagsmith-dotnet-client/releases/tag/v6.0.0) - 18 Dec 2024
+## [v6.0.0](https://github.com/Flagsmith/flagsmith-dotnet-client/releases/tag/v6.0.0) - 18 Dec 2024
 
 ## What's Changed
 * Fixes by [@mjwills-k](https://github.com/mjwills-k) in https://github.com/Flagsmith/flagsmith-dotnet-client/pull/126
@@ -106,7 +120,7 @@ The changes in this release affect the encoding of identifiers. This is technica
 
 [Changes][v6.0.0]
 
-# [v5.4.3](https://github.com/Flagsmith/flagsmith-dotnet-client/releases/tag/v5.4.3) - 30 Oct 2024
+## [v5.4.3](https://github.com/Flagsmith/flagsmith-dotnet-client/releases/tag/v5.4.3) - 30 Oct 2024
 
 ## What's Changed
 * fix: handle null django_id in identity overrides for local evaluation mode by [@rolodato](https://github.com/rolodato) in https://github.com/Flagsmith/flagsmith-dotnet-client/pull/122
@@ -115,7 +129,7 @@ The changes in this release affect the encoding of identifiers. This is technica
 
 [Changes][v5.4.3]
 
-# [v5.4.2](https://github.com/Flagsmith/flagsmith-dotnet-client/releases/tag/v5.4.2) - 17 Oct 2024
+## [v5.4.2](https://github.com/Flagsmith/flagsmith-dotnet-client/releases/tag/v5.4.2) - 17 Oct 2024
 
 ## What's Changed
 * Fix constructor deadlock when using local evaluation by [@rolodato](https://github.com/rolodato) in https://github.com/Flagsmith/flagsmith-dotnet-client/pull/121
@@ -124,7 +138,7 @@ The changes in this release affect the encoding of identifiers. This is technica
 
 [Changes][v5.4.2]
 
-# [v5.4.1](https://github.com/Flagsmith/flagsmith-dotnet-client/releases/tag/v5.4.1) - 09 Oct 2024
+## [v5.4.1](https://github.com/Flagsmith/flagsmith-dotnet-client/releases/tag/v5.4.1) - 09 Oct 2024
 
 ## What's Changed
 * deps: bump artifact options by [@matthewelwell](https://github.com/matthewelwell) in https://github.com/Flagsmith/flagsmith-dotnet-client/pull/115
@@ -137,7 +151,7 @@ The changes in this release affect the encoding of identifiers. This is technica
 
 [Changes][v5.4.1]
 
-# [v5.4.0](https://github.com/Flagsmith/flagsmith-dotnet-client/releases/tag/v5.4.0) - 11 Sep 2024
+## [v5.4.0](https://github.com/Flagsmith/flagsmith-dotnet-client/releases/tag/v5.4.0) - 11 Sep 2024
 
 ## What's Changed
 * feat: Transient identities and traits by [@novakzaballa](https://github.com/novakzaballa) in https://github.com/Flagsmith/flagsmith-dotnet-client/pull/111
@@ -150,7 +164,7 @@ The changes in this release affect the encoding of identifiers. This is technica
 
 [Changes][v5.4.0]
 
-# [v5.3.2](https://github.com/Flagsmith/flagsmith-dotnet-client/releases/tag/v5.3.2) - 29 Jul 2024
+## [v5.3.2](https://github.com/Flagsmith/flagsmith-dotnet-client/releases/tag/v5.3.2) - 29 Jul 2024
 
 ## What's Changed
 * fix: OfflineHandler causes the SDK to bypass live flag lookups by [@novakzaballa](https://github.com/novakzaballa) in https://github.com/Flagsmith/flagsmith-dotnet-client/pull/110
@@ -159,7 +173,7 @@ The changes in this release affect the encoding of identifiers. This is technica
 
 [Changes][v5.3.2]
 
-# [v5.3.1](https://github.com/Flagsmith/flagsmith-dotnet-client/releases/tag/v5.3.1) - 18 Jul 2024
+## [v5.3.1](https://github.com/Flagsmith/flagsmith-dotnet-client/releases/tag/v5.3.1) - 18 Jul 2024
 
 ## What's Changed
 * fix: Prevent SynchronizationContext deadlock on dotnet framework by [@novakzaballa](https://github.com/novakzaballa) in https://github.com/Flagsmith/flagsmith-dotnet-client/pull/107
@@ -168,7 +182,7 @@ The changes in this release affect the encoding of identifiers. This is technica
 
 [Changes][v5.3.1]
 
-# [v5.3.0](https://github.com/Flagsmith/flagsmith-dotnet-client/releases/tag/v5.3.0) - 19 Apr 2024
+## [v5.3.0](https://github.com/Flagsmith/flagsmith-dotnet-client/releases/tag/v5.3.0) - 19 Apr 2024
 
 ## What's Changed
 * feat: Offline mode by [@novakzaballa](https://github.com/novakzaballa) in https://github.com/Flagsmith/flagsmith-dotnet-client/pull/86
@@ -182,7 +196,7 @@ The changes in this release affect the encoding of identifiers. This is technica
 
 [Changes][v5.3.0]
 
-# [Version 5.2.2 (v5.2.2)](https://github.com/Flagsmith/flagsmith-dotnet-client/releases/tag/v5.2.2) - 19 Apr 2024
+## [Version 5.2.2 (v5.2.2)](https://github.com/Flagsmith/flagsmith-dotnet-client/releases/tag/v5.2.2) - 19 Apr 2024
 
 ## What's Changed
 * fix: Ensure environment is retrieved on start polling by [@novakzaballa](https://github.com/novakzaballa) in https://github.com/Flagsmith/flagsmith-dotnet-client/pull/83
@@ -195,7 +209,7 @@ The changes in this release affect the encoding of identifiers. This is technica
 
 [Changes][v5.2.2]
 
-# [Version 5.2.1 (v5.2.1)](https://github.com/Flagsmith/flagsmith-dotnet-client/releases/tag/v5.2.1) - 27 Oct 2023
+## [Version 5.2.1 (v5.2.1)](https://github.com/Flagsmith/flagsmith-dotnet-client/releases/tag/v5.2.1) - 27 Oct 2023
 
 ## What's Changed
 * Fix cache initialisation that was some kind of circular reference. by [@JFCote](https://github.com/JFCote) in https://github.com/Flagsmith/flagsmith-dotnet-client/pull/81
@@ -204,7 +218,7 @@ The changes in this release affect the encoding of identifiers. This is technica
 
 [Changes][v5.2.1]
 
-# [Version 5.2.0 (v5.2.0)](https://github.com/Flagsmith/flagsmith-dotnet-client/releases/tag/v5.2.0) - 26 Oct 2023
+## [Version 5.2.0 (v5.2.0)](https://github.com/Flagsmith/flagsmith-dotnet-client/releases/tag/v5.2.0) - 26 Oct 2023
 
 ## What's Changed
 * chore: test support for other .NET versions by [@matthewelwell](https://github.com/matthewelwell) in https://github.com/Flagsmith/flagsmith-dotnet-client/pull/75
@@ -214,7 +228,7 @@ The changes in this release affect the encoding of identifiers. This is technica
 
 [Changes][v5.2.0]
 
-# [Version 5.1.0 (v5.1.0)](https://github.com/Flagsmith/flagsmith-dotnet-client/releases/tag/v5.1.0) - 26 Oct 2023
+## [Version 5.1.0 (v5.1.0)](https://github.com/Flagsmith/flagsmith-dotnet-client/releases/tag/v5.1.0) - 26 Oct 2023
 
 ## What's Changed
 * feat: implement `IN` operator by [@khvn26](https://github.com/khvn26) in https://github.com/Flagsmith/flagsmith-dotnet-client/pull/72
@@ -223,7 +237,7 @@ The changes in this release affect the encoding of identifiers. This is technica
 
 [Changes][v5.1.0]
 
-# [Version 5.0.1 (v5.0.1)](https://github.com/Flagsmith/flagsmith-dotnet-client/releases/tag/v5.0.1) - 22 Jun 2023
+## [Version 5.0.1 (v5.0.1)](https://github.com/Flagsmith/flagsmith-dotnet-client/releases/tag/v5.0.1) - 22 Jun 2023
 
 ## What's Changed
 * feat: accept FlagsmithConfiguration in FlagsmithClient & small refactor by [@luk355](https://github.com/luk355) in https://github.com/Flagsmith/flagsmith-dotnet-client/pull/67
@@ -235,7 +249,7 @@ The changes in this release affect the encoding of identifiers. This is technica
 
 [Changes][v5.0.1]
 
-# [v5.0.0](https://github.com/Flagsmith/flagsmith-dotnet-client/releases/tag/v5.0.0) - 15 Jun 2023
+## [v5.0.0](https://github.com/Flagsmith/flagsmith-dotnet-client/releases/tag/v5.0.0) - 15 Jun 2023
 
 ## What's Changed
 * *BREAKING CHANGE*: fix: consistent split evaluations by [@khvn26](https://github.com/khvn26) in https://github.com/Flagsmith/flagsmith-dotnet-client/pull/69
@@ -249,7 +263,7 @@ The changes in this release affect the encoding of identifiers. This is technica
 
 [Changes][v5.0.0]
 
-# [v4.3.3](https://github.com/Flagsmith/flagsmith-dotnet-client/releases/tag/v4.3.3) - 15 Jun 2023
+## [v4.3.3](https://github.com/Flagsmith/flagsmith-dotnet-client/releases/tag/v4.3.3) - 15 Jun 2023
 
 ## What's Changed
 * Bump copyright notices by [@matthewelwell](https://github.com/matthewelwell) in https://github.com/Flagsmith/flagsmith-dotnet-client/pull/63
@@ -259,7 +273,7 @@ The changes in this release affect the encoding of identifiers. This is technica
 
 [Changes][v4.3.3]
 
-# [v4.3.2](https://github.com/Flagsmith/flagsmith-dotnet-client/releases/tag/v4.3.2) - 08 Jun 2023
+## [v4.3.2](https://github.com/Flagsmith/flagsmith-dotnet-client/releases/tag/v4.3.2) - 08 Jun 2023
 
 ## What's Changed
 * Feature/use interfaces by [@tberger](https://github.com/tberger) in https://github.com/Flagsmith/flagsmith-dotnet-client/pull/61
@@ -272,7 +286,7 @@ The changes in this release affect the encoding of identifiers. This is technica
 
 [Changes][v4.3.2]
 
-# [Version 4.3.1 (v4.3.1)](https://github.com/Flagsmith/flagsmith-dotnet-client/releases/tag/v4.3.1) - 29 Mar 2023
+## [Version 4.3.1 (v4.3.1)](https://github.com/Flagsmith/flagsmith-dotnet-client/releases/tag/v4.3.1) - 29 Mar 2023
 
 ## What's Changed
 * Release 4.3.1 by [@matthewelwell](https://github.com/matthewelwell) in https://github.com/Flagsmith/flagsmith-dotnet-client/pull/60
@@ -281,7 +295,7 @@ The changes in this release affect the encoding of identifiers. This is technica
 
 [Changes][v4.3.1]
 
-# [Version 4.3.0 (v4.3.0)](https://github.com/Flagsmith/flagsmith-dotnet-client/releases/tag/v4.3.0) - 07 Mar 2023
+## [Version 4.3.0 (v4.3.0)](https://github.com/Flagsmith/flagsmith-dotnet-client/releases/tag/v4.3.0) - 07 Mar 2023
 
 ## What's Changed
 * Update engine test data submodule by [@matthewelwell](https://github.com/matthewelwell) in https://github.com/Flagsmith/flagsmith-dotnet-client/pull/58
@@ -295,7 +309,7 @@ The changes in this release affect the encoding of identifiers. This is technica
 
 [Changes][v4.3.0]
 
-# [Version 4.2.1 (v4.2.1)](https://github.com/Flagsmith/flagsmith-dotnet-client/releases/tag/v4.2.1) - 03 Nov 2022
+## [Version 4.2.1 (v4.2.1)](https://github.com/Flagsmith/flagsmith-dotnet-client/releases/tag/v4.2.1) - 03 Nov 2022
 
 ## What's Changed
 * Use identity get request if no traits by [@matthewelwell](https://github.com/matthewelwell) in https://github.com/Flagsmith/flagsmith-dotnet-client/pull/54
@@ -305,7 +319,7 @@ The changes in this release affect the encoding of identifiers. This is technica
 
 [Changes][v4.2.1]
 
-# [Version 4.2.0 (v4.2.0)](https://github.com/Flagsmith/flagsmith-dotnet-client/releases/tag/v4.2.0) - 01 Nov 2022
+## [Version 4.2.0 (v4.2.0)](https://github.com/Flagsmith/flagsmith-dotnet-client/releases/tag/v4.2.0) - 01 Nov 2022
 
 ## What's Changed
 * Add Modulo operator by [@matthewelwell](https://github.com/matthewelwell) in https://github.com/Flagsmith/flagsmith-dotnet-client/pull/50
@@ -316,7 +330,7 @@ The changes in this release affect the encoding of identifiers. This is technica
 
 [Changes][v4.2.0]
 
-# [Version 4.1.0 (v4.1.0)](https://github.com/Flagsmith/flagsmith-dotnet-client/releases/tag/v4.1.0) - 29 Jul 2022
+## [Version 4.1.0 (v4.1.0)](https://github.com/Flagsmith/flagsmith-dotnet-client/releases/tag/v4.1.0) - 29 Jul 2022
 
 ## What's Changed
 * Add GetIdentitySegments method by [@matthewelwell](https://github.com/matthewelwell) in https://github.com/Flagsmith/flagsmith-dotnet-client/pull/45
@@ -326,7 +340,7 @@ The changes in this release affect the encoding of identifiers. This is technica
 
 [Changes][v4.1.0]
 
-# [Version 4.0.0 (v4.0.0)](https://github.com/Flagsmith/flagsmith-dotnet-client/releases/tag/v4.0.0) - 07 Jun 2022
+## [Version 4.0.0 (v4.0.0)](https://github.com/Flagsmith/flagsmith-dotnet-client/releases/tag/v4.0.0) - 07 Jun 2022
 
 
 [Changes][v4.0.0]
