@@ -1,0 +1,69 @@
+{
+  "$schema": "https://raw.githubusercontent.com/googleapis/release-please/main/schemas/config.json",
+  "bootstrap-sha": "338968944b18f71af5c5f3ea2f6d339f67f03f2b",
+  "packages": {
+    ".": {
+      "bump-minor-pre-major": false,
+      "bump-patch-for-minor-pre-major": false,
+      "changelog-path": "CHANGELOG.md",
+      "draft": false,
+      "include-component-in-tag": false,
+      "prerelease": false,
+      "release-type": "simple",
+      "extra-files": [
+        {
+          "type": "xml",
+          "path": "Flagsmith.FlagsmithClient/Flagsmith.FlagsmithClient.csproj",
+          "xpath": "//Project/PropertyGroup/Version"
+        }
+      ]
+    }
+  },
+  "changelog-sections": [
+    {
+      "type": "feat",
+      "hidden": false,
+      "section": "Features"
+    },
+    {
+      "type": "fix",
+      "hidden": false,
+      "section": "Bug Fixes"
+    },
+    {
+      "type": "deps",
+      "hidden": false,
+      "section": "Dependency Updates"
+    },
+    {
+      "type": "chore",
+      "hidden": true,
+      "section": "Other"
+    },
+    {
+      "type": "ci",
+      "hidden": false,
+      "section": "CI"
+    },
+    {
+      "type": "docs",
+      "hidden": false,
+      "section": "Docs"
+    },
+    {
+      "type": "perf",
+      "hidden": false,
+      "section": "Performance Improvements"
+    },
+    {
+      "type": "refactor",
+      "hidden": false,
+      "section": "Refactoring"
+    },
+    {
+      "type": "test",
+      "hidden": false,
+      "section": "Tests"
+    }
+  ]
+}
