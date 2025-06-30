@@ -1,5 +1,3 @@
-<img width="100%" src="https://github.com/Flagsmith/flagsmith/raw/main/static-files/hero.png"/>
-
 # Flagsmith .NET SDK
 
 The SDK for .NET Core, .NET Framework, Mono, Xamarin and Universal Windows Platform applications for [https://www.flagsmith.com/](https://www.flagsmith.com/).
