@@ -1,5 +1,12 @@
 # Changelog
 
+## [8.0.3](https://github.com/Flagsmith/flagsmith-dotnet-client/compare/v8.0.2...v8.0.3) (2025-07-21)
+
+
+### Docs
+
+* removing hero image from SDK readme ([#163](https://github.com/Flagsmith/flagsmith-dotnet-client/issues/163)) ([357788f](https://github.com/Flagsmith/flagsmith-dotnet-client/commit/357788fca1023224152d7d50ebd71f93f037e01f))
+
 ## [8.0.2](https://github.com/Flagsmith/flagsmith-dotnet-client/compare/v8.0.1...v8.0.2) (2025-05-23)
 
 
