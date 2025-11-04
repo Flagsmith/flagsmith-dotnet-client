@@ -14,6 +14,18 @@ namespace FlagsmithEngine
     public class Engine : IEngine
     {
         /// <summary>
+        /// Get the evaluation result for a given context
+        /// </summary>
+        /// <typeparam name="SegmentMetadataT">Segment metadata type</typeparam>
+        /// <typeparam name="FeatureMetadataT">Feature metadata type</typeparam>
+        /// <param name="context"></param>
+        /// <returns></returns>
+        public EvaluationResult<SegmentMetadataT, FeatureMetadataT> GetEvaluationResult<SegmentMetadataT, FeatureMetadataT>(EvaluationContext<SegmentMetadataT, FeatureMetadataT> context)
+        {
+            return new EvaluationResult<SegmentMetadataT, FeatureMetadataT>();
+        }
+
+        /// <summary>
         /// Get a list of feature states for a given environment
         /// </summary>
         /// <param name="environmentModel">the environment model object</param>
@@ -70,7 +82,8 @@ namespace FlagsmithEngine
                     }
 
                     featureStates[feature] = featureState;
-                };
+                }
+                ;
             }
             identity.IdentityFeatures?.ForEach(x =>
             {
