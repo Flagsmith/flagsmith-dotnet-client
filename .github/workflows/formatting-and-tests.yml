@@ -39,7 +39,7 @@ jobs:
             max-parallel: 4
             matrix:
                 working-directory: ["Flagsmith.EngineTest","Flagsmith.Client.Test"]
-                dotnet-version: ["6.0.x", "7.0.x", "8.0.x"]
+                dotnet-version: ["6.x", "7.x", "8.x", "10.x"]
 
         steps:
           - name: Cloning repo
@@ -51,9 +51,7 @@ jobs:
           - name: Set up Dotnet ${{ matrix.dotnet-version }}
             uses: actions/setup-dotnet@v3
             with:
-                dotnet-version: |
-                  6.0.x
-                  ${{ matrix.dotnet-version }}
+                dotnet-version: ${{ matrix.dotnet-version }}
 
           - name: Run Tests
             # bafflingly adding the below debugging echo / version statements got the workflow to pass

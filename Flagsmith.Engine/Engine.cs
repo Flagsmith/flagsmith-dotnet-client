@@ -22,7 +22,10 @@ namespace FlagsmithEngine
         /// <returns></returns>
         public EvaluationResult<SegmentMetadataT, FeatureMetadataT> GetEvaluationResult<SegmentMetadataT, FeatureMetadataT>(EvaluationContext<SegmentMetadataT, FeatureMetadataT> context)
         {
-            return new EvaluationResult<SegmentMetadataT, FeatureMetadataT>();
+            var result = new EvaluationResult<SegmentMetadataT, FeatureMetadataT>();
+            result.Flags = new Dictionary<string, FlagResult<FeatureMetadataT>>();
+            result.Segments = new List<SegmentResult<SegmentMetadataT>>().ToArray();
+            return result;
         }
 
         /// <summary>

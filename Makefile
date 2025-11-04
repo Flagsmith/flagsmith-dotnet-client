@@ -2,13 +2,18 @@
 install: ## Install development dependencies
 	npm install -g quicktype
 
+.PHONY: clone-engine-test-data
+clone-engine-test-data: ## (temporary) Clone the engine test data submodule
+	git clone git@github.com:Flagsmith/engine-test-data.git Flagsmith.EngineTest/EngineTestDataV2
+
 .PHONY: generate-engine-classes 
 generate-engine-classes: ## Generate engine classes from the JSON Schema specification
 	quicktype \
 		--lang csharp \
 		--src-lang schema \
 		--namespace FlagsmithEngine \
-		--features just-types-and-namespace \
+		--framework NewtonSoft \
+		--features attributes-only \
 		--check-required \
 		--out Flagsmith.Engine/EvaluationContext/EvaluationContext.cs \
 		https://raw.githubusercontent.com/Flagsmith/flagsmith/refs/heads/main/sdk/evaluation-context.json
@@ -16,7 +21,8 @@ generate-engine-classes: ## Generate engine classes from the JSON Schema specifi
 		--lang csharp \
 		--src-lang schema \
 		--namespace FlagsmithEngine \
-		--features just-types-and-namespace \
+		--framework NewtonSoft \
+		--features attributes-only \
 		--check-required \
 		--out Flagsmith.Engine/EvaluationResult/EvaluationResult.cs \
 		https://raw.githubusercontent.com/Flagsmith/flagsmith/refs/heads/main/sdk/evaluation-result.json
