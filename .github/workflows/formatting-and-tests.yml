@@ -54,7 +54,9 @@ jobs:
           - name: Set up Dotnet ${{ matrix.dotnet-version }}
             uses: actions/setup-dotnet@v3
             with:
-                dotnet-version: ${{ matrix.dotnet-version }}
+                dotnet-version: |
+                  6.0.x
+                  ${{ matrix.dotnet-version }}
 
           - name: Run Tests
             # bafflingly adding the below debugging echo / version statements got the workflow to pass
