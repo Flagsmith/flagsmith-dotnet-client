@@ -19,9 +19,9 @@ namespace EngineTest
         private struct TestCase
         {
             [JsonProperty("context")]
-            public EvaluationContext<object, object> Context;
+            public EvaluationContext<object, object> Context { get; set; };
             [JsonProperty("result")]
-            public EvaluationResult<object, object> Result;
+            public EvaluationResult<object, object> Result { get; set; };
         }
 
         private static TestCase GetTestCase(string filename)
