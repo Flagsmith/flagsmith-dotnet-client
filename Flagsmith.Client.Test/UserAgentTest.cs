@@ -16,7 +16,7 @@ namespace Flagsmith.FlagsmithClientTest
         public async Task TestUserAgentHeaderIsSentInGetEnvironmentFlags()
         {
             // Given
-            HttpRequestMessage capturedRequest = null;
+            HttpRequestMessage capturedRequest = null!;
             
             var httpClientMock = new Mock<HttpClient>();
             httpClientMock.Setup(x => x.SendAsync(It.IsAny<HttpRequestMessage>(), It.IsAny<CancellationToken>()))
@@ -61,7 +61,7 @@ namespace Flagsmith.FlagsmithClientTest
         public async Task TestUserAgentHeaderIsSentInGetIdentityFlags()
         {
             // Given
-            HttpRequestMessage capturedRequest = null;
+            HttpRequestMessage capturedRequest = null!;
             
             var httpClientMock = new Mock<HttpClient>();
             httpClientMock.Setup(x => x.SendAsync(It.IsAny<HttpRequestMessage>(), It.IsAny<CancellationToken>()))
@@ -111,7 +111,7 @@ namespace Flagsmith.FlagsmithClientTest
         public async Task TestUserAgentHeaderIsSentInAnalyticsFlush()
         {
             // Given
-            HttpRequestMessage capturedRequest = null;
+            HttpRequestMessage capturedRequest = null!;
             
             var httpClientMock = new Mock<HttpClient>();
             httpClientMock.Setup(x => x.SendAsync(It.IsAny<HttpRequestMessage>(), It.IsAny<CancellationToken>()))
