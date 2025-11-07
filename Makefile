@@ -4,7 +4,7 @@ install: ## Install development dependencies
 
 .PHONY: clone-engine-test-data
 clone-engine-test-data: ## (temporary) Clone the engine test data submodule
-	git clone git@github.com:Flagsmith/engine-test-data.git Flagsmith.EngineTest/EngineTestDataV2
+	git clone https://github.com/Flagsmith/engine-test-data.git Flagsmith.EngineTest/EngineTestDataV2
 
 .PHONY: generate-engine-classes 
 generate-engine-classes: ## Generate engine classes from the JSON Schema specification
