@@ -196,7 +196,8 @@ namespace Flagsmith
                     {
                         Headers =
                         {
-                            { "X-Environment-Key", _config.EnvironmentKey }
+                            { "X-Environment-Key", _config.EnvironmentKey },
+                            { "User-Agent", SdkVersion.GetUserAgent() }
                         }
                     };
                     _config.CustomHeaders?.ForEach(kvp => request.Headers.Add(kvp.Key, kvp.Value));
