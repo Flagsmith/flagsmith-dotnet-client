@@ -14,7 +14,7 @@ namespace Flagsmith
         {
             var assembly = typeof(SdkVersion).Assembly;
             var version = assembly.GetName().Version;
-            
+
             if (version != null)
             {
                 // Use Major.Minor.Build if Build > -1, otherwise use Major.Minor

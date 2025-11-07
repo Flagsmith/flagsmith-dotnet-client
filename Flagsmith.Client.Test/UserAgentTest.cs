@@ -17,7 +17,7 @@ namespace Flagsmith.FlagsmithClientTest
         {
             // Given
             HttpRequestMessage capturedRequest = null!;
-            
+
             var httpClientMock = new Mock<HttpClient>();
             httpClientMock.Setup(x => x.SendAsync(It.IsAny<HttpRequestMessage>(), It.IsAny<CancellationToken>()))
                 .Callback<HttpRequestMessage, CancellationToken>((request, token) =>
@@ -35,7 +35,7 @@ namespace Flagsmith.FlagsmithClientTest
                 EnvironmentKey = Fixtures.ApiKey,
                 HttpClient = httpClientMock.Object
             };
-            
+
             var client = new FlagsmithClient(config);
 
             // When
@@ -44,16 +44,16 @@ namespace Flagsmith.FlagsmithClientTest
             // Then
             Assert.NotNull(capturedRequest);
             Assert.True(capturedRequest.Headers.Contains("User-Agent"));
-            
+
             var userAgentValues = capturedRequest.Headers.GetValues("User-Agent").ToList();
             Assert.Single(userAgentValues);
-            
+
             var userAgent = userAgentValues[0];
             Assert.StartsWith("flagsmith-dotnet-sdk/", userAgent);
-            
+
             // Verify it's either a version number or "unknown"
             var versionPart = userAgent.Substring("flagsmith-dotnet-sdk/".Length);
-            Assert.True(versionPart == "unknown" || versionPart.Contains("."), 
+            Assert.True(versionPart == "unknown" || versionPart.Contains("."),
                 $"User-Agent should be 'flagsmith-dotnet-sdk/version' or 'flagsmith-dotnet-sdk/unknown', but was '{userAgent}'");
         }
 
@@ -62,7 +62,7 @@ namespace Flagsmith.FlagsmithClientTest
         {
             // Given
             HttpRequestMessage capturedRequest = null!;
-            
+
             var httpClientMock = new Mock<HttpClient>();
             httpClientMock.Setup(x => x.SendAsync(It.IsAny<HttpRequestMessage>(), It.IsAny<CancellationToken>()))
                 .Callback<HttpRequestMessage, CancellationToken>((request, token) =>
@@ -80,7 +80,7 @@ namespace Flagsmith.FlagsmithClientTest
                 EnvironmentKey = Fixtures.ApiKey,
                 HttpClient = httpClientMock.Object
             };
-            
+
             var client = new FlagsmithClient(config);
 
             // When
@@ -89,7 +89,7 @@ namespace Flagsmith.FlagsmithClientTest
             // Then
             Assert.NotNull(capturedRequest);
             Assert.True(capturedRequest.Headers.Contains("User-Agent"));
-            
+
             var userAgentValues = capturedRequest.Headers.GetValues("User-Agent").ToList();
             Assert.Single(userAgentValues);
             Assert.StartsWith("flagsmith-dotnet-sdk/", userAgentValues[0]);
@@ -112,7 +112,7 @@ namespace Flagsmith.FlagsmithClientTest
         {
             // Given
             HttpRequestMessage capturedRequest = null!;
-            
+
             var httpClientMock = new Mock<HttpClient>();
             httpClientMock.Setup(x => x.SendAsync(It.IsAny<HttpRequestMessage>(), It.IsAny<CancellationToken>()))
                 .Callback<HttpRequestMessage, CancellationToken>((request, token) =>
@@ -125,8 +125,8 @@ namespace Flagsmith.FlagsmithClientTest
                 });
 
             var analyticsProcessor = new AnalyticsProcessor(
-                httpClientMock.Object, 
-                Fixtures.ApiKey, 
+                httpClientMock.Object,
+                Fixtures.ApiKey,
                 Fixtures.ApiUrl
             );
 
@@ -137,7 +137,7 @@ namespace Flagsmith.FlagsmithClientTest
             // Then
             Assert.NotNull(capturedRequest);
             Assert.True(capturedRequest.Headers.Contains("User-Agent"));
-            
+
             var userAgentValues = capturedRequest.Headers.GetValues("User-Agent").ToList();
             Assert.Single(userAgentValues);
             Assert.StartsWith("flagsmith-dotnet-sdk/", userAgentValues[0]);

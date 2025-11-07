@@ -169,7 +169,8 @@ namespace Flagsmith.FlagsmithClientTest
                         environment = 1,
                     };
                     flags.Add(flag);
-                };
+                }
+                ;
                 var json = JsonConvert.SerializeObject(flags);
                 // Return the JSON string representation of the flags list
                 return json;
