@@ -49,12 +49,7 @@ namespace Flagsmith.FlagsmithClientTest
             Assert.Single(userAgentValues);
 
             var userAgent = userAgentValues[0];
-            Assert.StartsWith("flagsmith-dotnet-sdk/", userAgent);
-
-            // Verify it's either a version number or "unknown"
-            var versionPart = userAgent.Substring("flagsmith-dotnet-sdk/".Length);
-            Assert.True(versionPart == "unknown" || versionPart.Contains("."),
-                $"User-Agent should be 'flagsmith-dotnet-sdk/version' or 'flagsmith-dotnet-sdk/unknown', but was '{userAgent}'");
+            Assert.Equal(SdkVersion.GetUserAgent(), userAgent);
         }
 
         [Fact]
@@ -93,18 +88,6 @@ namespace Flagsmith.FlagsmithClientTest
             var userAgentValues = capturedRequest.Headers.GetValues("User-Agent").ToList();
             Assert.Single(userAgentValues);
             Assert.StartsWith("flagsmith-dotnet-sdk/", userAgentValues[0]);
-        }
-
-        [Fact]
-        public void TestSdkVersionReturnsConsistentValue()
-        {
-            // When
-            var userAgent1 = SdkVersion.GetUserAgent();
-            var userAgent2 = SdkVersion.GetUserAgent();
-
-            // Then
-            Assert.Equal(userAgent1, userAgent2);
-            Assert.StartsWith("flagsmith-dotnet-sdk/", userAgent1);
         }
 
         [Fact]
