@@ -21,10 +21,17 @@ namespace Flagsmith
                 var assembly = typeof(SdkVersion).Assembly;
                 var version = assembly.GetName().Version;
                 
-                if (version != null && version.Major > 0)
+                if (version != null)
                 {
-                    // Use only Major.Minor.Build (e.g., 8.0.2)
-                    _version = $"flagsmith-dotnet-sdk/{version.Major}.{version.Minor}.{version.Build}";
+                    // Use Major.Minor.Build if Build >= 0, otherwise use Major.Minor
+                    if (version.Build >= 0)
+                    {
+                        _version = $"flagsmith-dotnet-sdk/{version.Major}.{version.Minor}.{version.Build}";
+                    }
+                    else
+                    {
+                        _version = $"flagsmith-dotnet-sdk/{version.Major}.{version.Minor}";
+                    }
                 }
                 else
                 {
