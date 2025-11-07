@@ -49,7 +49,7 @@ namespace EngineTest
             var result = _iengine.GetEvaluationResult(testCase.Context);
 
             // Then
-            Assert.Equal(testCase.Result, result);
+            Assert.Equivalent(testCase.Result, result);
         }
 
         public static IEnumerable<object[]> ExtractTestCaseFilenames()

@@ -4,6 +4,7 @@ namespace FlagsmithEngine
     using System.Collections.Generic;
 
     using System.Globalization;
+    using System.Runtime.Serialization;
     using Newtonsoft.Json;
     using Newtonsoft.Json.Converters;
 
@@ -35,6 +36,11 @@ namespace FlagsmithEngine
         /// </summary>
         [JsonProperty("segments", Required = Required.DisallowNull, NullValueHandling = NullValueHandling.Ignore)]
         public Dictionary<string, SegmentContext<SegmentMetadataT, FeatureMetadataT>> Segments { get; set; }
+
+        public EvaluationContext<SegmentMetadataT, FeatureMetadataT> Clone()
+        {
+            return (EvaluationContext<SegmentMetadataT, FeatureMetadataT>)MemberwiseClone();
+        }
     }
 
     /// <summary>
@@ -246,6 +252,7 @@ namespace FlagsmithEngine
         ///
         /// The values to compare against the trait or context value.
         /// </summary>
+        [JsonConverter(typeof(ConditionValueUnionConverter))]
         [JsonProperty("value", Required = Required.Always)]
         public ConditionValueUnion Value { get; set; }
     }
@@ -253,11 +260,13 @@ namespace FlagsmithEngine
     /// <summary>
     /// The operator to use for evaluating the condition.
     /// </summary>
+    [JsonConverter(typeof(OperatorConverter))]
     public enum Operator { Contains, Equal, GreaterThan, GreaterThanInclusive, In, IsNotSet, IsSet, LessThan, LessThanInclusive, Modulo, NotContains, NotEqual, PercentageSplit, Regex };
 
     /// <summary>
     /// Segment rule type. Represents a logical quantifier for the conditions and sub-rules.
     /// </summary>
+    [JsonConverter(typeof(TypeEnumConverter))]
     public enum TypeEnum { All, Any, None };
 
     public partial struct ConditionValueUnion
@@ -267,22 +276,6 @@ namespace FlagsmithEngine
 
         public static implicit operator ConditionValueUnion(string String) => new ConditionValueUnion { String = String };
         public static implicit operator ConditionValueUnion(string[] StringArray) => new ConditionValueUnion { StringArray = StringArray };
-    }
-
-    internal static class Converter
-    {
-        public static readonly JsonSerializerSettings Settings = new JsonSerializerSettings
-        {
-            MetadataPropertyHandling = MetadataPropertyHandling.Ignore,
-            DateParseHandling = DateParseHandling.None,
-            Converters =
-            {
-                OperatorConverter.Singleton,
-                ConditionValueUnionConverter.Singleton,
-                TypeEnumConverter.Singleton,
-                new IsoDateTimeConverter { DateTimeStyles = DateTimeStyles.AssumeUniversal }
-            },
-        };
     }
 
     internal class OperatorConverter : JsonConverter

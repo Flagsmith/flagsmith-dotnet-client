@@ -1,13 +1,14 @@
 ﻿using System.Linq;
 using System.Collections.Generic;
 using FlagsmithEngine.Exceptions;
-using System;
 using FlagsmithEngine.Interfaces;
 using FlagsmithEngine.Segment;
 using FlagsmithEngine.Environment.Models;
 using FlagsmithEngine.Feature.Models;
 using FlagsmithEngine.Identity.Models;
 using FlagsmithEngine.Trait.Models;
+using System.Collections;
+using System.Data;
 
 namespace FlagsmithEngine
 {
@@ -22,10 +23,25 @@ namespace FlagsmithEngine
         /// <returns></returns>
         public EvaluationResult<SegmentMetadataT, FeatureMetadataT> GetEvaluationResult<SegmentMetadataT, FeatureMetadataT>(EvaluationContext<SegmentMetadataT, FeatureMetadataT> context)
         {
+            context = GetEnrichedEvaluationContext(context);
             var result = new EvaluationResult<SegmentMetadataT, FeatureMetadataT>();
-            result.Flags = new Dictionary<string, FlagResult<FeatureMetadataT>>();
-            result.Segments = new List<SegmentResult<SegmentMetadataT>>().ToArray();
+            var segmentEvaluationResult = ContextEvaluator.EvaluateSegments(context);
+            result.Flags = ContextEvaluator.EvaluateFlags(context, segmentEvaluationResult.SegmentOverrides);
+            result.Segments = segmentEvaluationResult.Segments;
             return result;
+        }
+
+        private EvaluationContext<SegmentMetadataT, FeatureMetadataT> GetEnrichedEvaluationContext<SegmentMetadataT, FeatureMetadataT>(EvaluationContext<SegmentMetadataT, FeatureMetadataT> context)
+        {
+            if (context.Identity != null)
+            {
+                if (string.IsNullOrEmpty(context.Identity.Key))
+                {
+                    context = context.Clone();
+                    context.Identity.Key = context.Environment.Key + "_" + context.Identity.Identifier;
+                }
+            }
+            return context;
         }
 
         /// <summary>

@@ -48,6 +48,9 @@ jobs:
                 fetch-depth: 0
                 submodules: recursive
 
+          - name: Clone engine-test-data v2 (temporary)
+            run: make clone-engine-test-data
+
           - name: Set up Dotnet ${{ matrix.dotnet-version }}
             uses: actions/setup-dotnet@v3
             with:
