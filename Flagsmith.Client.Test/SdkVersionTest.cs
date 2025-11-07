@@ -1,3 +1,4 @@
+using Flagsmith;
 using Xunit;
 
 namespace Flagsmith.FlagsmithClientTest
