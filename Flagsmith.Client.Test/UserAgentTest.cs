@@ -88,7 +88,9 @@ namespace Flagsmith.FlagsmithClientTest
 
             var userAgentValues = capturedRequest.Headers.GetValues("User-Agent").ToList();
             Assert.Single(userAgentValues);
-            Assert.StartsWith("flagsmith-dotnet-sdk/", userAgentValues[0]);
+
+            var userAgent = userAgentValues[0];
+            Assert.Equal(SdkVersion.GetUserAgent(), userAgent);
         }
 
         [Fact]
@@ -124,7 +126,9 @@ namespace Flagsmith.FlagsmithClientTest
 
             var userAgentValues = capturedRequest.Headers.GetValues("User-Agent").ToList();
             Assert.Single(userAgentValues);
-            Assert.StartsWith("flagsmith-dotnet-sdk/", userAgentValues[0]);
+
+            var userAgent = userAgentValues[0];
+            Assert.Equal(SdkVersion.GetUserAgent(), userAgent);
         }
     }
 }
