@@ -1,8 +1,5 @@
 #nullable enable
 
-using System;
-using System.Reflection;
-
 namespace Flagsmith
 {
     /// <summary>
@@ -10,35 +7,16 @@ namespace Flagsmith
     /// </summary>
     public static class SdkVersion
     {
-        private static readonly Lazy<string> _version = new Lazy<string>(() =>
-        {
-            var assembly = typeof(SdkVersion).Assembly;
-            var version = assembly.GetName().Version;
-
-            if (version != null)
-            {
-                // Use Major.Minor.Build if Build > -1, otherwise use Major.Minor
-                if (version.Build > -1)
-                {
-                    return $"flagsmith-dotnet-sdk/{version.Major}.{version.Minor}.{version.Build}";
-                }
-                else
-                {
-                    return $"flagsmith-dotnet-sdk/{version.Major}.{version.Minor}";
-                }
-            }
-            else
-            {
-                return "flagsmith-dotnet-sdk/unknown";
-            }
-        });
+        // x-release-please-start-version
+        private const string Version = "8.0.2";
+        // x-release-please-end
 
         /// <summary>
         /// Gets the SDK version in the format "flagsmith-dotnet-sdk/version"
         /// </summary>
         public static string GetUserAgent()
         {
-            return _version.Value;
+            return $"flagsmith-dotnet-sdk/{Version}";
         }
     }
 }
