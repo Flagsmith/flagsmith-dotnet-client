@@ -75,7 +75,8 @@ namespace Flagsmith
                 {
                     Headers =
                         {
-                            { "X-Environment-Key", _EnvironmentKey }
+                            { "X-Environment-Key", _EnvironmentKey },
+                            { "User-Agent", SdkVersion.GetUserAgent() }
                         },
                     Content = new StringContent(analyticsJson, Encoding.UTF8, "application/json")
                 };

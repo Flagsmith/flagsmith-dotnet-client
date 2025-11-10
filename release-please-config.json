@@ -15,7 +15,9 @@
           "type": "xml",
           "path": "Flagsmith.FlagsmithClient/Flagsmith.FlagsmithClient.csproj",
           "xpath": "//Project/PropertyGroup/Version"
-        }
+        },
+        "Flagsmith.FlagsmithClient/SdkVersion.cs",
+        "Flagsmith.Client.Test/SdkVersionTest.cs"
       ]
     }
   },

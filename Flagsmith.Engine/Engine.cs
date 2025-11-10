@@ -70,7 +70,8 @@ namespace FlagsmithEngine
                     }
 
                     featureStates[feature] = featureState;
-                };
+                }
+                ;
             }
             identity.IdentityFeatures?.ForEach(x =>
             {
