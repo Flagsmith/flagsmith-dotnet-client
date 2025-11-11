@@ -1,5 +1,18 @@
 # Changelog
 
+## [8.1.0](https://github.com/Flagsmith/flagsmith-dotnet-client/compare/v8.0.2...v8.1.0) (2025-11-11)
+
+
+### Features
+
+* Context Values support, `GetEvaluationResult` ([#171](https://github.com/Flagsmith/flagsmith-dotnet-client/issues/171)) ([b064127](https://github.com/Flagsmith/flagsmith-dotnet-client/commit/b0641279374da7cec66afea6d1dc7bcd00b6d7aa))
+* Send a standard `User-Agent: sdk-name/version` header ([#172](https://github.com/Flagsmith/flagsmith-dotnet-client/issues/172)) ([743b767](https://github.com/Flagsmith/flagsmith-dotnet-client/commit/743b76770d42fe93b776a9f81cb2131533422fae))
+
+
+### Docs
+
+* removing hero image from SDK readme ([#163](https://github.com/Flagsmith/flagsmith-dotnet-client/issues/163)) ([357788f](https://github.com/Flagsmith/flagsmith-dotnet-client/commit/357788fca1023224152d7d50ebd71f93f037e01f))
+
 ## [8.0.2](https://github.com/Flagsmith/flagsmith-dotnet-client/compare/v8.0.1...v8.0.2) (2025-05-23)
 
 
