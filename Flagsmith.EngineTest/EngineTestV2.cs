@@ -89,6 +89,12 @@ namespace EngineTest
 
             // Assert: The original context's Identity.Key should still be null
             Assert.Null(context.Identity.Key);
+
+            // ...and the rest of the context should remain unchanged
+            Assert.Equal("test-env", context.Environment.Key);
+            Assert.Equal("user-123", context.Identity.Identifier);
+            Assert.Empty(context.Features);
+            Assert.Empty(context.Segments);
         }
     }
 }
