@@ -117,6 +117,7 @@ namespace FlagsmithEngine.Segment
             bool matchesConditions;
 
             if (rule?.Conditions is null || !rule.Conditions.Any())
+                // Sometimes rules are just groupers of subrules, having no intrinsic conditions
                 matchesConditions = true;
             else
                 switch (rule.Type)
