@@ -10,6 +10,7 @@ namespace FlagsmithEngine.Interfaces
 {
     public interface IEngine
     {
+        EvaluationResult<SegmentMetadataT, FeatureMetadataT> GetEvaluationResult<SegmentMetadataT, FeatureMetadataT>(EvaluationContext<SegmentMetadataT, FeatureMetadataT> context);
         List<FeatureStateModel> GetEnvironmentFeatureStates(EnvironmentModel environmentModel);
         FeatureStateModel GetEnvironmentFeatureState(EnvironmentModel environmentModel, string featureName);
         List<FeatureStateModel> GetIdentityFeatureStates(EnvironmentModel environmentModel, IdentityModel identity, List<TraitModel> overrideTraits = null);
