@@ -6,7 +6,7 @@ namespace FlagsmithEngine.Segment
 {
     public static class Constants
     {
-        public const double DefaultPriority = float.PositiveInfinity;
+        public const double WeakestPriority = float.PositiveInfinity;
 
         public const string AllRule = "ALL";
         public const string AnyRule = "ANY";
