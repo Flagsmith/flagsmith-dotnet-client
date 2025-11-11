@@ -53,8 +53,8 @@ namespace FlagsmithEngine.Segment
                     var featureName = segmentOverride.Name;
                     if (segmentOverrides.ContainsKey(featureName))
                     {
-                        var existingPriority = segmentOverrides[featureName].FeatureContext.Priority ?? Constants.DefaultPriority;
-                        if ((segmentOverride.Priority ?? Constants.DefaultPriority) > existingPriority)
+                        var existingPriority = segmentOverrides[featureName].FeatureContext.Priority ?? Constants.WeakestPriority;
+                        if ((segmentOverride.Priority ?? Constants.WeakestPriority) > existingPriority)
                             continue;
                     }
                     segmentOverrides[segmentOverride.Name] = new SegmentOverride<FeatureMetadataT>
