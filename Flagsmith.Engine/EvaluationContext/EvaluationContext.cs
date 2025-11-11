@@ -37,9 +37,18 @@ namespace FlagsmithEngine
         [JsonProperty("segments", Required = Required.DisallowNull, NullValueHandling = NullValueHandling.Ignore)]
         public Dictionary<string, SegmentContext<SegmentMetadataT, FeatureMetadataT>> Segments { get; set; }
 
+
+        /// <summary>
+        /// Creates a copy of the EvaluationContext object
+        /// for internal use in the engine.
+        /// Optimised to avoid deep cloning where possible.
+        /// </summary>
+        /// <returns>EvaluationContext</returns>
         public EvaluationContext<SegmentMetadataT, FeatureMetadataT> Clone()
         {
-            return (EvaluationContext<SegmentMetadataT, FeatureMetadataT>)MemberwiseClone();
+            var clone = (EvaluationContext<SegmentMetadataT, FeatureMetadataT>)MemberwiseClone();
+            clone.Identity = clone.Identity?.Clone();
+            return clone;
         }
     }
 
@@ -166,6 +175,16 @@ namespace FlagsmithEngine
         /// </summary>
         [JsonProperty("traits", Required = Required.DisallowNull, NullValueHandling = NullValueHandling.Ignore)]
         public Dictionary<string, object> Traits { get; set; }
+
+        /// <summary>
+        /// Creates a copy of the IdentityContext object
+        /// for internal use in the engine.
+        /// </summary>
+        /// <returns>IdentityContext</returns>
+        public IdentityContext Clone()
+        {
+            return (IdentityContext)MemberwiseClone();
+        }
     }
 
     /// <summary>

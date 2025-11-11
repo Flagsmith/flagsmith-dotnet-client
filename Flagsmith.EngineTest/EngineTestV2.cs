@@ -62,5 +62,33 @@ namespace EngineTest
             }
             return testCases;
         }
+
+        [Fact]
+        public void TestGetEvaluationResult_ShouldNotMutateOriginalContextIdentity()
+        {
+            // Arrange
+            var engine = new Engine();
+            var context = new EvaluationContext<object, object>
+            {
+                Environment = new EnvironmentContext
+                {
+                    Key = "test-env",
+                    Name = "Test Environment"
+                },
+                Identity = new IdentityContext
+                {
+                    Identifier = "user-123",
+                    Key = null  // Empty Key triggers the clone+mutate logic in GetEnrichedEvaluationContext
+                },
+                Features = new Dictionary<string, FeatureContext<object>>(),
+                Segments = new Dictionary<string, SegmentContext<object, object>>()
+            };
+
+            // Act
+            var result = engine.GetEvaluationResult(context);
+
+            // Assert: The original context's Identity.Key should still be null
+            Assert.Null(context.Identity.Key);
+        }
     }
 }
