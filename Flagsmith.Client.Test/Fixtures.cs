@@ -56,7 +56,7 @@ namespace Flagsmith.FlagsmithClientTest
       'multivariate_feature_state_values': [],
       'feature_state_value': 'some-value',
       'id': 1,
-      'featurestate_uuid': '40eb539d-3713-4720-bbd4-829dbef10d51',
+      'featurestate_uuid': '00000000-0000-0000-0000-000000000000',
       'feature': {
         'name': 'some_feature',
         'type': 'STANDARD',
@@ -64,6 +64,76 @@ namespace Flagsmith.FlagsmithClientTest
       },
       'segment_id': null,
       'enabled': true
+    },
+    {
+      'feature_state_value': 'default_value',
+      'django_id': 2,
+      'featurestate_uuid': '11111111-1111-1111-1111-111111111111',
+      'feature': {
+        'name': 'mv_feature_with_ids',
+        'type': 'MULTIVARIATE',
+        'id': 2
+      },
+      'segment_id': null,
+      'enabled': true,
+      'multivariate_feature_state_values': [
+        {
+          'id': 100,
+          'multivariate_feature_option': {
+            'id': 10,
+            'value': 'variant_a'
+          },
+          'mv_fs_value_uuid': 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
+          'percentage_allocation': 30.0
+        },
+        {
+          'id': 200,
+          'multivariate_feature_option': {
+            'id': 20,
+            'value': 'variant_b'
+          },
+          'mv_fs_value_uuid': 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb',
+          'percentage_allocation': 70.0
+        }
+      ]
+    },
+    {
+      'feature_state_value': 'fallback_value',
+      'django_id': 3,
+      'featurestate_uuid': '22222222-2222-2222-2222-222222222222',
+      'feature': {
+        'name': 'mv_feature_without_ids',
+        'type': 'MULTIVARIATE',
+        'id': 3
+      },
+      'segment_id': null,
+      'enabled': false,
+      'multivariate_feature_state_values': [
+        {
+          'multivariate_feature_option': {
+            'id': 40,
+            'value': 'option_y'
+          },
+          'mv_fs_value_uuid': 'yyyyyyyy-yyyy-yyyy-yyyy-yyyyyyyyyyyy',
+          'percentage_allocation': 50.0
+        },
+        {
+          'multivariate_feature_option': {
+            'id': 30,
+            'value': 'option_x'
+          },
+          'mv_fs_value_uuid': 'xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx',
+          'percentage_allocation': 25.0
+        },
+        {
+          'multivariate_feature_option': {
+            'id': 50,
+            'value': 'option_z'
+          },
+          'mv_fs_value_uuid': 'zzzzzzzz-zzzz-zzzz-zzzz-zzzzzzzzzzzz',
+          'percentage_allocation': 25.0
+        }
+      ]
     }
   ],
   'identity_overrides': [
