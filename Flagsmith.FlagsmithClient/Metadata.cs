@@ -24,6 +24,6 @@ namespace Flagsmith
         /// <summary>
         /// The source of the segment: "api" for API-defined segments, "identity_override" for synthetic segments.
         /// </summary>
-        public string Source { get; set; }
+        public string? Source { get; set; }
     }
 }
