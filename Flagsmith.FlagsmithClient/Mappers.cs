@@ -153,6 +153,7 @@ namespace Flagsmith
         {
             var featureIDsByName = new Dictionary<string, int>();
             var featuresToIdentifiers = new Dictionary<string, List<string>>();
+            var overridesBySerializedJsonKey = new Dictionary<string, List<(string Name, bool Enabled, object Value)>>();
 
             foreach (var identityOverride in identityOverrides)
             {
@@ -181,6 +182,7 @@ namespace Flagsmith
                 if (!featuresToIdentifiers.ContainsKey(serializedOverridesKey))
                 {
                     featuresToIdentifiers[serializedOverridesKey] = new List<string>();
+                    overridesBySerializedJsonKey[serializedOverridesKey] = overridesKey;
                 }
                 featuresToIdentifiers[serializedOverridesKey].Add(identityOverride.Identifier);
             }
@@ -222,9 +224,9 @@ namespace Flagsmith
 
                 segment.Rules = new[] { identifiersRule };
 
-                var deserializedOverridesKey = JsonConvert.DeserializeObject<List<(string Name, bool Enabled, object Value)>>(serializedOverridesKey);
+                var overridesKey = overridesBySerializedJsonKey[serializedOverridesKey];
 
-                segment.Overrides = deserializedOverridesKey.Select(overrideKey => new FeatureContext<FeatureMetadata>
+                segment.Overrides = overridesKey.Select(overrideKey => new FeatureContext<FeatureMetadata>
                 {
                     Key = "", // Not used in identity overrides
                     Name = overrideKey.Name,
