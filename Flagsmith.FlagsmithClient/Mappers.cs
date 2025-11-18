@@ -22,15 +22,15 @@ namespace Flagsmith
         public static EvaluationContext<SegmentMetadata, FeatureMetadata> MapEnvironmentDocumentToContext(
             EnvironmentModel environmentDocument)
         {
-            var context = new EvaluationContext<SegmentMetadata, FeatureMetadata>();
-
-            context.Environment = new EnvironmentContext
+            var context = new EvaluationContext<SegmentMetadata, FeatureMetadata>
             {
-                Key = environmentDocument.ApiKey,
-                Name = environmentDocument.Project.Name,
+                Environment = new EnvironmentContext
+                {
+                    Key = environmentDocument.ApiKey,
+                    Name = environmentDocument.Project.Name,
+                },
+                Segments = new Dictionary<string, SegmentContext<SegmentMetadata, FeatureMetadata>>()
             };
-
-            context.Segments = new Dictionary<string, SegmentContext<SegmentMetadata, FeatureMetadata>>();
 
             if (environmentDocument.Project.Segments != null)
             {
@@ -90,30 +90,21 @@ namespace Flagsmith
 
         private static SegmentRule[] MapEnvironmentDocumentRulesToContextRules(List<SegmentRuleModel> srcRules)
         {
-            var rules = new List<SegmentRule>();
-            
-            foreach (var srcRule in srcRules)
+            return srcRules.Select(srcRule => new SegmentRule
             {
-                var rule = new SegmentRule
-                {
-                    Type = MapRuleType(srcRule.Type),
-                    Conditions = (srcRule.Conditions ?? new List<SegmentConditionModel>())
-                        .Select(c => new Condition
-                        {
-                            Property = c.Property ?? "",
-                            Operator = MapOperator(c.Operator),
-                            Value = MapConditionValue(c.Value),
-                        })
-                        .ToArray(),
-                    Rules = srcRule.Rules != null
-                        ? MapEnvironmentDocumentRulesToContextRules(srcRule.Rules)
-                        : Array.Empty<SegmentRule>(),
-                };
-
-                rules.Add(rule);
-            }
-
-            return rules.ToArray();
+                Type = MapRuleType(srcRule.Type),
+                Conditions = (srcRule.Conditions ?? Enumerable.Empty<SegmentConditionModel>())
+                    .Select(c => new Condition
+                    {
+                        Property = c.Property ?? "",
+                        Operator = MapOperator(c.Operator),
+                        Value = MapConditionValue(c.Value),
+                    })
+                    .ToArray(),
+                Rules = srcRule.Rules != null
+                    ? MapEnvironmentDocumentRulesToContextRules(srcRule.Rules)
+                    : Array.Empty<SegmentRule>(),
+            }).ToArray();
         }
 
         private static Dictionary<string, FeatureContext<FeatureMetadata>> MapEnvironmentDocumentFeatureStatesToFeatureContexts(
@@ -231,29 +222,17 @@ namespace Flagsmith
 
                 segment.Rules = new[] { identifiersRule };
 
-                var overrides = new List<FeatureContext<FeatureMetadata>>();
                 var deserializedOverridesKey = JsonConvert.DeserializeObject<List<(string Name, bool Enabled, object Value)>>(serializedOverridesKey);
 
-                foreach (var overrideKey in deserializedOverridesKey)
+                segment.Overrides = deserializedOverridesKey.Select(overrideKey => new FeatureContext<FeatureMetadata>
                 {
-                    var featureName = overrideKey.Name;
-                    var enabled = overrideKey.Enabled;
-                    var value = overrideKey.Value;
-                    var featureId = featureIDsByName[featureName];
-
-                    var feature = new FeatureContext<FeatureMetadata>
-                    {
-                        Key = "", // Not used in identity overrides
-                        Name = featureName,
-                        Enabled = enabled,
-                        Value = value,
-                        Priority = Constants.StrongestPriority,
-                        Metadata = new FeatureMetadata { Id = featureId },
-                    };
-                    overrides.Add(feature);
-                }
-
-                segment.Overrides = overrides.ToArray();
+                    Key = "", // Not used in identity overrides
+                    Name = overrideKey.Name,
+                    Enabled = overrideKey.Enabled,
+                    Value = overrideKey.Value,
+                    Priority = Constants.StrongestPriority,
+                    Metadata = new FeatureMetadata { Id = featureIDsByName[overrideKey.Name] },
+                }).ToArray();
 
                 var segmentKey = Utils.GetHashString(serializedOverridesKey);
                 segments[segmentKey] = segment;
