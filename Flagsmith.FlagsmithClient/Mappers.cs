@@ -17,6 +17,16 @@ namespace Flagsmith
     public static class Mappers
     {
         /// <summary>
+        /// Property value for operators that do not use property (e.g., PERCENTAGE_SPLIT).
+        /// </summary>
+        private const string EmptyProperty = "";
+
+        /// <summary>
+        /// Key value for synthetic segments and identity override features.
+        /// </summary>
+        private const string UnusedKey = "";
+
+        /// <summary>
         /// Parse the environment document into an EvaluationContext object
         /// </summary>
         public static EvaluationContext<SegmentMetadata, FeatureMetadata> MapEnvironmentDocumentToContext(
@@ -96,7 +106,7 @@ namespace Flagsmith
                 Conditions = (srcRule.Conditions ?? Enumerable.Empty<SegmentConditionModel>())
                     .Select(c => new Condition
                     {
-                        Property = c.Property ?? "",
+                        Property = c.Property ?? EmptyProperty,
                         Operator = MapOperator(c.Operator),
                         Value = MapConditionValue(c.Value),
                     })
@@ -199,7 +209,7 @@ namespace Flagsmith
 
                 var segment = new SegmentContext<SegmentMetadata, FeatureMetadata>
                 {
-                    Key = "", // Not used in identity overrides
+                    Key = UnusedKey,
                     Name = "identity_overrides",
                     Metadata = new SegmentMetadata
                     {
@@ -228,7 +238,7 @@ namespace Flagsmith
 
                 segment.Overrides = overridesKey.Select(overrideKey => new FeatureContext<FeatureMetadata>
                 {
-                    Key = "", // Not used in identity overrides
+                    Key = UnusedKey,
                     Name = overrideKey.Name,
                     Enabled = overrideKey.Enabled,
                     Value = overrideKey.Value,
