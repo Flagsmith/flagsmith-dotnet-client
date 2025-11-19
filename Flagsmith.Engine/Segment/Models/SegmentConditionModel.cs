@@ -1,5 +1,6 @@
 ﻿using System.Text.RegularExpressions;
 using System;
+using System.Globalization;
 using Newtonsoft.Json;
 namespace FlagsmithEngine.Segment.Models
 {
@@ -21,10 +22,10 @@ namespace FlagsmithEngine.Segment.Models
                 string[] parts = this.Value.Split('|');
                 if (parts.Length != 2) { return false; }
 
-                double divisor = Convert.ToDouble(parts[0]);
-                double remainder = Convert.ToDouble(parts[1]);
+                double divisor = Convert.ToDouble(parts[0], CultureInfo.InvariantCulture);
+                double remainder = Convert.ToDouble(parts[1], CultureInfo.InvariantCulture);
 
-                return Convert.ToDouble(traitValue) % divisor == remainder;
+                return Convert.ToDouble(traitValue, CultureInfo.InvariantCulture) % divisor == remainder;
             }
             catch (FormatException)
             {
