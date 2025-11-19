@@ -250,7 +250,7 @@ namespace FlagsmithEngine.Segment
                             Enabled = featureContext.Enabled,
                             Value = variant.Value,
                             Metadata = featureContext.Metadata,
-                            Reason = $"SPLIT; weight={weight}",
+                            Reason = FormattableString.Invariant($"SPLIT; weight={weight}"),
                         };
                         break;
                     }
