@@ -19,7 +19,7 @@ namespace Flagsmith.FlagsmithClientTest
             // Then
             Assert.IsType<EvaluationContext<SegmentMetadata, FeatureMetadata>>(context);
             Assert.Equal("test_key", context.Environment.Key);
-            Assert.Equal("Test project", context.Environment.Name);
+            Assert.Equal("Test Environment", context.Environment.Name);
             Assert.Null(context.Identity);
             Assert.Equal(2, context.Segments.Count);
 

@@ -37,7 +37,7 @@ namespace Flagsmith
                 Environment = new EnvironmentContext
                 {
                     Key = environmentDocument.ApiKey,
-                    Name = environmentDocument.Project.Name,
+                    Name = environmentDocument.Name,
                 },
                 Segments = new Dictionary<string, SegmentContext<SegmentMetadata, FeatureMetadata>>()
             };
