@@ -14,6 +14,10 @@ namespace FlagsmithEngine.Environment.Models
 
         [JsonProperty(PropertyName = "api_key")]
         public string ApiKey { get; set; }
+
+        [JsonProperty(PropertyName = "name")]
+        public string Name { get; set; }
+
         [JsonProperty(PropertyName = "project")]
         public ProjectModel Project { get; set; }
         [JsonProperty(PropertyName = "feature_states")]

@@ -19,11 +19,7 @@ namespace Flagsmith
             get
             {
                 var combinedString = Identifier + JsonConvert.SerializeObject(Traits);
-                using (var sha256 = SHA256.Create())
-                {
-                    var hashBytes = sha256.ComputeHash(Encoding.UTF8.GetBytes(combinedString));
-                    return BitConverter.ToString(hashBytes).Replace("-", "").ToLower();
-                }
+                return Utils.GetHashString(combinedString);
             }
         }
 
