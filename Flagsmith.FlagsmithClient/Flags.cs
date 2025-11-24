@@ -1,4 +1,5 @@
-﻿using FlagsmithEngine.Feature.Models;
+﻿using FlagsmithEngine;
+using FlagsmithEngine.Feature.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -41,6 +42,22 @@ namespace Flagsmith
             var flags = featureStateModels.Select(f => FromFeatureStateModel(f, identityId)).ToList();
             return new Flags(flags, analyticsProcessor, defaultFlagHandler);
         }
+
+        public static IFlags FromEvaluationResult(
+            EvaluationResult<SegmentMetadata, FeatureMetadata> result,
+            AnalyticsProcessor analyticsProcessor,
+            Func<string, IFlag> defaultFlagHandler)
+        {
+            var flags = result.Flags.Values.Select(flagContext => new Flag(
+                new Feature(flagContext.Name, flagContext.Metadata.Id),
+                flagContext.Enabled,
+                flagContext.Value?.ToString(),
+                flagContext.Metadata.Id
+            )).ToList<IFlag>();
+
+            return new Flags(flags, analyticsProcessor, defaultFlagHandler);
+        }
+
         public static IFlags FromApiFlag(AnalyticsProcessor analyticsProcessor, Func<string, IFlag> defaultFlagHandler, List<IFlag> flags)
         => new Flags(flags, analyticsProcessor, defaultFlagHandler);
 

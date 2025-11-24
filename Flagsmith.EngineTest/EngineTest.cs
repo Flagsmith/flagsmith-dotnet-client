@@ -1,6 +1,3 @@
-using FlagsmithEngine.Models;
-using FlagsmithEngine.Environment.Models;
-using FlagsmithEngine.Identity.Models;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
@@ -8,6 +5,7 @@ using System.Collections.Generic;
 using System.IO;
 using Xunit;
 using FlagsmithEngine.Interfaces;
+using FlagsmithEngine;
 using System.Linq;
 
 namespace EngineTest
@@ -15,60 +13,88 @@ namespace EngineTest
     public class EngineTest
     {
         private IEngine _iengine;
-        public EngineTest()
+
+        private static string TestCasesPath = Directory.GetParent(Environment.CurrentDirectory).Parent.Parent.FullName + "/EngineTestData/test_cases/";
+
+        private struct TestCase
         {
-            _iengine = new FlagsmithEngine.Engine();
+            [JsonProperty("context")]
+            public EvaluationContext<object, object> Context { get; set; }
+            [JsonProperty("result")]
+            public EvaluationResult<object, object> Result { get; set; }
         }
-        [Theory]
-        [MemberData(nameof(ExtractTestCases), parameters: @"/EngineTestData/data/environment_n9fbf9h3v4fFgH3U3ngWhb.json")]
-        public void Test_Engine(EnvironmentModel environmentModel, IdentityModel IdentityModel, Response response)
+
+        private static TestCase GetTestCase(string filename)
         {
-            var engineResponse = _iengine.GetIdentityFeatureStates(environmentModel, IdentityModel);
-
-            var sortedEngineflags = engineResponse.OrderBy(x => x.Feature.Name).ToList();
-            var sortedApiFlags = response.flags.OrderBy(x => x.feature.Name).ToList();
-
-            Assert.Equal(sortedApiFlags.Count(), sortedEngineflags.Count());
-            for (int i = 0; i < sortedEngineflags.Count(); i++)
-            {
-                var valueFromApi = sortedApiFlags[i].feature_state_value?.ToString();
-                var valueFromEngine = sortedEngineflags[i].GetValue(IdentityModel.DjangoId?.ToString())?.ToString();
-
-                if (valueFromApi == null)
-                {
-                    // TODO: this should be Assert.Null but there is an issue in the .NET framework
-                    // https://github.com/dotnet/runtime/issues/36510 which is seemingly causing null
-                    // values to serialize as empty strings.
-                    Assert.True(string.IsNullOrEmpty(valueFromEngine));
-                }
-                else
-                {
-                    Assert.Equal(valueFromApi, valueFromEngine);
-                }
-
-                Assert.Equal(sortedApiFlags[i].enabled, sortedEngineflags[i].Enabled);
-            }
-        }
-        public static JObject LoadData(string path)
-        {
-            path = Directory.GetParent(Environment.CurrentDirectory).Parent.Parent.FullName + path;
+            var path = TestCasesPath + filename;
             using (StreamReader r = new StreamReader(path))
             {
-                return JObject.Parse(r.ReadToEnd());
+                return JsonConvert.DeserializeObject<TestCase>(r.ReadToEnd());
             }
         }
-        public static IEnumerable<object[]> ExtractTestCases(string path)
+
+        public EngineTest()
+        {
+            _iengine = new Engine();
+        }
+
+        [Theory]
+        [MemberData(nameof(ExtractTestCaseFilenames))]
+        public void Test_Engine(String testCaseFilename)
+        {
+            // Given
+            var testCase = GetTestCase(testCaseFilename);
+
+            // When
+            var result = _iengine.GetEvaluationResult(testCase.Context);
+
+            // Then
+            Assert.Equivalent(testCase.Result, result);
+        }
+
+        public static IEnumerable<object[]> ExtractTestCaseFilenames()
         {
             var testCases = new List<object[]>();
-            var testData = LoadData(path);
-            var environment_model = testData["environment"].ToObject<EnvironmentModel>();
-            foreach (var item in testData["identities_and_responses"])
+            var testCasePaths = Directory.GetFiles(TestCasesPath, "*.json").Concat(Directory.GetFiles(TestCasesPath, "*.jsonc"));
+            foreach (var testCasePath in testCasePaths)
             {
-                var identity_model = item["identity"].ToObject<IdentityModel>();
-                var response = item["response"].ToObject<Response>();
-                testCases.Add(new object[] { environment_model, identity_model, response });
+                testCases.Add(new object[] { testCasePath.Replace(TestCasesPath, "") });
             }
             return testCases;
+        }
+
+        [Fact]
+        public void TestGetEvaluationResult_ShouldNotMutateOriginalContextIdentity()
+        {
+            // Arrange
+            var engine = new Engine();
+            var context = new EvaluationContext<object, object>
+            {
+                Environment = new EnvironmentContext
+                {
+                    Key = "test-env",
+                    Name = "Test Environment"
+                },
+                Identity = new IdentityContext
+                {
+                    Identifier = "user-123",
+                    Key = null  // Empty Key triggers the clone+mutate logic in GetEnrichedEvaluationContext
+                },
+                Features = new Dictionary<string, FeatureContext<object>>(),
+                Segments = new Dictionary<string, SegmentContext<object, object>>()
+            };
+
+            // Act
+            var result = engine.GetEvaluationResult(context);
+
+            // Assert: The original context's Identity.Key should still be null
+            Assert.Null(context.Identity.Key);
+
+            // ...and the rest of the context should remain unchanged
+            Assert.Equal("test-env", context.Environment.Key);
+            Assert.Equal("user-123", context.Identity.Identifier);
+            Assert.Empty(context.Features);
+            Assert.Empty(context.Segments);
         }
     }
 }
