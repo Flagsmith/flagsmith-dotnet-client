@@ -278,9 +278,6 @@ namespace FlagsmithEngine.Segment
     {
         public static Hashing Hashing = new Hashing();
 
-        public static List<SegmentModel> GetIdentitySegments(EnvironmentModel environmentModel, IdentityModel identity, List<TraitModel> overrideTraits)
-            => environmentModel.Project.Segments.Where(s => EvaluateIdentityInSegment(identity, s, overrideTraits)).ToList();
-
         public static bool EvaluateIdentityInSegment(IdentityModel identity, SegmentModel segment, List<TraitModel> overrideTraits)
         {
             var traits = overrideTraits?.Any() == true ? overrideTraits : identity.IdentityTraits;
