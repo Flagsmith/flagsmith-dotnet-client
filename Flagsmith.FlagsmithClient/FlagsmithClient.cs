@@ -177,7 +177,7 @@ namespace Flagsmith
 
             var segments = result.Segments
                 .Where(s => s.Metadata.Id != null) // Not a real segment, e.g. an identity override virtual segment
-                .Select(s => new Segment(id: s.Metadata.Id.Value, name: s.Name))
+                .Select(s => new Segment(id: s.Metadata.Id!.Value, name: s.Name))
                 .ToList<ISegment>();
 
             return segments;
