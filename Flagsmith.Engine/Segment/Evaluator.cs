@@ -203,7 +203,7 @@ namespace FlagsmithEngine.Segment
                         Property = condition.Property
                     };
 
-                    return Evaluator.MatchesTraitValue(contextValue, segmentConditionModel);
+                    return Evaluator.MatchesContextValue(contextValue, segmentConditionModel);
             }
         }
 
@@ -273,7 +273,7 @@ namespace FlagsmithEngine.Segment
 
     public static class Evaluator
     {
-        public static bool MatchesTraitValue(object traitValue, SegmentConditionModel condition)
+        public static bool MatchesContextValue(object contextValue, SegmentConditionModel condition)
         {
             var exceptionOperatorMethods = new Dictionary<string, string>()
             {
@@ -284,10 +284,10 @@ namespace FlagsmithEngine.Segment
 
             if (exceptionOperatorMethods.TryGetValue(condition.Operator, out var operatorMethod))
             {
-                return (bool)typeof(SegmentConditionModel).GetMethod(operatorMethod).Invoke(condition, new object[] { traitValue.ToString() });
+                return (bool)typeof(SegmentConditionModel).GetMethod(operatorMethod).Invoke(condition, new object[] { contextValue.ToString() });
             }
 
-            return MatchingFunctionName(traitValue, condition);
+            return MatchingFunctionName(contextValue, condition);
         }
 
         static bool MatchingFunctionName(object traitValue, SegmentConditionModel condition)

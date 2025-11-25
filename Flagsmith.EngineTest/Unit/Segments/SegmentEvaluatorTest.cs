@@ -12,7 +12,7 @@ namespace EngineTest.Unit.Segments
         public void TestSegmentConditionMatchesTraitValue(string _operator, object traitValue, string conditionValue, bool expectedResult)
         {
             SegmentConditionModel conditionModel = new SegmentConditionModel { Operator = _operator, Value = conditionValue, Property = "foo" };
-            Assert.Equal(expectedResult, Evaluator.MatchesTraitValue(traitValue, conditionModel));
+            Assert.Equal(expectedResult, Evaluator.MatchesContextValue(traitValue, conditionModel));
         }
         public static IEnumerable<object[]> TestCasesSegmentCondition() =>
             new List<object[]>
