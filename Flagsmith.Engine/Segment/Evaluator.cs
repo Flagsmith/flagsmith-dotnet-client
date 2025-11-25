@@ -1,7 +1,4 @@
-﻿using FlagsmithEngine.Environment.Models;
-using FlagsmithEngine.Identity.Models;
-using FlagsmithEngine.Segment.Models;
-using FlagsmithEngine.Trait.Models;
+﻿using FlagsmithEngine.Segment.Models;
 using FlagsmithEngine.Utils;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -276,42 +273,6 @@ namespace FlagsmithEngine.Segment
 
     public static class Evaluator
     {
-        public static Hashing Hashing = new Hashing();
-
-        public static bool EvaluateIdentityInSegment(IdentityModel identity, SegmentModel segment, List<TraitModel> overrideTraits)
-        {
-            var traits = overrideTraits?.Any() == true ? overrideTraits : identity.IdentityTraits;
-            var identityHashKey = identity.DjangoId == null ? identity.CompositeKey : identity.DjangoId.ToString();
-            return segment.Rules?.Any() == true && segment.Rules.All(rule => TraitsMatchSegmentRule(traits, rule, segment.Id.ToString(), identityHashKey));
-        }
-
-        static bool TraitsMatchSegmentRule(List<TraitModel> identityTraits, SegmentRuleModel rule, string segmentId, string identityId)
-        {
-            var matchesConditions = !rule.Conditions.Any() || rule.MatchingFunction(rule.Conditions.Select(c =>
-                    TraitsMatchSegmentCondition(identityTraits, c, segmentId, identityId)).ToList()
-            );
-            return matchesConditions && (rule.Rules?.All(r => TraitsMatchSegmentRule(identityTraits, r, segmentId, identityId)) ?? true);
-        }
-
-        static bool TraitsMatchSegmentCondition(List<TraitModel> identityTraits, SegmentConditionModel condition, string segmentId, string identityId)
-        {
-            if (condition.Operator == Constants.PercentageSplit)
-                return Hashing.GetHashedPercentageForObjectIds(new List<string>() { segmentId, identityId }) <= float.Parse(condition.Value);
-
-            var trait = identityTraits?.FirstOrDefault(t => t.TraitKey == condition.Property);
-
-            if (condition.Operator == Constants.IsSet)
-            {
-                return trait != null;
-            }
-            else if (condition.Operator == Constants.IsNotSet)
-            {
-                return trait == null;
-            }
-
-            return trait != null && MatchesTraitValue(trait.TraitValue, condition);
-        }
-
         public static bool MatchesTraitValue(object traitValue, SegmentConditionModel condition)
         {
             var exceptionOperatorMethods = new Dictionary<string, string>()

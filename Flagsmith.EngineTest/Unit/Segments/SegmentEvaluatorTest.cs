@@ -1,13 +1,7 @@
-﻿using System;
 using System.Collections.Generic;
-using System.Text;
 using Xunit;
 using FlagsmithEngine.Segment;
 using FlagsmithEngine.Segment.Models;
-using FlagsmithEngine.Trait.Models;
-using FlagsmithEngine.Identity.Models;
-using FlagsmithEngine.Utils;
-using Moq;
 
 namespace EngineTest.Unit.Segments
 {
@@ -111,103 +105,6 @@ namespace EngineTest.Unit.Segments
                 // due to ambiguous serialization across supported platforms.
                 new object[]{Constants.In, 1.5, "1.5", false},
                 new object[]{Constants.In, false, "false", false},
-            };
-        [Theory]
-        [MemberData(nameof(TestCasesIdentityInSegment))]
-        public void TestIdentityInSegment(SegmentModel segment, List<TraitModel> identityTraits, bool expectedResult)
-        {
-            var identity = new IdentityModel()
-            {
-                Identifier = "foo",
-                IdentityTraits = identityTraits,
-                EnvironmentApiKey = "api-key",
-            };
-            Assert.Equal(expectedResult, Evaluator.EvaluateIdentityInSegment(identity, segment, null));
-        }
-        public static IEnumerable<object[]> TestCasesIdentityInSegment() =>
-            new List<object[]> {
-                new object[] { Fixtures.EmptySegment, new List<TraitModel>(), false },
-                new object[] { Fixtures.SegmentSingleCondition, new List<TraitModel>(), false },
-                new object[] { Fixtures.SegmentSingleCondition, new List<TraitModel> { new TraitModel { TraitKey = Fixtures.TraitKey1, TraitValue = Fixtures.TraitValue1 } }, true },
-                new object[] { Fixtures.SegmentMultipleConditionsAll, new List<TraitModel>(), false },
-                new object[] { Fixtures.SegmentMultipleConditionsAll, new List<TraitModel> { new TraitModel { TraitKey = Fixtures.TraitKey1, TraitValue = Fixtures.TraitValue1 } }, false },
-                new object[] { Fixtures.SegmentMultipleConditionsAll, new List<TraitModel> {
-                                    new TraitModel { TraitKey = Fixtures.TraitKey1, TraitValue = Fixtures.TraitValue1 },
-                                    new TraitModel { TraitKey = Fixtures.TraitKey2, TraitValue = Fixtures.TraitValue2 }
-                                }, true
-                },
-                new object[] { Fixtures.SegmentMultipleConditionsAny, new List<TraitModel>(), false },
-                new object[] { Fixtures.SegmentMultipleConditionsAny, new List<TraitModel> { new TraitModel { TraitKey = Fixtures.TraitKey1, TraitValue = Fixtures.TraitValue1 } }, true },
-                new object[] { Fixtures.SegmentMultipleConditionsAny, new List<TraitModel> { new TraitModel { TraitKey = Fixtures.TraitKey2, TraitValue = Fixtures.TraitValue2 } }, true },
-                new object[] { Fixtures.SegmentMultipleConditionsAny, new List<TraitModel> {
-                                    new TraitModel { TraitKey = Fixtures.TraitKey1, TraitValue = Fixtures.TraitValue1 },
-                                    new TraitModel { TraitKey = Fixtures.TraitKey2, TraitValue = Fixtures.TraitValue2 }
-                                    }, true
-                },
-                new object[] { Fixtures.SegmentNestedRules, new List<TraitModel>(), false },
-                new object[] { Fixtures.SegmentNestedRules, new List<TraitModel> { new TraitModel { TraitKey = Fixtures.TraitKey1, TraitValue = Fixtures.TraitValue1 } }, false },
-                new object[] { Fixtures.SegmentNestedRules, new List<TraitModel> {
-                                    new TraitModel { TraitKey = Fixtures.TraitKey1, TraitValue = Fixtures.TraitValue1 },
-                                    new TraitModel { TraitKey = Fixtures.TraitKey2, TraitValue = Fixtures.TraitValue2 },
-                                    new TraitModel { TraitKey = Fixtures.TraitKey3, TraitValue = Fixtures.TraitValue3 }
-                                    }, true
-                },
-                new object[] { Fixtures.SegmentConditionsAndNestedRules, new List<TraitModel>(), false },
-                new object[] { Fixtures.SegmentConditionsAndNestedRules, new List<TraitModel> { new TraitModel { TraitKey = Fixtures.TraitKey1, TraitValue = Fixtures.TraitValue1 } }, false },
-                new object[] { Fixtures.SegmentConditionsAndNestedRules, new List<TraitModel> {
-                                    new TraitModel { TraitKey = Fixtures.TraitKey1, TraitValue = Fixtures.TraitValue1 },
-                                    new TraitModel { TraitKey = Fixtures.TraitKey2, TraitValue = Fixtures.TraitValue2 },
-                                    new TraitModel { TraitKey = Fixtures.TraitKey3, TraitValue = Fixtures.TraitValue3 }
-                                    }, true
-                },
-                new object[] { Fixtures.SegmentToCheckIfTrait1IsSet, new List<TraitModel>(), false },
-                new object[] { Fixtures.SegmentToCheckIfTrait1IsSet, new List<TraitModel>() { new TraitModel {TraitKey = Fixtures.TraitKey1, TraitValue = "foo"}}, true },
-                new object[] { Fixtures.SegmentToCheckIfTrait1IsNotSet, new List<TraitModel>() { new TraitModel {TraitKey = Fixtures.TraitKey1, TraitValue = "foo"}}, false },
-                new object[] { Fixtures.SegmentToCheckIfTrait1IsNotSet, new List<TraitModel>(), true },
-            };
-        [Theory]
-        [InlineData(10, 1, true)]
-        [InlineData(100, 50, true)]
-        [InlineData(0, 1, false)]
-        [InlineData(10, 20, false)]
-        public void TestIdentityInSegmentPercentageSplit(int segmentSplitValue, int identityHashedPercentage, bool expectedResult)
-        {
-            var percentage_split_condition = new SegmentConditionModel
-            {
-                Operator = Constants.PercentageSplit,
-                Value = segmentSplitValue.ToString()
-            };
-            var rule = new SegmentRuleModel { Type = Constants.AllRule, Conditions = new List<SegmentConditionModel> { percentage_split_condition } };
-            var segment = new SegmentModel { Id = 1, Name = "% split", Rules = new List<SegmentRuleModel> { rule } };
-            var hashingMock = new Mock<Hashing>();
-            var mockSetup = hashingMock.SetupSequence(p => p.GetHashedPercentageForObjectIds(It.IsAny<List<string>>(), It.IsAny<int>()))
-             .Returns(identityHashedPercentage);
-            Evaluator.Hashing = hashingMock.Object;
-            var result = Evaluator.EvaluateIdentityInSegment(Unit.Fixtures.Identity(), segment, null);
-            Assert.Equal(expectedResult, result);
-            Evaluator.Hashing = new Hashing();
-        }
-        [Theory]
-        [MemberData(nameof(TestCasesIdentities))]
-        public void TestIdentityInSegmentPercentageSplitUsesDjangoId(IdentityModel identity, bool expectedResult)
-        {
-            var percentage_split_condition = new SegmentConditionModel
-            {
-                Operator = Constants.PercentageSplit,
-                Value = "50",
-            };
-            var rule = new SegmentRuleModel { Type = Constants.AllRule, Conditions = new List<SegmentConditionModel> { percentage_split_condition } };
-            var segment = new SegmentModel { Id = 1, Name = "% split", Rules = new List<SegmentRuleModel> { rule } };
-
-            var result = Evaluator.EvaluateIdentityInSegment(identity, segment, null);
-
-            Assert.Equal(expectedResult, result);
-        }
-        public static IEnumerable<object[]> TestCasesIdentities() =>
-            new List<object[]>
-            {
-                new object[]{new IdentityModel(){ Identifier = "Test", EnvironmentApiKey = "key" }, true},
-                new object[]{new IdentityModel(){ DjangoId = 1, Identifier = "Test", EnvironmentApiKey = "key" }, false},
             };
     }
 }

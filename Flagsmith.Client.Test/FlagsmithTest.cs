@@ -124,7 +124,7 @@ namespace Flagsmith.FlagsmithClientTest
             var flags = (await flagsmithClientTest.GetEnvironmentFlags()).AllFlags();
             var fs = Fixtures.Environment.FeatureStates[0];
             Assert.Equal(fs.Enabled, flags[0].Enabled);
-            Assert.Equal(fs.GetValue(), flags[0].Value);
+            Assert.Equal(fs.Value, flags[0].Value);
             Assert.Equal(fs.Feature.Name, flags[0].GetFeatureName());
             mockHttpClient.VerifyHttpRequest(HttpMethod.Get, "/api/v1/environment-document/", Times.Once);
         }

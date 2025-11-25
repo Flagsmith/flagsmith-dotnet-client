@@ -1,20 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+using System;
 
 namespace FlagsmithEngine.Exceptions
 {
-    public class FeatureStateNotFound : Exception
-    {
-        //Overriding the Message property
-        public override string Message
-        {
-            get
-            {
-                return "Feature State not found.";
-            }
-        }
-    }
     public class DuplicateFeatureState : Exception
     {
     }
