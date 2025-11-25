@@ -1,4 +1,3 @@
-﻿using FlagsmithEngine.Segment.Models;
 using FlagsmithEngine.Utils;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -6,6 +5,7 @@ using Semver;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.RegularExpressions;
 
 namespace FlagsmithEngine.Segment
 {
@@ -196,14 +196,7 @@ namespace FlagsmithEngine.Segment
                     if (contextValue == null)
                         return false;
 
-                    var segmentConditionModel = new SegmentConditionModel
-                    {
-                        Operator = JsonConvert.SerializeObject(condition.Operator).Replace("\"", ""),
-                        Value = condition.Value.String,
-                        Property = condition.Property
-                    };
-
-                    return Evaluator.MatchesContextValue(contextValue, segmentConditionModel);
+                    return MatchesContextValue(contextValue, condition);
             }
         }
 
@@ -269,69 +262,81 @@ namespace FlagsmithEngine.Segment
 
             return flagResult;
         }
-    }
 
-    public static class Evaluator
-    {
-        public static bool MatchesContextValue(object contextValue, SegmentConditionModel condition)
+        private static bool MatchesContextValue(object contextValue, Condition condition)
         {
-            var exceptionOperatorMethods = new Dictionary<string, string>()
+            switch (condition.Operator)
             {
-                { Constants.NotContains, "EvaluateNotContains" },
-                { Constants.Regex, "EvaluateRegex" },
-                { Constants.Modulo, "EvaluateModulo" },
-            };
-
-            if (exceptionOperatorMethods.TryGetValue(condition.Operator, out var operatorMethod))
-            {
-                return (bool)typeof(SegmentConditionModel).GetMethod(operatorMethod).Invoke(condition, new object[] { contextValue.ToString() });
+                case Operator.NotContains:
+                    return !contextValue.ToString().Contains(condition.Value.String);
+                case Operator.Regex:
+                    return Regex.Match(contextValue.ToString(), condition.Value.String).Success;
+                case Operator.Modulo:
+                    return EvaluateModulo(contextValue.ToString(), condition.Value.String);
+                default:
+                    return MatchingFunctionName(contextValue, condition);
             }
-
-            return MatchingFunctionName(contextValue, condition);
         }
 
-        static bool MatchingFunctionName(object traitValue, SegmentConditionModel condition)
+        private static bool EvaluateModulo(string contextValue, string conditionValue)
         {
-            switch (traitValue.GetType().FullName)
+            try
+            {
+                string[] parts = conditionValue.Split('|');
+                if (parts.Length != 2) { return false; }
+
+                double divisor = Convert.ToDouble(parts[0]);
+                double remainder = Convert.ToDouble(parts[1]);
+
+                return Convert.ToDouble(contextValue) % divisor == remainder;
+            }
+            catch (FormatException)
+            {
+                return false;
+            }
+        }
+
+        private static bool MatchingFunctionName(object contextValue, Condition condition)
+        {
+            switch (contextValue.GetType().FullName)
             {
                 case "System.Int32":
-                    return intOperations((Int32)traitValue, condition);
+                    return IntOperations((Int32)contextValue, condition);
                 case "System.Int64":
-                    return longOperations((Int64)traitValue, condition);
+                    return LongOperations((Int64)contextValue, condition);
                 case "System.Double":
-                    return doubleOperations((double)traitValue, condition);
+                    return DoubleOperations((double)contextValue, condition);
                 case "System.Boolean":
-                    return boolOperations((bool)traitValue, condition);
+                    return BoolOperations((bool)contextValue, condition);
                 default:
-                    return stringOperations((string)traitValue, condition);
+                    return StringOperations((string)contextValue, condition);
             }
         }
 
-        static bool stringOperations(string traitValue, SegmentConditionModel condition)
+        private static bool StringOperations(string contextValue, Condition condition)
         {
-            var currentValue = condition.Value;
+            var conditionValue = condition.Value.String;
 
-            if (currentValue.EndsWith(":semver"))
+            if (conditionValue.EndsWith(":semver"))
             {
-                return semVerOperations(traitValue, condition);
+                return SemVerOperations(contextValue, condition);
             }
 
             switch (condition.Operator)
             {
-                case Constants.Equal: return traitValue == currentValue;
-                case Constants.NotEqual: return traitValue != currentValue;
-                case Constants.Contains: return traitValue.Contains(currentValue);
-                case Constants.In: return condition.Value.Split(',').Contains(traitValue);
+                case Operator.Equal: return contextValue == conditionValue;
+                case Operator.NotEqual: return contextValue != conditionValue;
+                case Operator.Contains: return contextValue.Contains(conditionValue);
                 default: throw new ArgumentException("Invalid Operator");
             }
         }
 
-        static bool longOperations(long traitValue, SegmentConditionModel condition)
+        private static bool LongOperations(long contextValue, Condition condition)
         {
             long conditionValue;
             try
             {
-                conditionValue = Convert.ToInt64(condition.Value);
+                conditionValue = Convert.ToInt64(condition.Value.String);
             }
             catch (FormatException)
             {
@@ -339,74 +344,70 @@ namespace FlagsmithEngine.Segment
             }
             switch (condition.Operator)
             {
-                case Constants.Equal: return traitValue == conditionValue;
-                case Constants.NotEqual: return traitValue != conditionValue;
-                case Constants.GreaterThan: return traitValue > conditionValue;
-                case Constants.GreaterThanInclusive: return traitValue >= conditionValue;
-                case Constants.LessThan: return traitValue < conditionValue;
-                case Constants.LessThanInclusive: return traitValue <= conditionValue;
-                case Constants.In: return condition.Value.Split(',').Contains(traitValue.ToString());
+                case Operator.Equal: return contextValue == conditionValue;
+                case Operator.NotEqual: return contextValue != conditionValue;
+                case Operator.GreaterThan: return contextValue > conditionValue;
+                case Operator.GreaterThanInclusive: return contextValue >= conditionValue;
+                case Operator.LessThan: return contextValue < conditionValue;
+                case Operator.LessThanInclusive: return contextValue <= conditionValue;
                 default: throw new ArgumentException("Invalid Operator");
             }
         }
 
-        static bool intOperations(long traitValue, SegmentConditionModel condition)
+        private static bool IntOperations(long contextValue, Condition condition)
         {
             switch (condition.Operator)
             {
-                case Constants.Equal: return traitValue == Convert.ToInt32(condition.Value);
-                case Constants.NotEqual: return traitValue != Convert.ToInt32(condition.Value);
-                case Constants.GreaterThan: return traitValue > Convert.ToInt32(condition.Value);
-                case Constants.GreaterThanInclusive: return traitValue >= Convert.ToInt32(condition.Value);
-                case Constants.LessThan: return traitValue < Convert.ToInt32(condition.Value);
-                case Constants.LessThanInclusive: return traitValue <= Convert.ToInt32(condition.Value);
-                case Constants.In: return condition.Value.Split(',').Contains(traitValue.ToString());
+                case Operator.Equal: return contextValue == Convert.ToInt32(condition.Value.String);
+                case Operator.NotEqual: return contextValue != Convert.ToInt32(condition.Value.String);
+                case Operator.GreaterThan: return contextValue > Convert.ToInt32(condition.Value.String);
+                case Operator.GreaterThanInclusive: return contextValue >= Convert.ToInt32(condition.Value.String);
+                case Operator.LessThan: return contextValue < Convert.ToInt32(condition.Value.String);
+                case Operator.LessThanInclusive: return contextValue <= Convert.ToInt32(condition.Value.String);
                 default: throw new ArgumentException("Invalid Operator");
             }
         }
 
-        static bool doubleOperations(double traitValue, SegmentConditionModel condition)
+        private static bool DoubleOperations(double contextValue, Condition condition)
         {
             switch (condition.Operator)
             {
-                case Constants.Equal: return traitValue == Convert.ToDouble(condition.Value);
-                case Constants.NotEqual: return traitValue != Convert.ToDouble(condition.Value);
-                case Constants.GreaterThan: return traitValue > Convert.ToDouble(condition.Value);
-                case Constants.GreaterThanInclusive: return traitValue >= Convert.ToDouble(condition.Value);
-                case Constants.LessThan: return traitValue < Convert.ToDouble(condition.Value);
-                case Constants.LessThanInclusive: return traitValue <= Convert.ToDouble(condition.Value);
-                case Constants.In: return false;
+                case Operator.Equal: return contextValue == Convert.ToDouble(condition.Value.String);
+                case Operator.NotEqual: return contextValue != Convert.ToDouble(condition.Value.String);
+                case Operator.GreaterThan: return contextValue > Convert.ToDouble(condition.Value.String);
+                case Operator.GreaterThanInclusive: return contextValue >= Convert.ToDouble(condition.Value.String);
+                case Operator.LessThan: return contextValue < Convert.ToDouble(condition.Value.String);
+                case Operator.LessThanInclusive: return contextValue <= Convert.ToDouble(condition.Value.String);
                 default: throw new ArgumentException("Invalid Operator");
             }
         }
 
-        static bool boolOperations(bool traitValue, SegmentConditionModel condition)
+        private static bool BoolOperations(bool contextValue, Condition condition)
         {
             switch (condition.Operator)
             {
-                case Constants.Equal: return traitValue == toBoolean(condition.Value);
-                case Constants.NotEqual: return traitValue != toBoolean(condition.Value);
-                case Constants.In: return false;
+                case Operator.Equal: return contextValue == ToBoolean(condition.Value.String);
+                case Operator.NotEqual: return contextValue != ToBoolean(condition.Value.String);
                 default: throw new ArgumentException("Invalid Operator");
             }
         }
 
-        static bool semVerOperations(string traitValue, SegmentConditionModel condition)
+        private static bool SemVerOperations(string contextValue, Condition condition)
         {
             try
             {
-                string conditionValue = condition.Value.Substring(0, condition.Value.Length - 7);
+                string conditionValue = condition.Value.String.Substring(0, condition.Value.String.Length - 7);
                 SemVersion conditionValueAsVersion = SemVersion.Parse(conditionValue, SemVersionStyles.Strict);
-                SemVersion traitValueAsVersion = SemVersion.Parse(traitValue, SemVersionStyles.Strict);
+                SemVersion contextValueAsVersion = SemVersion.Parse(contextValue, SemVersionStyles.Strict);
 
                 switch (condition.Operator)
                 {
-                    case Constants.Equal: return traitValueAsVersion == conditionValueAsVersion;
-                    case Constants.NotEqual: return traitValueAsVersion != conditionValueAsVersion;
-                    case Constants.GreaterThan: return traitValueAsVersion > conditionValueAsVersion;
-                    case Constants.GreaterThanInclusive: return traitValueAsVersion >= conditionValueAsVersion;
-                    case Constants.LessThan: return traitValueAsVersion < conditionValueAsVersion;
-                    case Constants.LessThanInclusive: return traitValueAsVersion <= conditionValueAsVersion;
+                    case Operator.Equal: return contextValueAsVersion == conditionValueAsVersion;
+                    case Operator.NotEqual: return contextValueAsVersion != conditionValueAsVersion;
+                    case Operator.GreaterThan: return contextValueAsVersion.ComparePrecedenceTo(conditionValueAsVersion) > 0;
+                    case Operator.GreaterThanInclusive: return contextValueAsVersion.ComparePrecedenceTo(conditionValueAsVersion) >= 0;
+                    case Operator.LessThan: return contextValueAsVersion.ComparePrecedenceTo(conditionValueAsVersion) < 0;
+                    case Operator.LessThanInclusive: return contextValueAsVersion.ComparePrecedenceTo(conditionValueAsVersion) <= 0;
                     default: throw new ArgumentException("Invalid Operator");
                 }
             }
@@ -416,6 +417,6 @@ namespace FlagsmithEngine.Segment
             }
         }
 
-        static bool toBoolean(string conditionValue) => !new[] { "false", "False" }.Contains(conditionValue);
+        private static bool ToBoolean(string conditionValue) => !new[] { "false", "False" }.Contains(conditionValue);
     }
 }
