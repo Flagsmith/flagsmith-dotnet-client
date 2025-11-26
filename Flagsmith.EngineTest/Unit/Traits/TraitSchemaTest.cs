@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Text;
 using Xunit;
 using Newtonsoft.Json.Linq;
@@ -30,7 +31,7 @@ namespace EngineTest.Unit.Traits
             var jObject = JObject.FromObject(trait);
             Assert.Equal(trait.TraitKey, jObject["trait_key"].Value<string>());
             var valueToken = jObject["trait_value"];
-            var value = valueToken.Type != JTokenType.Null ? Convert.ChangeType(valueToken.Value<string>(), trait.TraitValue.GetType()) : null;
+            var value = valueToken.Type != JTokenType.Null ? Convert.ChangeType(valueToken.Value<string>(), trait.TraitValue.GetType(), CultureInfo.InvariantCulture) : null;
             Assert.Equal(trait.TraitValue, value);
         }
         public static IEnumerable<object[]> TestTraitToJobjectData() =>
