@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Text;
 using Xunit;
 using FlagsmithEngine.Segment.Models;
-using FlagsmithEngine.Segment;
 using FlagsmithEngine.Feature.Models;
 using feature = FlagsmithEngine.Feature;
 using Newtonsoft.Json;
@@ -22,9 +21,9 @@ namespace EngineTest.Unit.Segments
                 Name = "segment",
                 Rules = new List<SegmentRuleModel> {
                     new SegmentRuleModel{
-                        Type=SegmentRuleType.All,
+                        Type="ALL",
                         Conditions = new List<SegmentConditionModel> {
-                            new SegmentConditionModel { Operator = SegmentConditionOperator.Equal, Property = "foo", Value = "bar" }
+                            new SegmentConditionModel { Operator = "EQUAL", Property = "foo", Value = "bar" }
                         }
                     }
                 },
@@ -74,7 +73,7 @@ namespace EngineTest.Unit.Segments
         [Fact]
         public void TestSegmentConditionSchemaLoadWhenPropertyIsNull()
         {
-            var jObject = JObject.Parse($"{{'operator': '{SegmentConditionOperator.PercentageSplit}', 'value': 10, 'property_': null}}");
+            var jObject = JObject.Parse($"{{'operator': 'PERCENTAGE_SPLIT', 'value': 10, 'property_': null}}");
             var segmentCondition = jObject.ToObject<SegmentConditionModel>();
             Assert.Equal(jObject["value"].Value<string>(), segmentCondition.Value);
             Assert.Equal(jObject["operator"].Value<string>(), segmentCondition.Operator);

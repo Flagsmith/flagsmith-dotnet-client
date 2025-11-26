@@ -1,6 +1,5 @@
 using System.Linq;
 using FlagsmithEngine;
-using FlagsmithEngine.Segment;
 using Xunit;
 
 namespace Flagsmith.FlagsmithClientTest
@@ -34,16 +33,16 @@ namespace Flagsmith.FlagsmithClientTest
             Assert.Equal(1, apiSegment.Metadata.Id);
 
             // Verify segment rule structure
-            Assert.Equal(SegmentRuleType.All, apiSegment.Rules[0].Type);
+            Assert.Equal(TypeEnum.All, apiSegment.Rules[0].Type);
             Assert.Empty(apiSegment.Rules[0].Conditions);
             Assert.Single(apiSegment.Rules[0].Rules);
 
-            Assert.Equal(SegmentRuleType.All, apiSegment.Rules[0].Rules[0].Type);
+            Assert.Equal(TypeEnum.All, apiSegment.Rules[0].Rules[0].Type);
             Assert.Single(apiSegment.Rules[0].Rules[0].Conditions);
             Assert.Empty(apiSegment.Rules[0].Rules[0].Rules);
 
             Assert.Equal("foo", apiSegment.Rules[0].Rules[0].Conditions[0].Property);
-            Assert.Equal(SegmentConditionOperator.Equal, apiSegment.Rules[0].Rules[0].Conditions[0].Operator);
+            Assert.Equal(Operator.Equal, apiSegment.Rules[0].Rules[0].Conditions[0].Operator);
             Assert.Equal("bar", apiSegment.Rules[0].Rules[0].Conditions[0].Value.String);
 
             // Verify identity override segment
@@ -55,12 +54,12 @@ namespace Flagsmith.FlagsmithClientTest
             Assert.Single(overrideSegment.Rules);
             Assert.Single(overrideSegment.Overrides);
 
-            Assert.Equal(SegmentRuleType.All, overrideSegment.Rules[0].Type);
+            Assert.Equal(TypeEnum.All, overrideSegment.Rules[0].Type);
             Assert.Single(overrideSegment.Rules[0].Conditions);
             Assert.Empty(overrideSegment.Rules[0].Rules);
 
             Assert.Equal("$.identity.identifier", overrideSegment.Rules[0].Conditions[0].Property);
-            Assert.Equal(SegmentConditionOperator.In, overrideSegment.Rules[0].Conditions[0].Operator);
+            Assert.Equal(Operator.In, overrideSegment.Rules[0].Conditions[0].Operator);
             Assert.Equal(new[] { "overridden-id" }, overrideSegment.Rules[0].Conditions[0].Value.StringArray);
 
             Assert.Equal("", overrideSegment.Overrides[0].Key);

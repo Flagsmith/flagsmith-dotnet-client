@@ -154,13 +154,13 @@ namespace FlagsmithEngine
             else
                 switch (rule.Type)
                 {
-                    case SegmentRuleType.All:
+                    case TypeEnum.All:
                         matchesConditions = rule.Conditions.All(condition => ContextMatchesCondition(context, condition, segmentKey));
                         break;
-                    case SegmentRuleType.Any:
+                    case TypeEnum.Any:
                         matchesConditions = rule.Conditions.Any(condition => ContextMatchesCondition(context, condition, segmentKey));
                         break;
-                    case SegmentRuleType.None:
+                    case TypeEnum.None:
                         matchesConditions = !rule.Conditions.Any(condition => ContextMatchesCondition(context, condition, segmentKey));
                         break;
                     default:
@@ -177,7 +177,7 @@ namespace FlagsmithEngine
 
             switch (condition.Operator)
             {
-                case SegmentConditionOperator.In:
+                case Operator.In:
                     if (contextValue == null || contextValue.GetType() == typeof(bool))
                         return false;
                     HashSet<string> inValues;
@@ -198,7 +198,7 @@ namespace FlagsmithEngine
                     }
                     return inValues.Contains(contextValue.ToString());
 
-                case SegmentConditionOperator.PercentageSplit:
+                case Operator.PercentageSplit:
                     List<string> objectIds;
 
                     if (contextValue != null)
@@ -221,10 +221,10 @@ namespace FlagsmithEngine
 
                     return Hashing.GetHashedPercentageForObjectIds(objectIds) <= floatConditionValue;
 
-                case SegmentConditionOperator.IsNotSet:
+                case Operator.IsNotSet:
                     return contextValue == null;
 
-                case SegmentConditionOperator.IsSet:
+                case Operator.IsSet:
                     return contextValue != null;
 
                 default:
@@ -302,11 +302,11 @@ namespace FlagsmithEngine
         {
             switch (condition.Operator)
             {
-                case SegmentConditionOperator.NotContains:
+                case Operator.NotContains:
                     return !contextValue.ToString().Contains(condition.Value.String);
-                case SegmentConditionOperator.Regex:
+                case Operator.Regex:
                     return Regex.Match(contextValue.ToString(), condition.Value.String).Success;
-                case SegmentConditionOperator.Modulo:
+                case Operator.Modulo:
                     return EvaluateModulo(contextValue.ToString(), condition.Value.String);
                 default:
                     return MatchingFunctionName(contextValue, condition);
@@ -359,9 +359,9 @@ namespace FlagsmithEngine
 
             switch (condition.Operator)
             {
-                case SegmentConditionOperator.Equal: return contextValue == conditionValue;
-                case SegmentConditionOperator.NotEqual: return contextValue != conditionValue;
-                case SegmentConditionOperator.Contains: return contextValue.Contains(conditionValue);
+                case Operator.Equal: return contextValue == conditionValue;
+                case Operator.NotEqual: return contextValue != conditionValue;
+                case Operator.Contains: return contextValue.Contains(conditionValue);
                 default: throw new ArgumentException("Invalid Operator");
             }
         }
@@ -379,12 +379,12 @@ namespace FlagsmithEngine
             }
             switch (condition.Operator)
             {
-                case SegmentConditionOperator.Equal: return contextValue == conditionValue;
-                case SegmentConditionOperator.NotEqual: return contextValue != conditionValue;
-                case SegmentConditionOperator.GreaterThan: return contextValue > conditionValue;
-                case SegmentConditionOperator.GreaterThanInclusive: return contextValue >= conditionValue;
-                case SegmentConditionOperator.LessThan: return contextValue < conditionValue;
-                case SegmentConditionOperator.LessThanInclusive: return contextValue <= conditionValue;
+                case Operator.Equal: return contextValue == conditionValue;
+                case Operator.NotEqual: return contextValue != conditionValue;
+                case Operator.GreaterThan: return contextValue > conditionValue;
+                case Operator.GreaterThanInclusive: return contextValue >= conditionValue;
+                case Operator.LessThan: return contextValue < conditionValue;
+                case Operator.LessThanInclusive: return contextValue <= conditionValue;
                 default: throw new ArgumentException("Invalid Operator");
             }
         }
@@ -393,12 +393,12 @@ namespace FlagsmithEngine
         {
             switch (condition.Operator)
             {
-                case SegmentConditionOperator.Equal: return contextValue == InvariantConvert.ToInt32(condition.Value.String);
-                case SegmentConditionOperator.NotEqual: return contextValue != InvariantConvert.ToInt32(condition.Value.String);
-                case SegmentConditionOperator.GreaterThan: return contextValue > InvariantConvert.ToInt32(condition.Value.String);
-                case SegmentConditionOperator.GreaterThanInclusive: return contextValue >= InvariantConvert.ToInt32(condition.Value.String);
-                case SegmentConditionOperator.LessThan: return contextValue < InvariantConvert.ToInt32(condition.Value.String);
-                case SegmentConditionOperator.LessThanInclusive: return contextValue <= InvariantConvert.ToInt32(condition.Value.String);
+                case Operator.Equal: return contextValue == InvariantConvert.ToInt32(condition.Value.String);
+                case Operator.NotEqual: return contextValue != InvariantConvert.ToInt32(condition.Value.String);
+                case Operator.GreaterThan: return contextValue > InvariantConvert.ToInt32(condition.Value.String);
+                case Operator.GreaterThanInclusive: return contextValue >= InvariantConvert.ToInt32(condition.Value.String);
+                case Operator.LessThan: return contextValue < InvariantConvert.ToInt32(condition.Value.String);
+                case Operator.LessThanInclusive: return contextValue <= InvariantConvert.ToInt32(condition.Value.String);
                 default: throw new ArgumentException("Invalid Operator");
             }
         }
@@ -407,12 +407,12 @@ namespace FlagsmithEngine
         {
             switch (condition.Operator)
             {
-                case SegmentConditionOperator.Equal: return contextValue == InvariantConvert.ToDouble(condition.Value.String);
-                case SegmentConditionOperator.NotEqual: return contextValue != InvariantConvert.ToDouble(condition.Value.String);
-                case SegmentConditionOperator.GreaterThan: return contextValue > InvariantConvert.ToDouble(condition.Value.String);
-                case SegmentConditionOperator.GreaterThanInclusive: return contextValue >= InvariantConvert.ToDouble(condition.Value.String);
-                case SegmentConditionOperator.LessThan: return contextValue < InvariantConvert.ToDouble(condition.Value.String);
-                case SegmentConditionOperator.LessThanInclusive: return contextValue <= InvariantConvert.ToDouble(condition.Value.String);
+                case Operator.Equal: return contextValue == InvariantConvert.ToDouble(condition.Value.String);
+                case Operator.NotEqual: return contextValue != InvariantConvert.ToDouble(condition.Value.String);
+                case Operator.GreaterThan: return contextValue > InvariantConvert.ToDouble(condition.Value.String);
+                case Operator.GreaterThanInclusive: return contextValue >= InvariantConvert.ToDouble(condition.Value.String);
+                case Operator.LessThan: return contextValue < InvariantConvert.ToDouble(condition.Value.String);
+                case Operator.LessThanInclusive: return contextValue <= InvariantConvert.ToDouble(condition.Value.String);
                 default: throw new ArgumentException("Invalid Operator");
             }
         }
@@ -421,8 +421,8 @@ namespace FlagsmithEngine
         {
             switch (condition.Operator)
             {
-                case SegmentConditionOperator.Equal: return contextValue == ToBoolean(condition.Value.String);
-                case SegmentConditionOperator.NotEqual: return contextValue != ToBoolean(condition.Value.String);
+                case Operator.Equal: return contextValue == ToBoolean(condition.Value.String);
+                case Operator.NotEqual: return contextValue != ToBoolean(condition.Value.String);
                 default: throw new ArgumentException("Invalid Operator");
             }
         }
@@ -437,12 +437,12 @@ namespace FlagsmithEngine
 
                 switch (condition.Operator)
                 {
-                    case SegmentConditionOperator.Equal: return contextValueAsVersion == conditionValueAsVersion;
-                    case SegmentConditionOperator.NotEqual: return contextValueAsVersion != conditionValueAsVersion;
-                    case SegmentConditionOperator.GreaterThan: return contextValueAsVersion.ComparePrecedenceTo(conditionValueAsVersion) > 0;
-                    case SegmentConditionOperator.GreaterThanInclusive: return contextValueAsVersion.ComparePrecedenceTo(conditionValueAsVersion) >= 0;
-                    case SegmentConditionOperator.LessThan: return contextValueAsVersion.ComparePrecedenceTo(conditionValueAsVersion) < 0;
-                    case SegmentConditionOperator.LessThanInclusive: return contextValueAsVersion.ComparePrecedenceTo(conditionValueAsVersion) <= 0;
+                    case Operator.Equal: return contextValueAsVersion == conditionValueAsVersion;
+                    case Operator.NotEqual: return contextValueAsVersion != conditionValueAsVersion;
+                    case Operator.GreaterThan: return contextValueAsVersion.ComparePrecedenceTo(conditionValueAsVersion) > 0;
+                    case Operator.GreaterThanInclusive: return contextValueAsVersion.ComparePrecedenceTo(conditionValueAsVersion) >= 0;
+                    case Operator.LessThan: return contextValueAsVersion.ComparePrecedenceTo(conditionValueAsVersion) < 0;
+                    case Operator.LessThanInclusive: return contextValueAsVersion.ComparePrecedenceTo(conditionValueAsVersion) <= 0;
                     default: throw new ArgumentException("Invalid Operator");
                 }
             }
