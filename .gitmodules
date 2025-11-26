@@ -1,4 +1,4 @@
 [submodule "Flagsmith.EngineTest/EngineTestData"]
 	path = Flagsmith.EngineTest/EngineTestData
 	url = git@github.com:Flagsmith/engine-test-data.git
-	tag = v1.0.0
+	tag = v3.4.2

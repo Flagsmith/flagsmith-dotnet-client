@@ -37,7 +37,7 @@ namespace Flagsmith
     public class FlagsmithClient : IFlagsmithClient
     {
         private EnvironmentModel? Environment { get; set; }
-        private Dictionary<string, IdentityModel>? IdentitiesWithOverridesByIdentifier { get; set; }
+        private EvaluationContext<SegmentMetadata, FeatureMetadata>? _evaluationContext;
 
         private readonly FlagsmithConfiguration _config;
         private readonly IEngine _engine = new Engine();
@@ -60,6 +60,7 @@ namespace Flagsmith
             if (_config.OfflineHandler != null)
             {
                 Environment = _config.OfflineHandler.GetEnvironment();
+                _evaluationContext = Mappers.MapEnvironmentDocumentToContext(Environment);
             }
 
             if (!_config.OfflineMode)
@@ -114,7 +115,7 @@ namespace Flagsmith
 
         private async Task<IFlags> GetFeatureFlagsFromCorrectSource()
         {
-            return (_config.OfflineMode || _config.EnableLocalEvaluation) && Environment != null ? GetFeatureFlagsFromDocument() : await GetFeatureFlagsFromApi().ConfigureAwait(false);
+            return (_config.OfflineMode || _config.EnableLocalEvaluation) && Environment != null ? GetEnvironmentFlagsFromLocalEvaluationContext() : await GetFeatureFlagsFromApi().ConfigureAwait(false);
         }
 
         /// <summary>
@@ -140,7 +141,7 @@ namespace Flagsmith
             }
 
             if (_config.OfflineMode)
-                return this.GetIdentityFlagsFromDocument(identifier, traits ?? null);
+                return this.GetIdentityFlagsFromLocalEvaluationContext(identifier, traits ?? null);
 
             return await GetIdentityFlagsFromCorrectSource(identityWrapper).ConfigureAwait(false);
         }
@@ -149,7 +150,7 @@ namespace Flagsmith
         {
             if ((_config.OfflineMode || _config.EnableLocalEvaluation) && Environment != null)
             {
-                return GetIdentityFlagsFromDocument(identityWrapper.Identifier, identityWrapper.Traits);
+                return GetIdentityFlagsFromLocalEvaluationContext(identityWrapper.Identifier, identityWrapper.Traits);
             }
 
             return await GetIdentityFlagsFromApi(identityWrapper.Identifier, identityWrapper.Traits, identityWrapper.Transient).ConfigureAwait(false);
@@ -162,15 +163,24 @@ namespace Flagsmith
 
         public List<ISegment>? GetIdentitySegments(string identifier, List<ITrait> traits)
         {
-            if (Environment == null)
+            if (_evaluationContext == null)
             {
                 throw new FlagsmithClientError("Local evaluation required to obtain identity segments.");
             }
 
-            IdentityModel identityModel = new IdentityModel { Identifier = identifier, IdentityTraits = traits?.Select(t => new TraitModel { TraitKey = t.GetTraitKey(), TraitValue = t.GetTraitValue() }).ToList() };
-            List<SegmentModel> segmentModels = Evaluator.GetIdentitySegments(Environment, identityModel, new List<TraitModel>());
+            var context = Mappers.MapContextAndIdentityToContext(
+                _evaluationContext,
+                identifier,
+                traits);
 
-            return segmentModels?.Select(t => new Segment(id: t.Id, name: t.Name)).ToList<ISegment>();
+            var result = _engine.GetEvaluationResult(context);
+
+            var segments = result.Segments
+                .Where(s => s.Metadata.Id != null) // Not a real segment, e.g. an identity override virtual segment
+                .Select(s => new Segment(id: s.Metadata.Id!.Value, name: s.Name))
+                .ToList<ISegment>();
+
+            return segments;
         }
 
         private IdentityFlagListCache GetFlagListCacheByIdentity(IdentityWrapper identityWrapper)
@@ -229,7 +239,7 @@ namespace Flagsmith
             {
                 var json = await GetJson(HttpMethod.Get, new Uri(_config.ApiUri, "environment-document/").AbsoluteUri).ConfigureAwait(false);
                 Environment = JsonConvert.DeserializeObject<EnvironmentModel>(json);
-                IdentitiesWithOverridesByIdentifier = Environment?.IdentityOverrides != null ? Environment.IdentityOverrides.ToDictionary(identity => identity.Identifier) : new Dictionary<string, IdentityModel>();
+                _evaluationContext = Mappers.MapEnvironmentDocumentToContext(Environment);
                 _config.Logger?.LogInformation("Local Environment updated: " + json);
             }
             catch (FlagsmithAPIError ex)
@@ -251,7 +261,7 @@ namespace Flagsmith
             {
                 if (Environment != null)
                 {
-                    return this.GetFeatureFlagsFromDocument();
+                    return this.GetEnvironmentFlagsFromLocalEvaluationContext();
                 }
                 return _config.DefaultFlagHandler != null ? Flags.FromApiFlag(_analyticsProcessor, _config.DefaultFlagHandler, null) : throw e;
             }
@@ -273,37 +283,39 @@ namespace Flagsmith
             {
                 if (Environment != null)
                 {
-                    return this.GetIdentityFlagsFromDocument(identity, traits);
+                    return this.GetIdentityFlagsFromLocalEvaluationContext(identity, traits);
                 }
                 return _config.DefaultFlagHandler != null ? Flags.FromApiFlag(_analyticsProcessor, _config.DefaultFlagHandler, null) : throw e;
             }
         }
 
-        private IFlags GetFeatureFlagsFromDocument()
+        private IFlags GetEnvironmentFlagsFromLocalEvaluationContext()
         {
-            return Flags.FromFeatureStateModel(_analyticsProcessor, _config.DefaultFlagHandler, _engine.GetEnvironmentFeatureStates(Environment));
+            if (_evaluationContext == null)
+            {
+                throw new FlagsmithClientError("Evaluation context is not present");
+            }
+
+            var result = _engine.GetEvaluationResult(_evaluationContext);
+
+            return Flags.FromEvaluationResult(result, _analyticsProcessor, _config.DefaultFlagHandler);
         }
 
-        private IFlags GetIdentityFlagsFromDocument(string identifier, List<ITrait>? traits)
+        private IFlags GetIdentityFlagsFromLocalEvaluationContext(string identifier, List<ITrait>? traits)
         {
-            List<TraitModel> traitModels = traits?.Count > 0
-                ? traits.Select(t => new TraitModel { TraitKey = t.GetTraitKey(), TraitValue = t.GetTraitValue() }).ToList()
-                : new List<TraitModel>();
+            if (_evaluationContext == null)
+            {
+                throw new FlagsmithClientError("Evaluation context is not present");
+            }
 
-            if (IdentitiesWithOverridesByIdentifier?.TryGetValue(identifier, out var identity) ?? false)
-            {
-                identity.UpdateTraits(traitModels);
-            }
-            else
-            {
-                identity = new IdentityModel
-                {
-                    EnvironmentApiKey = Environment!.ApiKey,
-                    Identifier = identifier,
-                    IdentityTraits = traitModels,
-                };
-            }
-            return Flags.FromFeatureStateModel(_analyticsProcessor, _config.DefaultFlagHandler, _engine.GetIdentityFeatureStates(Environment, identity), identity.CompositeKey);
+            var context = Mappers.MapContextAndIdentityToContext(
+                _evaluationContext,
+                identifier,
+                traits ?? new List<ITrait>());
+
+            var result = _engine.GetEvaluationResult(context);
+
+            return Flags.FromEvaluationResult(result, _analyticsProcessor, _config.DefaultFlagHandler);
         }
 
         public Dictionary<string, int> aggregatedAnalytics => _analyticsProcessor != null ? _analyticsProcessor.GetAggregatedAnalytics() : new Dictionary<string, int>();

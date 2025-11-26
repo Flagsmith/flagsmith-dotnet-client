@@ -6,7 +6,6 @@ using FlagsmithEngine;
 using FlagsmithEngine.Environment.Models;
 using FlagsmithEngine.Feature.Models;
 using FlagsmithEngine.Identity.Models;
-using FlagsmithEngine.Segment;
 using FlagsmithEngine.Segment.Models;
 
 namespace Flagsmith
@@ -242,7 +241,7 @@ namespace Flagsmith
                     Name = overrideKey.Name,
                     Enabled = overrideKey.Enabled,
                     Value = overrideKey.Value,
-                    Priority = Constants.StrongestPriority,
+                    Priority = Engine.StrongestPriority,
                     Metadata = new FeatureMetadata { Id = featureIDsByName[overrideKey.Name] },
                 }).ToArray();
 
@@ -257,9 +256,9 @@ namespace Flagsmith
         {
             return type switch
             {
-                Constants.AllRule => TypeEnum.All,
-                Constants.AnyRule => TypeEnum.Any,
-                Constants.NoneRule => TypeEnum.None,
+                "ALL" => TypeEnum.All,
+                "ANY" => TypeEnum.Any,
+                "NONE" => TypeEnum.None,
                 _ => throw new ArgumentException($"Unknown rule type: {type}"),
             };
         }
@@ -268,20 +267,20 @@ namespace Flagsmith
         {
             return operatorString switch
             {
-                Constants.Equal => Operator.Equal,
-                Constants.NotEqual => Operator.NotEqual,
-                Constants.GreaterThan => Operator.GreaterThan,
-                Constants.GreaterThanInclusive => Operator.GreaterThanInclusive,
-                Constants.LessThan => Operator.LessThan,
-                Constants.LessThanInclusive => Operator.LessThanInclusive,
-                Constants.Contains => Operator.Contains,
-                Constants.NotContains => Operator.NotContains,
-                Constants.In => Operator.In,
-                Constants.Regex => Operator.Regex,
-                Constants.Modulo => Operator.Modulo,
-                Constants.IsSet => Operator.IsSet,
-                Constants.IsNotSet => Operator.IsNotSet,
-                Constants.PercentageSplit => Operator.PercentageSplit,
+                "EQUAL" => Operator.Equal,
+                "NOT_EQUAL" => Operator.NotEqual,
+                "GREATER_THAN" => Operator.GreaterThan,
+                "GREATER_THAN_INCLUSIVE" => Operator.GreaterThanInclusive,
+                "LESS_THAN" => Operator.LessThan,
+                "LESS_THAN_INCLUSIVE" => Operator.LessThanInclusive,
+                "CONTAINS" => Operator.Contains,
+                "NOT_CONTAINS" => Operator.NotContains,
+                "IN" => Operator.In,
+                "REGEX" => Operator.Regex,
+                "MODULO" => Operator.Modulo,
+                "IS_SET" => Operator.IsSet,
+                "IS_NOT_SET" => Operator.IsNotSet,
+                "PERCENTAGE_SPLIT" => Operator.PercentageSplit,
                 _ => throw new ArgumentException($"Unknown operator: {operatorString}"),
             };
         }

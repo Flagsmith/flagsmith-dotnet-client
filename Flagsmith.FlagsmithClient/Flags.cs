@@ -1,4 +1,4 @@
-﻿using FlagsmithEngine.Feature.Models;
+using FlagsmithEngine;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -33,14 +33,22 @@ namespace Flagsmith
             return Task.FromResult(flag);
         }
         public List<IFlag> AllFlags() => _Flags;
-        private static IFlag FromFeatureStateModel(FeatureStateModel featureStateModel, string identityId = null) =>
-            new Flag(new Feature(featureStateModel.Feature.Name, featureStateModel.Feature.Id), featureStateModel.Enabled, featureStateModel.GetValue(identityId)?.ToString(), featureStateModel.Feature.Id);
 
-        public static IFlags FromFeatureStateModel(AnalyticsProcessor analyticsProcessor, Func<string, IFlag> defaultFlagHandler, List<FeatureStateModel> featureStateModels, string identityId = null)
+        public static IFlags FromEvaluationResult(
+            EvaluationResult<SegmentMetadata, FeatureMetadata> result,
+            AnalyticsProcessor analyticsProcessor,
+            Func<string, IFlag> defaultFlagHandler)
         {
-            var flags = featureStateModels.Select(f => FromFeatureStateModel(f, identityId)).ToList();
+            var flags = result.Flags.Values.Select(flagContext => new Flag(
+                new Feature(flagContext.Name, flagContext.Metadata.Id),
+                flagContext.Enabled,
+                flagContext.Value?.ToString(),
+                flagContext.Metadata.Id
+            )).ToList<IFlag>();
+
             return new Flags(flags, analyticsProcessor, defaultFlagHandler);
         }
+
         public static IFlags FromApiFlag(AnalyticsProcessor analyticsProcessor, Func<string, IFlag> defaultFlagHandler, List<IFlag> flags)
         => new Flags(flags, analyticsProcessor, defaultFlagHandler);
 

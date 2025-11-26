@@ -1,6 +1,5 @@
 using System.Linq;
 using FlagsmithEngine;
-using FlagsmithEngine.Segment;
 using Xunit;
 
 namespace Flagsmith.FlagsmithClientTest
@@ -67,7 +66,7 @@ namespace Flagsmith.FlagsmithClientTest
             Assert.Equal("some_feature", overrideSegment.Overrides[0].Name);
             Assert.False(overrideSegment.Overrides[0].Enabled);
             Assert.Equal("some-overridden-value", overrideSegment.Overrides[0].Value);
-            Assert.Equal(Constants.StrongestPriority, overrideSegment.Overrides[0].Priority);
+            Assert.Equal(Engine.StrongestPriority, overrideSegment.Overrides[0].Priority);
             Assert.Null(overrideSegment.Overrides[0].Variants);
             Assert.Equal(1, overrideSegment.Overrides[0].Metadata.Id);
 
