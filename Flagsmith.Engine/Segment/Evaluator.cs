@@ -336,7 +336,7 @@ namespace FlagsmithEngine.Segment
             long conditionValue;
             try
             {
-                conditionValue = InvariantConvert.ToInt64(condition.Value);
+                conditionValue = InvariantConvert.ToInt64(condition.Value.String);
             }
             catch (FormatException)
             {
@@ -358,13 +358,12 @@ namespace FlagsmithEngine.Segment
         {
             switch (condition.Operator)
             {
-                case Constants.Equal: return traitValue == InvariantConvert.ToInt32(condition.Value);
-                case Constants.NotEqual: return traitValue != InvariantConvert.ToInt32(condition.Value);
-                case Constants.GreaterThan: return traitValue > InvariantConvert.ToInt32(condition.Value);
-                case Constants.GreaterThanInclusive: return traitValue >= InvariantConvert.ToInt32(condition.Value);
-                case Constants.LessThan: return traitValue < InvariantConvert.ToInt32(condition.Value);
-                case Constants.LessThanInclusive: return traitValue <= InvariantConvert.ToInt32(condition.Value);
-                case Constants.In: return condition.Value.Split(',').Contains(traitValue.ToString());
+                case Operator.Equal: return contextValue == InvariantConvert.ToInt32(condition.Value.String);
+                case Operator.NotEqual: return contextValue != InvariantConvert.ToInt32(condition.Value.String);
+                case Operator.GreaterThan: return contextValue > InvariantConvert.ToInt32(condition.Value.String);
+                case Operator.GreaterThanInclusive: return contextValue >= InvariantConvert.ToInt32(condition.Value.String);
+                case Operator.LessThan: return contextValue < InvariantConvert.ToInt32(condition.Value.String);
+                case Operator.LessThanInclusive: return contextValue <= InvariantConvert.ToInt32(condition.Value.String);
                 default: throw new ArgumentException("Invalid Operator");
             }
         }
@@ -373,13 +372,12 @@ namespace FlagsmithEngine.Segment
         {
             switch (condition.Operator)
             {
-                case Constants.Equal: return traitValue == InvariantConvert.ToDouble(condition.Value);
-                case Constants.NotEqual: return traitValue != InvariantConvert.ToDouble(condition.Value);
-                case Constants.GreaterThan: return traitValue > InvariantConvert.ToDouble(condition.Value);
-                case Constants.GreaterThanInclusive: return traitValue >= InvariantConvert.ToDouble(condition.Value);
-                case Constants.LessThan: return traitValue < InvariantConvert.ToDouble(condition.Value);
-                case Constants.LessThanInclusive: return traitValue <= InvariantConvert.ToDouble(condition.Value);
-                case Constants.In: return false;
+                case Operator.Equal: return contextValue == InvariantConvert.ToDouble(condition.Value.String);
+                case Operator.NotEqual: return contextValue != InvariantConvert.ToDouble(condition.Value.String);
+                case Operator.GreaterThan: return contextValue > InvariantConvert.ToDouble(condition.Value.String);
+                case Operator.GreaterThanInclusive: return contextValue >= InvariantConvert.ToDouble(condition.Value.String);
+                case Operator.LessThan: return contextValue < InvariantConvert.ToDouble(condition.Value.String);
+                case Operator.LessThanInclusive: return contextValue <= InvariantConvert.ToDouble(condition.Value.String);
                 default: throw new ArgumentException("Invalid Operator");
             }
         }
