@@ -240,7 +240,7 @@ namespace FlagsmithEngine.Segment
                             Enabled = featureContext.Enabled,
                             Value = variant.Value,
                             Metadata = featureContext.Metadata,
-                            Reason = $"SPLIT; weight={weight}",
+                            Reason = FormattableString.Invariant($"SPLIT; weight={weight}"),
                         };
                         break;
                     }
@@ -336,7 +336,7 @@ namespace FlagsmithEngine.Segment
             long conditionValue;
             try
             {
-                conditionValue = Convert.ToInt64(condition.Value.String);
+                conditionValue = InvariantConvert.ToInt64(condition.Value);
             }
             catch (FormatException)
             {
@@ -358,12 +358,13 @@ namespace FlagsmithEngine.Segment
         {
             switch (condition.Operator)
             {
-                case Operator.Equal: return contextValue == Convert.ToInt32(condition.Value.String);
-                case Operator.NotEqual: return contextValue != Convert.ToInt32(condition.Value.String);
-                case Operator.GreaterThan: return contextValue > Convert.ToInt32(condition.Value.String);
-                case Operator.GreaterThanInclusive: return contextValue >= Convert.ToInt32(condition.Value.String);
-                case Operator.LessThan: return contextValue < Convert.ToInt32(condition.Value.String);
-                case Operator.LessThanInclusive: return contextValue <= Convert.ToInt32(condition.Value.String);
+                case Constants.Equal: return traitValue == InvariantConvert.ToInt32(condition.Value);
+                case Constants.NotEqual: return traitValue != InvariantConvert.ToInt32(condition.Value);
+                case Constants.GreaterThan: return traitValue > InvariantConvert.ToInt32(condition.Value);
+                case Constants.GreaterThanInclusive: return traitValue >= InvariantConvert.ToInt32(condition.Value);
+                case Constants.LessThan: return traitValue < InvariantConvert.ToInt32(condition.Value);
+                case Constants.LessThanInclusive: return traitValue <= InvariantConvert.ToInt32(condition.Value);
+                case Constants.In: return condition.Value.Split(',').Contains(traitValue.ToString());
                 default: throw new ArgumentException("Invalid Operator");
             }
         }
@@ -372,12 +373,13 @@ namespace FlagsmithEngine.Segment
         {
             switch (condition.Operator)
             {
-                case Operator.Equal: return contextValue == Convert.ToDouble(condition.Value.String);
-                case Operator.NotEqual: return contextValue != Convert.ToDouble(condition.Value.String);
-                case Operator.GreaterThan: return contextValue > Convert.ToDouble(condition.Value.String);
-                case Operator.GreaterThanInclusive: return contextValue >= Convert.ToDouble(condition.Value.String);
-                case Operator.LessThan: return contextValue < Convert.ToDouble(condition.Value.String);
-                case Operator.LessThanInclusive: return contextValue <= Convert.ToDouble(condition.Value.String);
+                case Constants.Equal: return traitValue == InvariantConvert.ToDouble(condition.Value);
+                case Constants.NotEqual: return traitValue != InvariantConvert.ToDouble(condition.Value);
+                case Constants.GreaterThan: return traitValue > InvariantConvert.ToDouble(condition.Value);
+                case Constants.GreaterThanInclusive: return traitValue >= InvariantConvert.ToDouble(condition.Value);
+                case Constants.LessThan: return traitValue < InvariantConvert.ToDouble(condition.Value);
+                case Constants.LessThanInclusive: return traitValue <= InvariantConvert.ToDouble(condition.Value);
+                case Constants.In: return false;
                 default: throw new ArgumentException("Invalid Operator");
             }
         }
