@@ -102,12 +102,12 @@ namespace Flagsmith
         {
             return srcRules.Select(srcRule => new SegmentRule
             {
-                Type = MapRuleType(srcRule.Type),
+                Type = srcRule.Type,
                 Conditions = (srcRule.Conditions ?? Enumerable.Empty<SegmentConditionModel>())
                     .Select(c => new Condition
                     {
                         Property = c.Property ?? EmptyProperty,
-                        Operator = MapOperator(c.Operator),
+                        Operator = c.Operator,
                         Value = MapConditionValue(c.Value),
                     })
                     .ToArray(),
@@ -221,13 +221,13 @@ namespace Flagsmith
                 var identifiersCondition = new Condition
                 {
                     Property = "$.identity.identifier",
-                    Operator = Operator.In,
+                    Operator = SegmentConditionOperator.In,
                     Value = new ConditionValueUnion { StringArray = identifiers.ToArray() },
                 };
 
                 var identifiersRule = new SegmentRule
                 {
-                    Type = TypeEnum.All,
+                    Type = SegmentRuleType.All,
                     Conditions = new[] { identifiersCondition },
                     Rules = Array.Empty<SegmentRule>(),
                 };
@@ -242,7 +242,7 @@ namespace Flagsmith
                     Name = overrideKey.Name,
                     Enabled = overrideKey.Enabled,
                     Value = overrideKey.Value,
-                    Priority = Constants.StrongestPriority,
+                    Priority = Engine.StrongestPriority,
                     Metadata = new FeatureMetadata { Id = featureIDsByName[overrideKey.Name] },
                 }).ToArray();
 
@@ -251,39 +251,6 @@ namespace Flagsmith
             }
 
             return segments;
-        }
-
-        private static TypeEnum MapRuleType(string type)
-        {
-            return type switch
-            {
-                Constants.AllRule => TypeEnum.All,
-                Constants.AnyRule => TypeEnum.Any,
-                Constants.NoneRule => TypeEnum.None,
-                _ => throw new ArgumentException($"Unknown rule type: {type}"),
-            };
-        }
-
-        private static Operator MapOperator(string operatorString)
-        {
-            return operatorString switch
-            {
-                Constants.Equal => Operator.Equal,
-                Constants.NotEqual => Operator.NotEqual,
-                Constants.GreaterThan => Operator.GreaterThan,
-                Constants.GreaterThanInclusive => Operator.GreaterThanInclusive,
-                Constants.LessThan => Operator.LessThan,
-                Constants.LessThanInclusive => Operator.LessThanInclusive,
-                Constants.Contains => Operator.Contains,
-                Constants.NotContains => Operator.NotContains,
-                Constants.In => Operator.In,
-                Constants.Regex => Operator.Regex,
-                Constants.Modulo => Operator.Modulo,
-                Constants.IsSet => Operator.IsSet,
-                Constants.IsNotSet => Operator.IsNotSet,
-                Constants.PercentageSplit => Operator.PercentageSplit,
-                _ => throw new ArgumentException($"Unknown operator: {operatorString}"),
-            };
         }
 
         private static ConditionValueUnion MapConditionValue(string value)

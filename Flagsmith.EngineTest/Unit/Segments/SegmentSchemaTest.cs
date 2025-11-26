@@ -22,9 +22,9 @@ namespace EngineTest.Unit.Segments
                 Name = "segment",
                 Rules = new List<SegmentRuleModel> {
                     new SegmentRuleModel{
-                        Type=Constants.AllRule,
+                        Type=SegmentRuleType.All,
                         Conditions = new List<SegmentConditionModel> {
-                            new SegmentConditionModel { Operator = Constants.Equal, Property = "foo", Value = "bar" }
+                            new SegmentConditionModel { Operator = SegmentConditionOperator.Equal, Property = "foo", Value = "bar" }
                         }
                     }
                 },
@@ -74,7 +74,7 @@ namespace EngineTest.Unit.Segments
         [Fact]
         public void TestSegmentConditionSchemaLoadWhenPropertyIsNull()
         {
-            var jObject = JObject.Parse($"{{'operator': '{Constants.PercentageSplit}', 'value': 10, 'property_': null}}");
+            var jObject = JObject.Parse($"{{'operator': '{SegmentConditionOperator.PercentageSplit}', 'value': 10, 'property_': null}}");
             var segmentCondition = jObject.ToObject<SegmentConditionModel>();
             Assert.Equal(jObject["value"].Value<string>(), segmentCondition.Value);
             Assert.Equal(jObject["operator"].Value<string>(), segmentCondition.Operator);
