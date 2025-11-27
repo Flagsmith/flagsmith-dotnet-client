@@ -203,7 +203,7 @@ namespace FlagsmithEngine
 
                     if (contextValue != null)
                         objectIds = new List<string> { segmentKey, contextValue.ToString() };
-                    else if (context.Identity?.Key != null)
+                    else if (string.IsNullOrEmpty(condition.Property) && context.Identity?.Key != null)
                         objectIds = new List<string> { segmentKey, context.Identity.Key };
                     else
                         return false;
