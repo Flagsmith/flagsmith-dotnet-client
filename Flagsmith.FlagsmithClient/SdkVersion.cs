@@ -8,7 +8,7 @@ namespace Flagsmith
     public static class SdkVersion
     {
         // x-release-please-start-version
-        private const string Version = "8.0.2";
+        private const string Version = "9.0.0";
         // x-release-please-end
 
         /// <summary>

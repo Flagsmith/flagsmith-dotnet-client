@@ -1,5 +1,30 @@
 # Changelog
 
+## [9.0.0](https://github.com/Flagsmith/flagsmith-dotnet-client/compare/v8.0.2...v9.0.0) (2025-11-28)
+
+
+### ⚠ BREAKING CHANGES
+
+* **Client:** Integrate SDK with context-based engine ([#179](https://github.com/Flagsmith/flagsmith-dotnet-client/issues/179))
+
+### Features
+
+* **Client:** Add mapper layer for context-based engine ([#177](https://github.com/Flagsmith/flagsmith-dotnet-client/issues/177)) ([ef5082b](https://github.com/Flagsmith/flagsmith-dotnet-client/commit/ef5082bd59f5a5f3026d14e6d6f529ba3b17eba1))
+* **Client:** Integrate SDK with context-based engine ([#179](https://github.com/Flagsmith/flagsmith-dotnet-client/issues/179)) ([a5f15b6](https://github.com/Flagsmith/flagsmith-dotnet-client/commit/a5f15b668bf1693c601fde33b933fa3080a7d618))
+* Context Values support, `GetEvaluationResult` ([#171](https://github.com/Flagsmith/flagsmith-dotnet-client/issues/171)) ([b064127](https://github.com/Flagsmith/flagsmith-dotnet-client/commit/b0641279374da7cec66afea6d1dc7bcd00b6d7aa))
+* Send a standard `User-Agent: sdk-name/version` header ([#172](https://github.com/Flagsmith/flagsmith-dotnet-client/issues/172)) ([743b767](https://github.com/Flagsmith/flagsmith-dotnet-client/commit/743b76770d42fe93b776a9f81cb2131533422fae))
+
+
+### Bug Fixes
+
+* **Engine:** Fix segment condition evaluation across all system locales ([#175](https://github.com/Flagsmith/flagsmith-dotnet-client/issues/175)) ([be7ad72](https://github.com/Flagsmith/flagsmith-dotnet-client/commit/be7ad72b5a2e14f533602b1cbc3b42c3033efeb2))
+* Exclude identities when PERCENTAGE_SPLIT trait is undefined ([#181](https://github.com/Flagsmith/flagsmith-dotnet-client/issues/181)) ([78f9814](https://github.com/Flagsmith/flagsmith-dotnet-client/commit/78f9814bf58e802fcd4bd5e74085efa33549af85))
+
+
+### Docs
+
+* removing hero image from SDK readme ([#163](https://github.com/Flagsmith/flagsmith-dotnet-client/issues/163)) ([357788f](https://github.com/Flagsmith/flagsmith-dotnet-client/commit/357788fca1023224152d7d50ebd71f93f037e01f))
+
 ## [8.0.2](https://github.com/Flagsmith/flagsmith-dotnet-client/compare/v8.0.1...v8.0.2) (2025-05-23)
 
 
