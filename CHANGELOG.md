@@ -1,5 +1,17 @@
 # Changelog
 
+## [9.0.1](https://github.com/Flagsmith/flagsmith-dotnet-client/compare/v9.0.0...v9.0.1) (2026-04-17)
+
+
+### Bug Fixes
+
+* **CI:** Run CI tests against the expected .NET version ([#182](https://github.com/Flagsmith/flagsmith-dotnet-client/issues/182)) ([281f11f](https://github.com/Flagsmith/flagsmith-dotnet-client/commit/281f11f3e99fba9459f9b78e77f30526c6f1dd90))
+
+
+### CI
+
+* Use NuGet trusted publishing via OIDC ([#186](https://github.com/Flagsmith/flagsmith-dotnet-client/issues/186)) ([44a9201](https://github.com/Flagsmith/flagsmith-dotnet-client/commit/44a9201c5db6536811a1d8cbe27f205997945e17))
+
 ## [9.0.0](https://github.com/Flagsmith/flagsmith-dotnet-client/compare/v8.0.2...v9.0.0) (2025-11-28)
 
 
