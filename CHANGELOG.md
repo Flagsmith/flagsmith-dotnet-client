@@ -1,5 +1,19 @@
 # Changelog
 
+## [9.0.1](https://github.com/Flagsmith/flagsmith-dotnet-client/compare/v9.0.0...v9.0.1) (2026-05-15)
+
+
+### Bug Fixes
+
+* **CI:** Run CI tests against the expected .NET version ([#182](https://github.com/Flagsmith/flagsmith-dotnet-client/issues/182)) ([281f11f](https://github.com/Flagsmith/flagsmith-dotnet-client/commit/281f11f3e99fba9459f9b78e77f30526c6f1dd90))
+* respect rule type for sub-rules in segment evaluation ([#189](https://github.com/Flagsmith/flagsmith-dotnet-client/issues/189)) ([fc8f50f](https://github.com/Flagsmith/flagsmith-dotnet-client/commit/fc8f50f2004363c951d3c64dcd04d8ffd3cc0c87))
+
+
+### CI
+
+* setup Renovate for engine-test-data tracking ([#188](https://github.com/Flagsmith/flagsmith-dotnet-client/issues/188)) ([1333de9](https://github.com/Flagsmith/flagsmith-dotnet-client/commit/1333de9b3c02f2ad1b6424c54d3cba204f6cb3f2))
+* Use NuGet trusted publishing via OIDC ([#186](https://github.com/Flagsmith/flagsmith-dotnet-client/issues/186)) ([44a9201](https://github.com/Flagsmith/flagsmith-dotnet-client/commit/44a9201c5db6536811a1d8cbe27f205997945e17))
+
 ## [9.0.0](https://github.com/Flagsmith/flagsmith-dotnet-client/compare/v8.0.2...v9.0.0) (2025-11-28)
 
 
