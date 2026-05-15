@@ -168,7 +168,29 @@ namespace FlagsmithEngine
                         break;
                 }
 
-            return matchesConditions && (rule.Rules?.All(r => ContextMatchesRule(context, r, segmentKey)) ?? true);
+            if (!matchesConditions)
+                return false;
+
+            if (rule.Rules is null || !rule.Rules.Any())
+                return true;
+
+            bool matchesSubRules;
+            switch (rule.Type)
+            {
+                case TypeEnum.All:
+                    matchesSubRules = rule.Rules.All(r => ContextMatchesRule(context, r, segmentKey));
+                    break;
+                case TypeEnum.Any:
+                    matchesSubRules = rule.Rules.Any(r => ContextMatchesRule(context, r, segmentKey));
+                    break;
+                case TypeEnum.None:
+                    matchesSubRules = !rule.Rules.Any(r => ContextMatchesRule(context, r, segmentKey));
+                    break;
+                default:
+                    matchesSubRules = false;
+                    break;
+            }
+            return matchesSubRules;
         }
 
         private static bool ContextMatchesCondition<_, __>(EvaluationContext<_, __> context, Condition condition, string segmentKey)
