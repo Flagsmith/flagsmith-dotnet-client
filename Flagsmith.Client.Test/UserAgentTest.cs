@@ -113,7 +113,7 @@ namespace Flagsmith.FlagsmithClientTest
             var analyticsProcessor = new AnalyticsProcessor(
                 httpClientMock.Object,
                 Fixtures.ApiKey,
-                Fixtures.ApiUrl
+                Fixtures.AnalyticsUri
             );
 
             // When

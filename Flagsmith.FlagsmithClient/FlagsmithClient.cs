@@ -70,7 +70,7 @@ namespace Flagsmith
                     throw new Exception("ValueError: environmentKey is required");
                 }
                 if (_config.EnableAnalytics)
-                    _analyticsProcessor = new AnalyticsProcessor(_config.HttpClient, _config.EnvironmentKey, _config.ApiUri.ToString(), _config.Logger, _config.CustomHeaders);
+                    _analyticsProcessor = new AnalyticsProcessor(_config.HttpClient, _config.EnvironmentKey, _config.AnalyticsUri ?? new Uri(_config.ApiUri, "analytics/flags/"), _config.Logger, _config.CustomHeaders);
 
                 if (_config.EnableLocalEvaluation)
                 {
