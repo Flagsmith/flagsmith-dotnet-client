@@ -199,8 +199,7 @@ namespace Flagsmith
         {
             try
             {
-                var policy = HttpPolicies.GetRetryPolicyAwaitable(_config.Retries);
-                return await (await policy.ExecuteAsync(async () =>
+                return await (await HttpPolicies.ExecuteWithRetryAsync(_config.Retries, async () =>
                 {
                     HttpRequestMessage request = new HttpRequestMessage(method, url)
                     {
