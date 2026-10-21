@@ -3,9 +3,12 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using Flagsmith.Cache;
@@ -197,10 +200,16 @@ namespace Flagsmith
 
         private async Task<string> GetJson(HttpMethod method, string url, string? body = null)
         {
+            var (json, _) = await GetJsonAndHeaders(method, url, body).ConfigureAwait(false);
+            return json;
+        }
+
+        private async Task<(string Json, HttpResponseHeaders Headers)> GetJsonAndHeaders(HttpMethod method, string url, string? body = null)
+        {
             try
             {
                 var policy = HttpPolicies.GetRetryPolicyAwaitable(_config.Retries);
-                return await (await policy.ExecuteAsync(async () =>
+                var response = await policy.ExecuteAsync(async () =>
                 {
                     HttpRequestMessage request = new HttpRequestMessage(method, url)
                     {
@@ -219,7 +228,8 @@ namespace Flagsmith
                     var cancellationTokenSource = new CancellationTokenSource(TimeSpan.FromSeconds(_config.RequestTimeout ?? 100));
                     HttpResponseMessage response = await _config.HttpClient.SendAsync(request, cancellationTokenSource.Token).ConfigureAwait(false);
                     return response.EnsureSuccessStatusCode();
-                }).ConfigureAwait(false)).Content.ReadAsStringAsync().ConfigureAwait(false);
+                }).ConfigureAwait(false);
+                return (await response.Content.ReadAsStringAsync().ConfigureAwait(false), response.Headers);
             }
             catch (HttpRequestException e)
             {
@@ -233,12 +243,41 @@ namespace Flagsmith
             }
         }
 
+        private static string? GetNextPageId(HttpResponseHeaders headers)
+        {
+            if (!headers.TryGetValues("Link", out var links))
+            {
+                return null;
+            }
+            var match = Regex.Match(string.Join(",", links), "<[^>]*[?&]page_id=([^&>]*)[^>]*>;\\s*rel=\"next\"");
+            return match.Success ? Uri.UnescapeDataString(match.Groups[1].Value) : null;
+        }
+
         private async Task GetAndUpdateEnvironmentFromApi()
         {
             try
             {
-                var json = await GetJson(HttpMethod.Get, new Uri(_config.ApiUri, "environment-document/").AbsoluteUri).ConfigureAwait(false);
-                Environment = JsonConvert.DeserializeObject<EnvironmentModel>(json);
+                var stopwatch = Stopwatch.StartNew();
+                var environmentUrl = new Uri(_config.ApiUri, "environment-document/").AbsoluteUri;
+                var (json, headers) = await GetJsonAndHeaders(HttpMethod.Get, environmentUrl).ConfigureAwait(false);
+                var environment = JsonConvert.DeserializeObject<EnvironmentModel>(json);
+                var pageId = GetNextPageId(headers);
+                while (pageId != null)
+                {
+                    var (pageJson, pageHeaders) = await GetJsonAndHeaders(HttpMethod.Get, $"{environmentUrl}?page_id={Uri.EscapeDataString(pageId)}").ConfigureAwait(false);
+                    var page = JsonConvert.DeserializeObject<EnvironmentModel>(pageJson);
+                    environment!.IdentityOverrides ??= new List<IdentityModel>();
+                    environment.IdentityOverrides.AddRange(page?.IdentityOverrides ?? new List<IdentityModel>());
+                    pageId = GetNextPageId(pageHeaders);
+                }
+                if (stopwatch.Elapsed > _config.EnvironmentRefreshInterval)
+                {
+                    _config.Logger?.LogWarning(
+                        "Fetching the environment document took {Elapsed}, longer than the environment refresh interval of {RefreshInterval}; raise the refresh interval or reduce the environment size.",
+                        stopwatch.Elapsed,
+                        _config.EnvironmentRefreshInterval);
+                }
+                Environment = environment;
                 _evaluationContext = Mappers.MapEnvironmentDocumentToContext(Environment);
                 _config.Logger?.LogInformation("Local Environment updated: " + json);
             }
