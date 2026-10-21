@@ -82,6 +82,7 @@ namespace Flagsmith.FlagsmithClientTest
           'id': 100,
           'multivariate_feature_option': {
             'id': 10,
+            'key': 'variant_a_key',
             'value': 'variant_a'
           },
           'mv_fs_value_uuid': 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',

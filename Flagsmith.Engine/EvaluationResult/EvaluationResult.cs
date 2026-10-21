@@ -65,6 +65,14 @@ namespace FlagsmithEngine
         /// </summary>
         [JsonProperty("value", Required = Required.AllowNull)]
         public object Value { get; set; }
+
+        /// <summary>
+        /// A stable identifier of the multivariate variant the identity was bucketed into: the
+        /// variant's key, "control" for the control bucket, or null when no multivariate split
+        /// applied (a standard feature, an unkeyed variant, or evaluation without an identity).
+        /// </summary>
+        [JsonProperty("variant", Required = Required.AllowNull)]
+        public string Variant { get; set; }
     }
 
     public partial class SegmentResult<SegmentMetadataT>

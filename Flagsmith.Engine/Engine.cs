@@ -17,12 +17,16 @@ namespace FlagsmithEngine
         public string SegmentName { get; set; }
     }
 
-    public class Engine : IEngine
+    public partial class Engine : IEngine
     {
         public static Hashing Hashing = new Hashing();
 
         public const double StrongestPriority = double.NegativeInfinity;
         public const double WeakestPriority = double.PositiveInfinity;
+
+        public const string CircularDependencyReason = "ERROR; code=CIRCULAR_DEPENDENCY";
+
+        private const string ControlVariant = "control";
 
         /// <summary>
         /// Get the evaluation result for a given context
@@ -35,9 +39,20 @@ namespace FlagsmithEngine
         {
             context = GetEnrichedEvaluationContext(context);
             var result = new EvaluationResult<SegmentMetadataT, FeatureMetadataT>();
-            var segmentEvaluationResult = EvaluateSegments(context);
+            var flagDependencies = new FlagDependencies<SegmentMetadataT, FeatureMetadataT>(context);
+            var segmentEvaluationResult = EvaluateSegments(context, flagDependencies);
             result.Flags = EvaluateFlags(context, segmentEvaluationResult.SegmentOverrides);
             result.Segments = segmentEvaluationResult.Segments;
+
+            if (flagDependencies.Used)
+            {
+                foreach (var resolvedFlag in flagDependencies.Resolved)
+                    result.Flags[resolvedFlag.Key] = resolvedFlag.Value;
+                foreach (var featureName in flagDependencies.Cyclic)
+                    if (result.Flags.TryGetValue(featureName, out var cyclicFlag))
+                        cyclicFlag.Reason = CircularDependencyReason;
+            }
+
             return result;
         }
 
@@ -54,7 +69,7 @@ namespace FlagsmithEngine
             return context;
         }
 
-        private static (SegmentResult<SegmentMetadataT>[] Segments, Dictionary<string, SegmentOverride<FeatureMetadataT>> SegmentOverrides) EvaluateSegments<SegmentMetadataT, FeatureMetadataT>(EvaluationContext<SegmentMetadataT, FeatureMetadataT> context)
+        private static (SegmentResult<SegmentMetadataT>[] Segments, Dictionary<string, SegmentOverride<FeatureMetadataT>> SegmentOverrides) EvaluateSegments<SegmentMetadataT, FeatureMetadataT>(EvaluationContext<SegmentMetadataT, FeatureMetadataT> context, FlagDependencies<SegmentMetadataT, FeatureMetadataT> flagDependencies)
         {
             var segmentOverrides = new Dictionary<string, SegmentOverride<FeatureMetadataT>>();
 
@@ -67,7 +82,7 @@ namespace FlagsmithEngine
             {
                 var segmentContext = segmentItem.Value;
 
-                if (!IsContextInSegment(context, segmentContext))
+                if (!flagDependencies.TryMatchSegment(segmentItem.Key, out var matches) || !matches)
                     continue;
 
                 segmentResults.Add(new SegmentResult<SegmentMetadataT>
@@ -81,13 +96,9 @@ namespace FlagsmithEngine
 
                 foreach (var segmentOverride in segmentContext.Overrides)
                 {
-                    var featureName = segmentOverride.Name;
-                    if (segmentOverrides.ContainsKey(featureName))
-                    {
-                        var existingPriority = segmentOverrides[featureName].FeatureContext.Priority ?? WeakestPriority;
-                        if ((segmentOverride.Priority ?? WeakestPriority) > existingPriority)
-                            continue;
-                    }
+                    segmentOverrides.TryGetValue(segmentOverride.Name, out var incumbent);
+                    if (!WinsOver(segmentOverride, incumbent?.FeatureContext))
+                        continue;
                     segmentOverrides[segmentOverride.Name] = new SegmentOverride<FeatureMetadataT>
                     {
                         FeatureContext = segmentOverride,
@@ -97,6 +108,14 @@ namespace FlagsmithEngine
             }
 
             return (segmentResults.ToArray(), segmentOverrides);
+        }
+
+        /// <summary>
+        /// Whether a segment override takes precedence over the one held so far: the lowest priority wins, and the latest seen wins a tie.
+        /// </summary>
+        private static bool WinsOver<FeatureMetadataT>(FeatureContext<FeatureMetadataT> candidate, FeatureContext<FeatureMetadataT> incumbent)
+        {
+            return incumbent is null || (candidate.Priority ?? WeakestPriority) <= (incumbent.Priority ?? WeakestPriority);
         }
 
         private static Dictionary<string, FlagResult<FeatureMetadataT>> EvaluateFlags<Any, FeatureMetadataT>(EvaluationContext<Any, FeatureMetadataT> context, Dictionary<string, SegmentOverride<FeatureMetadataT>> segmentOverrides)
@@ -116,7 +135,7 @@ namespace FlagsmithEngine
                     flags[featureName] = GetFlagResult(
                         context,
                         segmentOverride.FeatureContext,
-                        $"TARGETING_MATCH; segment={segmentOverride.SegmentName}"
+                        GetTargetingMatchReason(segmentOverride.SegmentName)
                     );
                 }
                 else
@@ -132,19 +151,22 @@ namespace FlagsmithEngine
             return flags;
         }
 
-        private static bool IsContextInSegment<_, __>(EvaluationContext<_, __> context, SegmentContext<_, __> segmentContext)
+        private static string GetTargetingMatchReason(string segmentName) => $"TARGETING_MATCH; segment={segmentName}";
+
+        private static bool IsContextInSegment<_, __>(EvaluationContext<_, __> context, SegmentContext<_, __> segmentContext, FlagDependencies<_, __> flagDependencies)
         {
             return (
                 segmentContext?.Rules != null &&
                 segmentContext.Rules.All(rule => ContextMatchesRule(
                     context,
                     rule,
-                    segmentContext.Key
+                    segmentContext.Key,
+                    flagDependencies
                 ))
             );
         }
 
-        private static bool ContextMatchesRule<_, __>(EvaluationContext<_, __> context, SegmentRule rule, string segmentKey)
+        private static bool ContextMatchesRule<_, __>(EvaluationContext<_, __> context, SegmentRule rule, string segmentKey, FlagDependencies<_, __> flagDependencies)
         {
             bool matchesConditions;
 
@@ -155,13 +177,13 @@ namespace FlagsmithEngine
                 switch (rule.Type)
                 {
                     case TypeEnum.All:
-                        matchesConditions = rule.Conditions.All(condition => ContextMatchesCondition(context, condition, segmentKey));
+                        matchesConditions = rule.Conditions.All(condition => ContextMatchesCondition(context, condition, segmentKey, flagDependencies));
                         break;
                     case TypeEnum.Any:
-                        matchesConditions = rule.Conditions.Any(condition => ContextMatchesCondition(context, condition, segmentKey));
+                        matchesConditions = rule.Conditions.Any(condition => ContextMatchesCondition(context, condition, segmentKey, flagDependencies));
                         break;
                     case TypeEnum.None:
-                        matchesConditions = !rule.Conditions.Any(condition => ContextMatchesCondition(context, condition, segmentKey));
+                        matchesConditions = !rule.Conditions.Any(condition => ContextMatchesCondition(context, condition, segmentKey, flagDependencies));
                         break;
                     default:
                         matchesConditions = false;
@@ -178,13 +200,13 @@ namespace FlagsmithEngine
             switch (rule.Type)
             {
                 case TypeEnum.All:
-                    matchesSubRules = rule.Rules.All(r => ContextMatchesRule(context, r, segmentKey));
+                    matchesSubRules = rule.Rules.All(r => ContextMatchesRule(context, r, segmentKey, flagDependencies));
                     break;
                 case TypeEnum.Any:
-                    matchesSubRules = rule.Rules.Any(r => ContextMatchesRule(context, r, segmentKey));
+                    matchesSubRules = rule.Rules.Any(r => ContextMatchesRule(context, r, segmentKey, flagDependencies));
                     break;
                 case TypeEnum.None:
-                    matchesSubRules = !rule.Rules.Any(r => ContextMatchesRule(context, r, segmentKey));
+                    matchesSubRules = !rule.Rules.Any(r => ContextMatchesRule(context, r, segmentKey, flagDependencies));
                     break;
                 default:
                     matchesSubRules = false;
@@ -193,9 +215,9 @@ namespace FlagsmithEngine
             return matchesSubRules;
         }
 
-        private static bool ContextMatchesCondition<_, __>(EvaluationContext<_, __> context, Condition condition, string segmentKey)
+        private static bool ContextMatchesCondition<_, __>(EvaluationContext<_, __> context, Condition condition, string segmentKey, FlagDependencies<_, __> flagDependencies)
         {
-            var contextValue = GetContextValue(context, condition.Property);
+            var contextValue = GetContextValue(context, condition.Property, flagDependencies);
 
             switch (condition.Operator)
             {
@@ -257,14 +279,17 @@ namespace FlagsmithEngine
             }
         }
 
-        private static object GetContextValue<_, __>(EvaluationContext<_, __> context, string property)
+        private static object GetContextValue<_, __>(EvaluationContext<_, __> context, string property, FlagDependencies<_, __> flagDependencies)
         {
             object value = null;
             if (!(context.Identity?.Traits?.TryGetValue(property, out value) ?? false))
             {
                 if (property.StartsWith("$."))
                 {
-                    var jToken = JToken.FromObject(context).SelectToken(property);
+                    var root = TryGetFlagDependencyName(property, out var featureName)
+                        ? GetFlagsRoot(featureName, flagDependencies.Get(featureName))
+                        : JToken.FromObject(context);
+                    var jToken = root.SelectToken(property);
                     if (jToken is JValue jValue)
                     {
                         value = jValue.ToObject<object>();
@@ -277,10 +302,12 @@ namespace FlagsmithEngine
         private static FlagResult<FeatureMetadataT> GetFlagResult<_, FeatureMetadataT>(EvaluationContext<_, FeatureMetadataT> context, FeatureContext<FeatureMetadataT> featureContext, String reason)
         {
             FlagResult<FeatureMetadataT> flagResult = null;
+            string variantKey = null;
             var key = context?.Identity?.Key;
 
-            if (key != null && featureContext.Variants != null)
+            if (key != null && featureContext.Variants != null && featureContext.Variants.Any())
             {
+                variantKey = ControlVariant;
                 var percentageValue = Hashing.GetHashedPercentageForObjectIds(new List<string>() { featureContext.Key, key });
                 var startPercentage = 0.0f;
                 float limit;
@@ -298,6 +325,7 @@ namespace FlagsmithEngine
                             Value = variant.Value,
                             Metadata = featureContext.Metadata,
                             Reason = FormattableString.Invariant($"SPLIT; weight={weight}"),
+                            Variant = variant.Key,
                         };
                         break;
                     }
@@ -313,7 +341,8 @@ namespace FlagsmithEngine
                     Enabled = featureContext.Enabled,
                     Value = featureContext.Value,
                     Metadata = featureContext.Metadata,
-                    Reason = reason
+                    Reason = reason,
+                    Variant = variantKey,
                 };
             }
 
