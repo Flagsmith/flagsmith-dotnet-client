@@ -14,10 +14,11 @@ namespace FlagsmithEngine
         private sealed class FlagDependencies<SegmentMetadataT, FeatureMetadataT>
         {
             private readonly EvaluationContext<SegmentMetadataT, FeatureMetadataT> _context;
-            private readonly Dictionary<string, FlagResult<FeatureMetadataT>> _resolved = new Dictionary<string, FlagResult<FeatureMetadataT>>();
-            private readonly HashSet<string> _cyclic = new HashSet<string>();
-            private readonly List<string> _resolving = new List<string>();
-            private readonly Dictionary<string, bool> _segmentMatches = new Dictionary<string, bool>();
+            // Allocated once a condition first reads a flag, sparing evaluations without Flag Dependency
+            private Dictionary<string, FlagResult<FeatureMetadataT>> _resolved;
+            private HashSet<string> _cyclic;
+            private List<string> _resolving;
+            private Dictionary<string, bool> _segmentMatches;
             private Dictionary<string, List<string>> _segmentKeysByFeatureName;
 
             public FlagDependencies(EvaluationContext<SegmentMetadataT, FeatureMetadataT> context)
@@ -28,12 +29,12 @@ namespace FlagsmithEngine
             /// <summary>
             /// Whether any segment condition has read a flag.
             /// </summary>
-            public bool Used { get; private set; }
+            public bool Used => _resolved != null;
 
             /// <summary>
             /// Incremented whenever a dependency cycle is cut. A segment whose evaluation increments it read a flag that could not be resolved.
             /// </summary>
-            public int CycleHits { get; private set; }
+            private int CycleHits { get; set; }
 
             /// <summary>
             /// Flags resolved for segment conditions, mapped by feature name. Flags in a dependency cycle are never resolved.
@@ -50,9 +51,15 @@ namespace FlagsmithEngine
             /// </summary>
             public FlagResult<FeatureMetadataT> Get(string featureName)
             {
+                if (!Used)
+                {
+                    _resolved = new Dictionary<string, FlagResult<FeatureMetadataT>>();
+                    _cyclic = new HashSet<string>();
+                    _resolving = new List<string>();
+                    _segmentMatches = new Dictionary<string, bool>();
+                }
                 if (!_resolved.TryGetValue(featureName, out var flag))
                 {
-                    Used = true;
                     Resolve(featureName);
                     _resolved.TryGetValue(featureName, out flag);
                 }
@@ -112,20 +119,27 @@ namespace FlagsmithEngine
                 return segmentOverride;
             }
 
-            private bool MatchesSegment(string segmentKey)
+            /// <summary>
+            /// Whether the context matches a segment, evaluating each segment once. Returns false when the verdict is
+            /// unsound, having read a flag left unresolved by a dependency cycle.
+            /// </summary>
+            public bool TryMatchSegment(string segmentKey, out bool matches)
             {
-                if (_segmentMatches.TryGetValue(segmentKey, out var matches))
-                    return matches;
+                if (Used && _segmentMatches.TryGetValue(segmentKey, out matches))
+                    return true;
 
                 var cycleHits = CycleHits;
                 matches = IsContextInSegment(_context, _context.Segments[segmentKey], this);
 
                 if (CycleHits != cycleHits)
-                    return false; // Rests on a flag left unresolved by a dependency cycle
+                    return false;
 
-                _segmentMatches[segmentKey] = matches;
-                return matches;
+                if (Used)
+                    _segmentMatches[segmentKey] = matches;
+                return true;
             }
+
+            private bool MatchesSegment(string segmentKey) => TryMatchSegment(segmentKey, out var matches) && matches;
 
             private Dictionary<string, List<string>> GetSegmentKeysByFeatureName()
             {
