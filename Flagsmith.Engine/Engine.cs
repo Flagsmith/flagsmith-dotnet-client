@@ -77,22 +77,12 @@ namespace FlagsmithEngine
             { return (Array.Empty<SegmentResult<SegmentMetadataT>>(), segmentOverrides); }
 
             var segmentResults = new List<SegmentResult<SegmentMetadataT>>();
-            var cycleHits = flagDependencies.CycleHits;
 
             foreach (var segmentItem in context.Segments)
             {
                 var segmentContext = segmentItem.Value;
 
-                var matches = IsContextInSegment(context, segmentContext, flagDependencies);
-
-                if (flagDependencies.CycleHits != cycleHits)
-                {
-                    // A segment read a flag left unresolved by a dependency cycle, so neither verdict is sound
-                    cycleHits = flagDependencies.CycleHits;
-                    continue;
-                }
-
-                if (!matches)
+                if (!flagDependencies.TryMatchSegment(segmentItem.Key, out var matches) || !matches)
                     continue;
 
                 segmentResults.Add(new SegmentResult<SegmentMetadataT>
