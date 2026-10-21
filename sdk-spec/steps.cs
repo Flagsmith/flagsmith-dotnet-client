@@ -7,7 +7,7 @@ using Flagsmith;
 
 public static class Steps
 {
-    // Given an SDK client for the environment
+    // Create the SDK client
     public static FlagsmithClient CreateClient(string environmentKey, string apiUrl) =>
         new(new FlagsmithConfiguration { EnvironmentKey = environmentKey, ApiUri = new Uri(apiUrl) });
 
