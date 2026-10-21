@@ -1,5 +1,27 @@
 # Changelog
 
+## [9.0.1](https://github.com/Flagsmith/flagsmith-dotnet-client/compare/v9.0.0...v9.0.1) (2026-10-21)
+
+
+### Bug Fixes
+
+* **CI:** Run CI tests against the expected .NET version ([#182](https://github.com/Flagsmith/flagsmith-dotnet-client/issues/182)) ([281f11f](https://github.com/Flagsmith/flagsmith-dotnet-client/commit/281f11f3e99fba9459f9b78e77f30526c6f1dd90))
+* respect rule type for sub-rules in segment evaluation ([#189](https://github.com/Flagsmith/flagsmith-dotnet-client/issues/189)) ([fc8f50f](https://github.com/Flagsmith/flagsmith-dotnet-client/commit/fc8f50f2004363c951d3c64dcd04d8ffd3cc0c87))
+
+
+### Dependency Updates
+
+* update dependency flagsmith.enginetest/enginetestdata to v3.10.0 ([#193](https://github.com/Flagsmith/flagsmith-dotnet-client/issues/193)) ([a61d428](https://github.com/Flagsmith/flagsmith-dotnet-client/commit/a61d4286145936d328ac80fb2f9d9a601a9c3982))
+
+
+### CI
+
+* Label Renovate's SDK spec bump PRs ([#204](https://github.com/Flagsmith/flagsmith-dotnet-client/issues/204)) ([e2c5320](https://github.com/Flagsmith/flagsmith-dotnet-client/commit/e2c5320bf13abb1ffef48a0d7f64d74c1b49656d))
+* Run the Flagsmith SDK behavioural spec ([#202](https://github.com/Flagsmith/flagsmith-dotnet-client/issues/202)) ([7ce0c90](https://github.com/Flagsmith/flagsmith-dotnet-client/commit/7ce0c90fd086f63e0b8d93daa326f4f53262a0cf))
+* setup Renovate for engine-test-data tracking ([#188](https://github.com/Flagsmith/flagsmith-dotnet-client/issues/188)) ([1333de9](https://github.com/Flagsmith/flagsmith-dotnet-client/commit/1333de9b3c02f2ad1b6424c54d3cba204f6cb3f2))
+* track engine-test-data semver tags via Renovate ([#192](https://github.com/Flagsmith/flagsmith-dotnet-client/issues/192)) ([1f93d10](https://github.com/Flagsmith/flagsmith-dotnet-client/commit/1f93d10636134e50f3274af3eba5c0a7363fef5b))
+* Use NuGet trusted publishing via OIDC ([#186](https://github.com/Flagsmith/flagsmith-dotnet-client/issues/186)) ([44a9201](https://github.com/Flagsmith/flagsmith-dotnet-client/commit/44a9201c5db6536811a1d8cbe27f205997945e17))
+
 ## [9.0.0](https://github.com/Flagsmith/flagsmith-dotnet-client/compare/v8.0.2...v9.0.0) (2025-11-28)
 
 
