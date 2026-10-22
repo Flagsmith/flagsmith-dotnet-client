@@ -28,6 +28,15 @@ namespace Flagsmith
         {
             return this.Feature.Name;
         }
+
+        /// <summary>
+        /// The feature id, which <see cref="IFlag"/> does not expose. Used to round-trip a flag
+        /// through the cache without losing it.
+        /// </summary>
+        internal int GetFeatureId()
+        {
+            return this.Feature != null ? this.Feature.Id : default;
+        }
         public override string ToString()
         {
             return JsonConvert.SerializeObject(this);

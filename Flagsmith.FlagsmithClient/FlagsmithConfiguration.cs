@@ -74,6 +74,13 @@ namespace Flagsmith
         public CacheConfig CacheConfig { get; set; } = new CacheConfig(false);
 
         /// <summary>
+        /// If enabled, the SDK will cache the flags in the HybridCache instance provided by the host
+        /// application, for the duration specified in the HybridCacheConfig. Cannot be combined with
+        /// the CacheConfig.
+        /// </summary>
+        public HybridCacheConfig HybridCacheConfig { get; set; } = new HybridCacheConfig();
+
+        /// <summary>
         /// Indicates whether the client is in offline mode.
         /// </summary>
         public bool OfflineMode { get; set; }

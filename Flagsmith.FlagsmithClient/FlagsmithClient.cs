@@ -9,6 +9,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Flagsmith.Cache;
+using Flagsmith.Cache.Hybrid;
 using Flagsmith.Extensions;
 using Flagsmith.Providers;
 using FlagsmithEngine;
@@ -45,6 +46,7 @@ namespace Flagsmith
         private AnalyticsProcessor? _analyticsProcessor;
         private RegularFlagListCache? _regularFlagListCache;
         private ConcurrentDictionary<string, IdentityFlagListCache>? _flagListCacheDictionary;
+        private HybridFlagListCache? _hybridFlagListCache;
 
         private void Initialise()
         {
@@ -55,6 +57,24 @@ namespace Flagsmith
             else if (_config.DefaultFlagHandler != null && _config.OfflineHandler != null)
             {
                 throw new Exception("ValueError: Cannot use both defaultFlagHandler and offlineHandler.");
+            }
+            else if (_config.CacheConfig.Enabled && _config.HybridCacheConfig.Enabled)
+            {
+                throw new Exception("ValueError: Cannot use both cacheConfig and hybridCacheConfig.");
+            }
+            else if (_config.HybridCacheConfig.Enabled && _config.HybridCacheConfig.Cache is null)
+            {
+                throw new Exception("ValueError: hybridCacheConfig.Cache must be provided to use HybridCache.");
+            }
+            // HybridCache rejects a non-positive expiration when it writes, and that throw would
+            // otherwise surface from every flag read rather than from here.
+            else if (_config.HybridCacheConfig.Enabled && _config.HybridCacheConfig.Duration <= TimeSpan.Zero)
+            {
+                throw new Exception("ValueError: hybridCacheConfig.Duration must be positive.");
+            }
+            else if (_config.HybridCacheConfig.Enabled && _config.HybridCacheConfig.LocalCacheDuration <= TimeSpan.Zero)
+            {
+                throw new Exception("ValueError: hybridCacheConfig.LocalCacheDuration must be positive.");
             }
 
             if (_config.OfflineHandler != null)
@@ -92,6 +112,12 @@ namespace Flagsmith
                     _config.CacheConfig.DurationInMinutes);
                 _flagListCacheDictionary = new ConcurrentDictionary<string, IdentityFlagListCache>();
             }
+            else if (_config.HybridCacheConfig.Enabled)
+            {
+                _hybridFlagListCache = new HybridFlagListCache(_config.HybridCacheConfig,
+                    _config.EnvironmentKey,
+                    flags => Flags.FromApiFlag(_analyticsProcessor, _config.DefaultFlagHandler, flags));
+            }
         }
 
         public FlagsmithClient(FlagsmithConfiguration configuration)
@@ -108,6 +134,11 @@ namespace Flagsmith
             if (_config.CacheConfig.Enabled)
             {
                 return _regularFlagListCache!.GetLatestFlags(GetFeatureFlagsFromCorrectSource);
+            }
+
+            if (_hybridFlagListCache != null)
+            {
+                return await _hybridFlagListCache.GetEnvironmentFlags(GetFeatureFlagsFromCorrectSource).ConfigureAwait(false);
             }
 
             return await GetFeatureFlagsFromCorrectSource().ConfigureAwait(false);
@@ -138,6 +169,11 @@ namespace Flagsmith
                 var flagListCache = GetFlagListCacheByIdentity(identityWrapper);
 
                 return flagListCache.GetLatestFlags(GetIdentityFlagsFromCorrectSource);
+            }
+
+            if (_hybridFlagListCache != null)
+            {
+                return await _hybridFlagListCache.GetIdentityFlags(identityWrapper, GetIdentityFlagsFromCorrectSource).ConfigureAwait(false);
             }
 
             if (_config.OfflineMode)
@@ -257,13 +293,17 @@ namespace Flagsmith
                 var flags = JsonConvert.DeserializeObject<List<Flag>>(json)?.ToList<IFlag>();
                 return Flags.FromApiFlag(_analyticsProcessor, _config.DefaultFlagHandler, flags);
             }
-            catch (FlagsmithAPIError e)
+            catch (FlagsmithAPIError)
             {
                 if (Environment != null)
                 {
                     return this.GetEnvironmentFlagsFromLocalEvaluationContext();
                 }
-                return _config.DefaultFlagHandler != null ? Flags.FromApiFlag(_analyticsProcessor, _config.DefaultFlagHandler, null) : throw e;
+                if (_config.DefaultFlagHandler == null)
+                {
+                    throw;
+                }
+                return Flags.FromApiFlag(_analyticsProcessor, _config.DefaultFlagHandler, null);
             }
         }
 
@@ -279,13 +319,17 @@ namespace Flagsmith
 
                 return Flags.FromApiFlag(_analyticsProcessor, _config.DefaultFlagHandler, flags);
             }
-            catch (FlagsmithAPIError e)
+            catch (FlagsmithAPIError)
             {
                 if (Environment != null)
                 {
                     return this.GetIdentityFlagsFromLocalEvaluationContext(identity, traits);
                 }
-                return _config.DefaultFlagHandler != null ? Flags.FromApiFlag(_analyticsProcessor, _config.DefaultFlagHandler, null) : throw e;
+                if (_config.DefaultFlagHandler == null)
+                {
+                    throw;
+                }
+                return Flags.FromApiFlag(_analyticsProcessor, _config.DefaultFlagHandler, null);
             }
         }
 
