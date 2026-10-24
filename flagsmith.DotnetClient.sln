@@ -13,6 +13,10 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Flagsmith.FlagsmithClient",
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ClientTest", "Flagsmith.Client.Test\ClientTest.csproj", "{31F8CB2A-F642-4786-A4FF-688D18B2B10D}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Polly7CompatTest", "Flagsmith.PollyCompatTest\Polly7\Polly7CompatTest.csproj", "{CF439106-9890-4808-8B68-D042B545DCAE}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PollyCore8CompatTest", "Flagsmith.PollyCompatTest\PollyCore8\PollyCore8CompatTest.csproj", "{FF02944D-B602-4C94-A9E0-F3BBCB1F5443}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -35,6 +39,14 @@ Global
 		{31F8CB2A-F642-4786-A4FF-688D18B2B10D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{31F8CB2A-F642-4786-A4FF-688D18B2B10D}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{31F8CB2A-F642-4786-A4FF-688D18B2B10D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{CF439106-9890-4808-8B68-D042B545DCAE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CF439106-9890-4808-8B68-D042B545DCAE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CF439106-9890-4808-8B68-D042B545DCAE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CF439106-9890-4808-8B68-D042B545DCAE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FF02944D-B602-4C94-A9E0-F3BBCB1F5443}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FF02944D-B602-4C94-A9E0-F3BBCB1F5443}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FF02944D-B602-4C94-A9E0-F3BBCB1F5443}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FF02944D-B602-4C94-A9E0-F3BBCB1F5443}.Release|Any CPU.Build.0 = Release|Any CPU
 		{25D89E01-B26A-416A-96E0-9EA2B9A7F07A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{25D89E01-B26A-416A-96E0-9EA2B9A7F07A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{25D89E01-B26A-416A-96E0-9EA2B9A7F07A}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -46,6 +58,8 @@ Global
 	GlobalSection(NestedProjects) = preSolution
 		{2F55E63A-512C-4B9D-9A6B-8B4F50A23CA2} = {28F7ADEC-83A8-438D-BA32-E43D143AB02E}
 		{31F8CB2A-F642-4786-A4FF-688D18B2B10D} = {28F7ADEC-83A8-438D-BA32-E43D143AB02E}
+		{CF439106-9890-4808-8B68-D042B545DCAE} = {28F7ADEC-83A8-438D-BA32-E43D143AB02E}
+		{FF02944D-B602-4C94-A9E0-F3BBCB1F5443} = {28F7ADEC-83A8-438D-BA32-E43D143AB02E}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {4970AB8B-879D-4EE9-86BC-33649DB7277D}
