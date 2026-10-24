@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Net.Http;
 using FlagsmithEngine.Environment.Models;
@@ -10,7 +11,8 @@ namespace Flagsmith.FlagsmithClientTest
     {
         public static string ApiKey => "ser.test_key";
         public static string ApiUrl => "http://test_url/";
-        public static AnalyticsProcessorTest GetAnalyticalProcessorTest() => new(new HttpClient(), ApiKey, ApiUrl);
+        public static Uri AnalyticsUri => new Uri(ApiUrl + "analytics/flags/");
+        public static AnalyticsProcessorTest GetAnalyticalProcessorTest() => new(new HttpClient(), ApiKey, AnalyticsUri);
         public static JObject JsonObject = JObject.Parse(@"{
   'api_key': 'test_key',
   'name': 'Test Environment',

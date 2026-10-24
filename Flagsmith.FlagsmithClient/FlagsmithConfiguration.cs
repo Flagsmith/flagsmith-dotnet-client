@@ -20,6 +20,14 @@ namespace Flagsmith
         public Uri ApiUri { get; set; } = DefaultApiUri;
 
         /// <summary>
+        /// URI of the Flagsmith analytics events API endpoint. Set this when analytics are not served by the same
+        /// API as flags, e.g. when using Edge Proxy. Defaults to the <c>analytics/flags/</c> endpoint relative to
+        /// <see cref="ApiUri"/>.
+        /// <example><code>new Uri("https://flagsmith.example.com/api/v1/analytics/flags/")</code></example>
+        /// </summary>
+        public Uri? AnalyticsUri { get; set; }
+
+        /// <summary>
         /// The environment key obtained from Flagsmith interface.
         /// </summary>
         public string EnvironmentKey { get; set; }
