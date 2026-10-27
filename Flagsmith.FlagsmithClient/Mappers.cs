@@ -144,6 +144,7 @@ namespace Flagsmith
                     feature.Variants = featureState.MultivariateFeatureStateValues
                         .Select(mv => new FeatureValue
                         {
+                            Key = mv.MultivariateFeatureOption.Key,
                             Value = mv.MultivariateFeatureOption.Value,
                             Weight = mv.PercentageAllocation,
                             Priority = mv.Id != 0 ? mv.Id : Array.IndexOf(sortedUUIDs, mv.MvFsValueUUID),

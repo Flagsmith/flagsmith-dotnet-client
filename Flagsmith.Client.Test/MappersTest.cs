@@ -94,11 +94,13 @@ namespace Flagsmith.FlagsmithClientTest
             Assert.Equal(2, mvFeatureWithIds.Metadata.Id);
 
             // First variant: ID=100, should have priority 100
+            Assert.Equal("variant_a_key", mvFeatureWithIds.Variants[0].Key);
             Assert.Equal("variant_a", mvFeatureWithIds.Variants[0].Value);
             Assert.Equal(30.0, mvFeatureWithIds.Variants[0].Weight);
             Assert.Equal(100, mvFeatureWithIds.Variants[0].Priority);
 
             // Second variant: ID=200, should have priority 200
+            Assert.Null(mvFeatureWithIds.Variants[1].Key);
             Assert.Equal("variant_b", mvFeatureWithIds.Variants[1].Value);
             Assert.Equal(70.0, mvFeatureWithIds.Variants[1].Weight);
             Assert.Equal(200, mvFeatureWithIds.Variants[1].Priority);

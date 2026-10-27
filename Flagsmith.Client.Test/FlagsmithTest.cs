@@ -245,6 +245,92 @@ namespace Flagsmith.FlagsmithClientTest
             Assert.False(flag.Enabled);
             Assert.Equal("some-overridden-value", flag.Value);
         }
+        [Theory]
+        [InlineData("premium", true, "new-checkout")]
+        [InlineData("free", false, "old-checkout")]
+        public async Task TestGetIdentityFlagsServesFlagDependingOnAnotherFlagWhenLocallyEvaluated(string plan, bool expectedEnabled, string expectedValue)
+        {
+            // Given
+            var environmentDocument = @"{
+  'api_key': 'test_key',
+  'name': 'Test Environment',
+  'project': {
+    'name': 'Test project',
+    'organisation': {'feature_analytics': false, 'name': 'Test Org', 'id': 1, 'persist_trait_data': true, 'stop_serving_flags': false},
+    'id': 1,
+    'hide_disabled_flags': false,
+    'segments': [
+      {
+        'id': 1,
+        'name': 'Premium plan',
+        'rules': [{'type': 'ALL', 'rules': [], 'conditions': [{'operator': 'EQUAL', 'property_': 'plan', 'value': 'premium'}]}],
+        'feature_states': [
+          {
+            'django_id': 3,
+            'feature': {'name': 'beta_access', 'type': 'STANDARD', 'id': 1},
+            'feature_state_value': null,
+            'enabled': true,
+            'feature_segment': {'priority': 0},
+            'multivariate_feature_state_values': []
+          }
+        ]
+      },
+      {
+        'id': 2,
+        'name': 'Beta access',
+        'rules': [{'type': 'ALL', 'rules': [], 'conditions': [{'operator': 'EQUAL', 'property_': '$.flags.beta_access.enabled', 'value': 'true'}]}],
+        'feature_states': [
+          {
+            'django_id': 4,
+            'feature': {'name': 'checkout', 'type': 'STANDARD', 'id': 2},
+            'feature_state_value': 'new-checkout',
+            'enabled': true,
+            'feature_segment': {'priority': 1},
+            'multivariate_feature_state_values': []
+          }
+        ]
+      }
+    ]
+  },
+  'id': 1,
+  'feature_states': [
+    {
+      'django_id': 1,
+      'feature': {'name': 'beta_access', 'type': 'STANDARD', 'id': 1},
+      'feature_state_value': null,
+      'enabled': false,
+      'multivariate_feature_state_values': []
+    },
+    {
+      'django_id': 2,
+      'feature': {'name': 'checkout', 'type': 'STANDARD', 'id': 2},
+      'feature_state_value': 'old-checkout',
+      'enabled': false,
+      'multivariate_feature_state_values': []
+    }
+  ],
+  'identity_overrides': []
+}";
+            var mockHttpClient = HttpMocker.MockHttpResponse(new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.OK,
+                Content = new StringContent(environmentDocument)
+            });
+            var flagsmithClientTest = new FlagsmithClient(new FlagsmithConfiguration
+            {
+                EnvironmentKey = Fixtures.ApiKey,
+                HttpClient = mockHttpClient.Object,
+                EnableLocalEvaluation = true
+            });
+
+            // When
+            var flags = await flagsmithClientTest.GetIdentityFlags("identifier", new List<ITrait> { new Trait("plan", plan) });
+
+            // Then
+            var flag = await flags.GetFlag("checkout");
+            Assert.Equal(expectedEnabled, flag.Enabled);
+            Assert.Equal(expectedValue, flag.Value);
+        }
         [Fact]
         public async Task TestRequestConnectionErrorRaisesFlagsmithApiError()
         {
