@@ -63,6 +63,53 @@ namespace EngineTest
             return testCases;
         }
 
+        [Theory]
+        [InlineData(95, Operator.GreaterThan, "90.5")]
+        [InlineData(95, Operator.NotEqual, "90.5")]
+        [InlineData(1, Operator.Equal, "not_an_int")]
+        [InlineData(1.5, Operator.LessThan, "not_a_number")]
+        public void TestGetEvaluationResult_ShouldNotMatchSegment_WhenConditionValueIsNotOfNumericTraitType(object traitValue, Operator conditionOperator, string conditionValue)
+        {
+            // Given
+            var context = new EvaluationContext<object, object>
+            {
+                Environment = new EnvironmentContext { Key = "test-env", Name = "Test Environment" },
+                Identity = new IdentityContext
+                {
+                    Identifier = "user-123",
+                    Traits = new Dictionary<string, object> { { "score", traitValue } },
+                },
+                Features = new Dictionary<string, FeatureContext<object>>(),
+                Segments = new Dictionary<string, SegmentContext<object, object>>
+                {
+                    {
+                        "1", new SegmentContext<object, object>
+                        {
+                            Key = "1",
+                            Name = "high_scorers",
+                            Rules = new[]
+                            {
+                                new SegmentRule
+                                {
+                                    Type = TypeEnum.All,
+                                    Conditions = new[]
+                                    {
+                                        new Condition { Operator = conditionOperator, Property = "score", Value = conditionValue },
+                                    },
+                                },
+                            },
+                        }
+                    },
+                },
+            };
+
+            // When
+            var result = new Engine().GetEvaluationResult(context);
+
+            // Then
+            Assert.Empty(result.Segments);
+        }
+
         [Fact]
         public void TestGetEvaluationResult_ShouldNotMutateOriginalContextIdentity()
         {

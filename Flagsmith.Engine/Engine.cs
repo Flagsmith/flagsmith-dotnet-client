@@ -358,7 +358,7 @@ namespace FlagsmithEngine
             switch (contextValue.GetType().FullName)
             {
                 case "System.Int32":
-                    return IntOperations((Int32)contextValue, condition);
+                    return LongOperations((Int32)contextValue, condition);
                 case "System.Int64":
                     return LongOperations((Int64)contextValue, condition);
                 case "System.Double":
@@ -411,30 +411,25 @@ namespace FlagsmithEngine
             }
         }
 
-        private static bool IntOperations(long contextValue, Condition condition)
-        {
-            switch (condition.Operator)
-            {
-                case Operator.Equal: return contextValue == InvariantConvert.ToInt32(condition.Value.String);
-                case Operator.NotEqual: return contextValue != InvariantConvert.ToInt32(condition.Value.String);
-                case Operator.GreaterThan: return contextValue > InvariantConvert.ToInt32(condition.Value.String);
-                case Operator.GreaterThanInclusive: return contextValue >= InvariantConvert.ToInt32(condition.Value.String);
-                case Operator.LessThan: return contextValue < InvariantConvert.ToInt32(condition.Value.String);
-                case Operator.LessThanInclusive: return contextValue <= InvariantConvert.ToInt32(condition.Value.String);
-                default: throw new ArgumentException("Invalid Operator");
-            }
-        }
-
         private static bool DoubleOperations(double contextValue, Condition condition)
         {
+            double conditionValue;
+            try
+            {
+                conditionValue = InvariantConvert.ToDouble(condition.Value.String);
+            }
+            catch (FormatException)
+            {
+                return false;
+            }
             switch (condition.Operator)
             {
-                case Operator.Equal: return contextValue == InvariantConvert.ToDouble(condition.Value.String);
-                case Operator.NotEqual: return contextValue != InvariantConvert.ToDouble(condition.Value.String);
-                case Operator.GreaterThan: return contextValue > InvariantConvert.ToDouble(condition.Value.String);
-                case Operator.GreaterThanInclusive: return contextValue >= InvariantConvert.ToDouble(condition.Value.String);
-                case Operator.LessThan: return contextValue < InvariantConvert.ToDouble(condition.Value.String);
-                case Operator.LessThanInclusive: return contextValue <= InvariantConvert.ToDouble(condition.Value.String);
+                case Operator.Equal: return contextValue == conditionValue;
+                case Operator.NotEqual: return contextValue != conditionValue;
+                case Operator.GreaterThan: return contextValue > conditionValue;
+                case Operator.GreaterThanInclusive: return contextValue >= conditionValue;
+                case Operator.LessThan: return contextValue < conditionValue;
+                case Operator.LessThanInclusive: return contextValue <= conditionValue;
                 default: throw new ArgumentException("Invalid Operator");
             }
         }
