@@ -2,12 +2,14 @@
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Web;
 using Moq;
+using Newtonsoft.Json.Linq;
 
 namespace Flagsmith.FlagsmithClientTest
 {
@@ -96,6 +98,13 @@ namespace Flagsmith.FlagsmithClientTest
                 ((req.Content != null && req.Content.ReadAsStringAsync().Result == expectedBodyJson) || (expectedBodyJson == null)) &&
                 (queryString == "" || QueryStringsMatch(req, queryString))), It.IsAny<CancellationToken>()), times);
         }
+
+        public static List<JObject> PostedJson(this Mock<HttpClient> mockHttpClient, string path) =>
+            mockHttpClient.Invocations
+                .Select(invocation => (HttpRequestMessage)invocation.Arguments[0])
+                .Where(request => request.Method == HttpMethod.Post && request.RequestUri.AbsolutePath == path)
+                .Select(request => JObject.Parse(request.Content.ReadAsStringAsync().Result))
+                .ToList();
 
         private static bool QueryStringsMatch(HttpRequestMessage req, string expectedQueryString)
         {
