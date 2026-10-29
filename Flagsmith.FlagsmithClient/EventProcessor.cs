@@ -34,12 +34,17 @@ namespace Flagsmith
         private readonly object _lock = new object();
         private List<Event> _buffer = new List<Event>();
         private readonly HashSet<(string?, string?, string?, string?)> _bufferedExposures = new HashSet<(string?, string?, string?, string?)>();
+        private readonly HashSet<Task> _pendingSends = new HashSet<Task>();
 
         public EventProcessor(HttpClient httpClient, string environmentKey, Uri eventsApiUri, TimeSpan flushInterval, int maxBufferItems, TimeSpan requestTimeout, ILogger? logger)
         {
             if (maxBufferItems < 1)
             {
                 throw new ArgumentOutOfRangeException(nameof(maxBufferItems), "The events buffer must hold at least one event.");
+            }
+            if (flushInterval <= TimeSpan.Zero)
+            {
+                throw new ArgumentOutOfRangeException(nameof(flushInterval), "The events flush interval must be positive.");
             }
 
             _httpClient = httpClient;
@@ -58,23 +63,33 @@ namespace Flagsmith
             Buffer(new Event(FlagExposureEvent, featureName, identifier, value, traits, metadata));
 
         /// <summary>
-        /// Sends every event buffered so far. A batch the events API does not accept is logged and dropped.
+        /// Sends every event buffered so far, and waits for batches already being sent.
+        /// A batch the events API does not accept is logged and dropped.
         /// </summary>
-        public async Task Flush()
+        public Task Flush()
         {
-            List<Event> events;
+            List<Event>? events = null;
+            TaskCompletionSource<bool>? sent = null;
+            Task[] pendingSends;
             lock (_lock)
             {
-                if (_buffer.Count == 0)
+                if (_buffer.Count > 0)
                 {
-                    return;
+                    events = _buffer;
+                    _buffer = new List<Event>();
+                    _bufferedExposures.Clear();
+                    // Registered before the lock is released, so a concurrent Flush always waits for this batch.
+                    sent = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+                    _pendingSends.Add(sent.Task);
                 }
-                events = _buffer;
-                _buffer = new List<Event>();
-                _bufferedExposures.Clear();
+                pendingSends = _pendingSends.ToArray();
             }
 
-            await Send(events).ConfigureAwait(false);
+            if (events != null)
+            {
+                _ = SendTracked(events, sent!);
+            }
+            return Task.WhenAll(pendingSends);
         }
 
         public void Dispose() => _timer.Dispose();
@@ -99,9 +114,35 @@ namespace Flagsmith
             }
         }
 
+        private async Task SendTracked(List<Event> events, TaskCompletionSource<bool> sent)
+        {
+            try
+            {
+                await Send(events).ConfigureAwait(false);
+            }
+            finally
+            {
+                lock (_lock)
+                {
+                    _pendingSends.Remove(sent.Task);
+                }
+                sent.SetResult(true);
+            }
+        }
+
         private async Task Send(List<Event> events)
         {
-            var body = JsonConvert.SerializeObject(new { events });
+            string body;
+            try
+            {
+                body = JsonConvert.SerializeObject(new { events });
+            }
+            catch (Exception e)
+            {
+                _logger?.LogError(e, "Dropping {EventCount} events that could not be serialised", events.Count);
+                return;
+            }
+
             for (var attempt = 1; ; attempt++)
             {
                 string failure;
@@ -131,6 +172,11 @@ namespace Flagsmith
                 {
                     failure = e.Message;
                     retryable = true;
+                }
+                catch (Exception e)
+                {
+                    failure = e.Message;
+                    retryable = false;
                 }
 
                 if (!retryable || attempt >= MaxAttempts)
