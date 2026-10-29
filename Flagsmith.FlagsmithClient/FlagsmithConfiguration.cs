@@ -10,6 +10,7 @@ namespace Flagsmith
     public class FlagsmithConfiguration
     {
         private static readonly Uri DefaultApiUri = new Uri("https://edge.api.flagsmith.com/api/v1/");
+        private static readonly Uri DefaultEventsApiUri = new Uri("https://events.api.flagsmith.com/");
         private TimeSpan _timeout = TimeSpan.FromSeconds(5);
 
         /// <summary>
@@ -48,6 +49,26 @@ namespace Flagsmith
         /// if enabled, sends additional requests to the Flagsmith API to power flag analytics charts.
         /// </summary>
         public bool EnableAnalytics { get; set; }
+
+        /// <summary>
+        /// If enabled, sends tracking and exposure events to the Flagsmith events API, powering experimentation.
+        /// </summary>
+        public bool EnableEvents { get; set; }
+
+        /// <summary>
+        /// Base URI of the Flagsmith events API. Defaults to <c>https://events.api.flagsmith.com/</c>.
+        /// </summary>
+        public Uri EventsApiUri { get; set; } = DefaultEventsApiUri;
+
+        /// <summary>
+        /// Interval between two sends of the buffered events.
+        /// </summary>
+        public TimeSpan EventsFlushInterval { get; set; } = TimeSpan.FromSeconds(10);
+
+        /// <summary>
+        /// Number of buffered events that are sent without waiting for <see cref="EventsFlushInterval"/>.
+        /// </summary>
+        public int EventsMaxBufferItems { get; set; } = 1000;
 
         /// <summary>
         /// Number of seconds to wait for a request to complete before terminating the request

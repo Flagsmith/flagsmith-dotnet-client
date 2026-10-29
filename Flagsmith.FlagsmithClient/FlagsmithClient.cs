@@ -43,6 +43,7 @@ namespace Flagsmith
         private readonly IEngine _engine = new Engine();
         private PollingManager? _pollingManager;
         private AnalyticsProcessor? _analyticsProcessor;
+        private EventProcessor? _eventProcessor;
         private RegularFlagListCache? _regularFlagListCache;
         private ConcurrentDictionary<string, IdentityFlagListCache>? _flagListCacheDictionary;
 
@@ -55,6 +56,10 @@ namespace Flagsmith
             else if (_config.DefaultFlagHandler != null && _config.OfflineHandler != null)
             {
                 throw new Exception("ValueError: Cannot use both defaultFlagHandler and offlineHandler.");
+            }
+            else if (_config.OfflineMode && _config.EnableEvents)
+            {
+                throw new Exception("ValueError: Cannot send events in offline mode.");
             }
 
             if (_config.OfflineHandler != null)
@@ -71,6 +76,9 @@ namespace Flagsmith
                 }
                 if (_config.EnableAnalytics)
                     _analyticsProcessor = new AnalyticsProcessor(_config.HttpClient, _config.EnvironmentKey, _config.ApiUri.ToString(), _config.Logger, _config.CustomHeaders);
+
+                if (_config.EnableEvents)
+                    _eventProcessor = new EventProcessor(_config.HttpClient, _config.EnvironmentKey, _config.EventsApiUri, _config.EventsFlushInterval, _config.EventsMaxBufferItems, TimeSpan.FromSeconds(_config.RequestTimeout ?? 5), _config.Logger);
 
                 if (_config.EnableLocalEvaluation)
                 {
@@ -155,6 +163,71 @@ namespace Flagsmith
 
             return await GetIdentityFlagsFromApi(identityWrapper.Identifier, identityWrapper.Traits, identityWrapper.Transient).ConfigureAwait(false);
         }
+
+        /// <summary>
+        /// Get an identity's flag for a feature, and record which variant the identity was exposed to
+        /// when it is enrolled in a running experiment on the feature. Requires <see cref="FlagsmithConfiguration.EnableEvents"/>.
+        /// Only remote evaluation knows about experiments, so local evaluation records no exposure.
+        /// </summary>
+        public async Task<IFlag> GetExperimentFlag(string featureName, string identifier, List<ITrait>? traits = null)
+        {
+            RequireEventProcessor("get experiment flags");
+            var flags = await GetIdentityFlags(identifier, traits).ConfigureAwait(false);
+            var flag = await flags.GetFlag(featureName).ConfigureAwait(false);
+            var experiment = (flag as Flag)?.Experiment;
+            var variant = (flag as Flag)?.Variant;
+
+            if (!flag.Enabled)
+                _config.Logger?.LogDebug("Not sending {Event} for feature {FeatureName}: the flag is disabled", EventProcessor.FlagExposureEvent, featureName);
+            else if (experiment == null || !experiment.InExperiment)
+                _config.Logger?.LogDebug("Not sending {Event} for feature {FeatureName}: the identity is not in a running experiment", EventProcessor.FlagExposureEvent, featureName);
+            else if (variant == null)
+                _config.Logger?.LogDebug("Not sending {Event} for feature {FeatureName}: the identity was served no variant", EventProcessor.FlagExposureEvent, featureName);
+            else
+                TrackExposureEvent(featureName, identifier, variant, traits, new Dictionary<string, object?> { ["experiment_id"] = experiment.Id });
+
+            return flag;
+        }
+
+        /// <summary>
+        /// Record an application event, such as a conversion, for experimentation. Requires <see cref="FlagsmithConfiguration.EnableEvents"/>.
+        /// </summary>
+        /// <exception cref="ArgumentException">The event name is empty, or starts with the reserved "$".</exception>
+        public void TrackEvent(string eventName, string? identifier = null, object? value = null, List<ITrait>? traits = null, Dictionary<string, object?>? metadata = null)
+        {
+            var eventProcessor = RequireEventProcessor("track events");
+            if (string.IsNullOrEmpty(eventName))
+                throw new ArgumentException("The event name must not be empty.", nameof(eventName));
+            if (eventName.StartsWith("$"))
+                throw new ArgumentException($"Event names starting with \"$\" are reserved: use TrackExposureEvent to record \"{EventProcessor.FlagExposureEvent}\".", nameof(eventName));
+
+            eventProcessor.TrackEvent(eventName, identifier, value, traits, metadata);
+        }
+
+        /// <summary>
+        /// Record that an identity was exposed to a variant of a feature, as a "$flag_exposure" event.
+        /// Requires <see cref="FlagsmithConfiguration.EnableEvents"/>.
+        /// </summary>
+        public void TrackExposureEvent(string featureName, string identifier, object? value = null, List<ITrait>? traits = null, Dictionary<string, object?>? metadata = null)
+        {
+            var eventProcessor = RequireEventProcessor("track exposure events");
+            if (string.IsNullOrEmpty(identifier))
+            {
+                _config.Logger?.LogWarning("Not sending {Event} for feature {FeatureName}: an exposure needs an identifier to be reconciled with conversion events", EventProcessor.FlagExposureEvent, featureName);
+                return;
+            }
+
+            eventProcessor.TrackExposureEvent(featureName, identifier, value, traits, metadata);
+        }
+
+        /// <summary>
+        /// Send the buffered events now, rather than at the next <see cref="FlagsmithConfiguration.EventsFlushInterval"/>.
+        /// Call it before the application exits, so that no events are lost.
+        /// </summary>
+        public Task FlushEvents() => _eventProcessor?.Flush() ?? Task.CompletedTask;
+
+        private EventProcessor RequireEventProcessor(string action) =>
+            _eventProcessor ?? throw new FlagsmithClientError($"Enable events to {action}.");
 
         public List<ISegment>? GetIdentitySegments(string identifier)
         {
@@ -320,6 +393,10 @@ namespace Flagsmith
 
         public Dictionary<string, int> aggregatedAnalytics => _analyticsProcessor != null ? _analyticsProcessor.GetAggregatedAnalytics() : new Dictionary<string, int>();
 
-        ~FlagsmithClient() => _pollingManager?.StopPoll();
+        ~FlagsmithClient()
+        {
+            _pollingManager?.StopPoll();
+            _eventProcessor?.Dispose();
+        }
     }
 }
