@@ -202,6 +202,56 @@ namespace Flagsmith.FlagsmithClientTest
             Assert.Equal("checkout_completed", (string)mockHttpClient.PostedJson("/v1/events").Single()["events"].Single()["event"]);
         }
 
+        [Fact]
+        public async Task TestFlushWaitsForEventsAlreadyBeingSent()
+        {
+            // Given
+            var eventsResponse = new TaskCompletionSource<HttpResponseMessage>();
+            var mockHttpClient = new Mock<HttpClient>();
+            mockHttpClient.Setup(x => x.SendAsync(It.IsAny<HttpRequestMessage>(), It.IsAny<CancellationToken>())).Returns(eventsResponse.Task);
+            var config = EventsConfiguration(mockHttpClient);
+            config.EventsMaxBufferItems = 1;
+            var flagsmith = new FlagsmithClient(config);
+            flagsmith.TrackEvent("checkout_completed", "user_123");
+
+            // When
+            var flush = flagsmith.FlushEvents();
+
+            // Then
+            Assert.Single(mockHttpClient.PostedJson("/v1/events"));
+            Assert.False(flush.IsCompleted);
+            eventsResponse.SetResult(new HttpResponseMessage { StatusCode = HttpStatusCode.Accepted });
+            await flush;
+        }
+
+        [Fact]
+        public async Task TestEventsThatCannotBeSerialisedAreDropped()
+        {
+            // Given
+            var mockHttpClient = MockFlagsmith();
+            var flagsmith = new FlagsmithClient(EventsConfiguration(mockHttpClient));
+            var metadata = new Dictionary<string, object>();
+            metadata["self"] = metadata;
+            flagsmith.TrackEvent("checkout_completed", "user_123", metadata: metadata);
+
+            // When
+            await flagsmith.FlushEvents();
+
+            // Then
+            Assert.Empty(mockHttpClient.PostedJson("/v1/events"));
+        }
+
+        [Fact]
+        public void TestEventsFlushIntervalMustBePositive()
+        {
+            // Given
+            var config = EventsConfiguration(MockFlagsmith());
+            config.EventsFlushInterval = TimeSpan.Zero;
+
+            // When / Then
+            Assert.Throws<ArgumentOutOfRangeException>(() => new FlagsmithClient(config));
+        }
+
         [Theory]
         [InlineData(HttpStatusCode.InternalServerError, 2)]
         [InlineData(HttpStatusCode.BadRequest, 1)]
