@@ -13,15 +13,6 @@ namespace FlagsmithEngine.Utils
     internal static class InvariantConvert
     {
         /// <summary>
-        /// Converts the string representation of a number to its 32-bit signed integer equivalent
-        /// using culture-invariant formatting.
-        /// </summary>
-        /// <param name="value">A string containing a number to convert.</param>
-        /// <returns>A 32-bit signed integer equivalent to the number in value.</returns>
-        public static int ToInt32(string value) =>
-            Convert.ToInt32(value, CultureInfo.InvariantCulture);
-
-        /// <summary>
         /// Converts the string representation of a number to its 64-bit signed integer equivalent
         /// using culture-invariant formatting.
         /// </summary>
