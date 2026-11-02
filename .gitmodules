@@ -2,3 +2,10 @@
 	path = Flagsmith.EngineTest/EngineTestData
 	url = git@github.com:Flagsmith/engine-test-data.git
 	branch = v3.10.0
+[submodule "Flagsmith.EngineTest/SdkBenchmarks"]
+	path = Flagsmith.EngineTest/SdkBenchmarks
+	url = https://github.com/Flagsmith/sdk-benchmarks.git
+	branch = 0.0.2
+[submodule "Flagsmith.Benchmarks/CodSpeed/instrument-hooks"]
+	path = Flagsmith.Benchmarks/CodSpeed/instrument-hooks
+	url = https://github.com/CodSpeedHQ/instrument-hooks.git

@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <OutputType>Exe</OutputType>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+    <!-- Compile fully optimised code once, so warm-ups leave nothing for the JIT to do while measuring -->
+    <TieredCompilation>false</TieredCompilation>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Flagsmith.FlagsmithClient\Flagsmith.FlagsmithClient.csproj" />
+  </ItemGroup>
+
+</Project>
