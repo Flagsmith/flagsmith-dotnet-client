@@ -5,8 +5,12 @@ using System.Text.RegularExpressions;
 using FlagsmithEngine.Interfaces;
 using FlagsmithEngine.Segment;
 using FlagsmithEngine.Utils;
+using System.Collections.Concurrent;
+using System.Diagnostics;
+using System.Text.Json;
+using System.Text.Json.Nodes;
+using Json.Path;
 using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 using Semver;
 
 namespace FlagsmithEngine
@@ -27,6 +31,8 @@ namespace FlagsmithEngine
         public const string CircularDependencyReason = "ERROR; code=CIRCULAR_DEPENDENCY";
 
         private const string ControlVariant = "control";
+
+        private static readonly ConcurrentDictionary<string, JsonPath> JsonPaths = new ConcurrentDictionary<string, JsonPath>();
 
         /// <summary>
         /// Get the evaluation result for a given context
@@ -231,7 +237,7 @@ namespace FlagsmithEngine
                         {
                             inValues = new HashSet<string>(JsonConvert.DeserializeObject<string[]>(condition.Value.String));
                         }
-                        catch (JsonException)
+                        catch (Newtonsoft.Json.JsonException)
                         {
                             inValues = new HashSet<string>(condition.Value.String.Split(','));
                         }
@@ -280,32 +286,74 @@ namespace FlagsmithEngine
             object value = null;
             if (!(context.Identity?.Traits?.TryGetValue(property, out value) ?? false))
             {
-                if (property.StartsWith("$."))
+                var jsonPath = property.StartsWith("$.") ? JsonPaths.GetOrAdd(property, ParseJsonPath) : null;
+                if (jsonPath != null)
                 {
-                    var jToken = GetJsonPathRoot(context, property, flagDependencies).SelectToken(property);
-                    if (jToken is JValue jValue)
-                    {
-                        value = jValue.ToObject<object>();
-                    }
+                    value = EvaluateJsonPath(context, property, jsonPath, flagDependencies);
                 }
             }
             return value;
         }
 
-        // Serialise only the context member a JSONPath reads: serialising every feature and segment dominates evaluation.
-        private static JToken GetJsonPathRoot<_, __>(EvaluationContext<_, __> context, string property, FlagDependencies<_, __> flagDependencies)
+        // A trait starting with "$." but not a valid JSONPath is read as a trait key only.
+        private static JsonPath ParseJsonPath(string property) => JsonPath.TryParse(property, out var jsonPath) ? jsonPath : null;
+
+        private static object EvaluateJsonPath<_, __>(EvaluationContext<_, __> context, string property, JsonPath jsonPath, FlagDependencies<_, __> flagDependencies)
         {
-            var memberEnd = property.IndexOfAny(new[] { '.', '[' }, 2);
-            switch (memberEnd < 0 ? property.Substring(2) : property.Substring(2, memberEnd - 2))
+            try
+            {
+                var matches = jsonPath.Evaluate(GetJsonPathRoot(context, jsonPath, flagDependencies)).Matches;
+                return matches?.Count > 0 && matches[0].Value is JsonValue jsonValue ? ToContextValue(jsonValue) : null;
+            }
+            catch (Exception exception) // Not expected to happen: the query is valid and the context serialisable
+            {
+                Trace.TraceWarning($"Failed to evaluate JSONPath query '{property}' in context: {exception.Message}");
+                return null;
+            }
+        }
+
+        // Serialise only the context member a JSONPath reads: serialising every feature and segment dominates evaluation.
+        private static JsonNode GetJsonPathRoot<_, __>(EvaluationContext<_, __> context, JsonPath jsonPath, FlagDependencies<_, __> flagDependencies)
+        {
+            switch (GetSegmentName(jsonPath, 0))
             {
                 case "environment":
-                    return new JObject { ["environment"] = JToken.FromObject(context.Environment) };
+                    return new JsonObject { ["environment"] = ToJsonNode(context.Environment) };
                 case "identity":
-                    return new JObject { ["identity"] = context.Identity is null ? JValue.CreateNull() : JToken.FromObject(context.Identity) };
+                    return new JsonObject { ["identity"] = ToJsonNode(context.Identity) };
                 case "flags":
-                    return GetFlagsRoot(property, flagDependencies);
+                    var featureName = GetSegmentName(jsonPath, 1);
+                    var flag = featureName is null ? null : flagDependencies.Get(featureName);
+                    return new JsonObject { ["flags"] = flag is null ? new JsonObject() : new JsonObject { [featureName] = ToJsonNode(flag) } };
                 default:
-                    return JToken.FromObject(context);
+                    return ToJsonNode(context);
+            }
+        }
+
+        private static string GetSegmentName(JsonPath jsonPath, int index)
+        {
+            if (jsonPath.Segments.Length <= index || jsonPath.Segments[index].IsRecursive || jsonPath.Segments[index].Selectors.Length != 1)
+                return null;
+            return (jsonPath.Segments[index].Selectors[0] as NameSelector)?.Name;
+        }
+
+        private static JsonNode ToJsonNode(object value) => value is null ? null : JsonNode.Parse(JsonConvert.SerializeObject(value));
+
+        private static object ToContextValue(JsonValue jsonValue)
+        {
+            var element = jsonValue.GetValue<JsonElement>();
+            switch (element.ValueKind)
+            {
+                case JsonValueKind.String:
+                    return element.GetString();
+                case JsonValueKind.Number:
+                    return element.TryGetInt64(out var integer) ? (object)integer : element.GetDouble();
+                case JsonValueKind.True:
+                    return true;
+                case JsonValueKind.False:
+                    return false;
+                default:
+                    return null;
             }
         }
 

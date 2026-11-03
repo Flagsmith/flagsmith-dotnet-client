@@ -1,13 +1,9 @@
 using System.Collections.Generic;
-using System.Text;
-using Newtonsoft.Json.Linq;
 
 namespace FlagsmithEngine
 {
     public partial class Engine
     {
-        private const string FlagsPathPrefix = "$.flags";
-
         /// <summary>
         /// The `$.flags` of an evaluation context, resolving a flag the first time a segment condition reads it.
         /// Flags supplied with the context are discarded: `$.flags` only ever holds flags resolved here.
@@ -163,63 +159,6 @@ namespace FlagsmithEngine
                     return _segmentKeysByFeatureName;
                 }
             }
-        }
-
-        /// <summary>
-        /// Get the feature name a JSONPath property reads from `$.flags`, e.g. `my_feature` from `$.flags.my_feature.enabled` or `$.flags['my_feature'].enabled`.
-        /// </summary>
-        private static bool TryGetFlagDependencyName(string property, out string featureName)
-        {
-            featureName = null;
-            if (!property.StartsWith(FlagsPathPrefix) || property.Length <= FlagsPathPrefix.Length)
-                return false;
-
-            var position = FlagsPathPrefix.Length;
-            switch (property[position])
-            {
-                case '.':
-                    var nameStart = position + 1;
-                    var nameEnd = property.IndexOfAny(new[] { '.', '[' }, nameStart);
-                    if (nameEnd < 0)
-                        nameEnd = property.Length;
-                    featureName = property.Substring(nameStart, nameEnd - nameStart);
-                    return featureName.Length > 0 && featureName != "*";
-                case '[':
-                    if (property.Length <= position + 1)
-                        return false;
-                    var quote = property[position + 1];
-                    if (quote != '\'' && quote != '"')
-                        return false;
-                    var name = new StringBuilder();
-                    for (var index = position + 2; index < property.Length; index++)
-                    {
-                        var character = property[index];
-                        if (character == '\\' && index + 1 < property.Length)
-                            name.Append(property[++index]);
-                        else if (character == quote)
-                        {
-                            featureName = name.ToString();
-                            return true;
-                        }
-                        else
-                            name.Append(character);
-                    }
-                    return false;
-                default:
-                    return false;
-            }
-        }
-
-        private static JObject GetFlagsRoot<_, __>(string property, FlagDependencies<_, __> flagDependencies)
-        {
-            var flags = new JObject();
-            if (TryGetFlagDependencyName(property, out var featureName))
-            {
-                var flag = flagDependencies.Get(featureName);
-                if (flag != null)
-                    flags[featureName] = JToken.FromObject(flag);
-            }
-            return new JObject { ["flags"] = flags };
         }
     }
 }

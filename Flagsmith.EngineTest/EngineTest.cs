@@ -63,6 +63,88 @@ namespace EngineTest
             return testCases;
         }
 
+        [Theory]
+        [InlineData("$.flags[\"payments\"].enabled")]
+        [InlineData("$.flags['payments'].enabled")]
+        [InlineData("$.flags.payments.enabled")]
+        public void TestGetEvaluationResult_FlagIsDisabledWhileTheFlagItDependsOnIsDisabled(string property)
+        {
+            // Given
+            var context = new EvaluationContext<object, object>
+            {
+                Environment = new EnvironmentContext { Key = "test-env", Name = "Test Environment" },
+                Features = new Dictionary<string, FeatureContext<object>>
+                {
+                    ["payments"] = new FeatureContext<object> { Key = "1", Name = "payments", Enabled = false },
+                    ["checkout"] = new FeatureContext<object> { Key = "2", Name = "checkout", Enabled = true, Value = "v2" },
+                },
+                Segments = new Dictionary<string, SegmentContext<object, object>>
+                {
+                    ["1"] = new SegmentContext<object, object>
+                    {
+                        Key = "1",
+                        Name = "payments_disabled",
+                        Rules = new[]
+                        {
+                            new SegmentRule
+                            {
+                                Type = TypeEnum.All,
+                                Conditions = new[] { new Condition { Property = property, Operator = Operator.NotEqual, Value = new ConditionValueUnion { String = "true" } } },
+                            },
+                        },
+                        Overrides = new[] { new FeatureContext<object> { Key = "2", Name = "checkout", Enabled = false, Value = "v2" } },
+                    },
+                },
+            };
+
+            // When
+            var result = _iengine.GetEvaluationResult(context);
+
+            // Then
+            Assert.False(result.Flags["checkout"].Enabled);
+            Assert.Equal("TARGETING_MATCH; segment=payments_disabled", result.Flags["checkout"].Reason);
+        }
+
+        [Theory]
+        [InlineData("$.plan[")]
+        [InlineData("$.environment.name")]
+        public void TestGetEvaluationResult_IdentityMatchesSegmentOnTraitNamedLikeJsonPath(string traitKey)
+        {
+            // Given
+            var context = new EvaluationContext<object, object>
+            {
+                Environment = new EnvironmentContext { Key = "test-env", Name = "Test Environment" },
+                Identity = new IdentityContext
+                {
+                    Identifier = "user-123",
+                    Traits = new Dictionary<string, object> { [traitKey] = "premium" },
+                },
+                Features = new Dictionary<string, FeatureContext<object>>(),
+                Segments = new Dictionary<string, SegmentContext<object, object>>
+                {
+                    ["1"] = new SegmentContext<object, object>
+                    {
+                        Key = "1",
+                        Name = "premium",
+                        Rules = new[]
+                        {
+                            new SegmentRule
+                            {
+                                Type = TypeEnum.All,
+                                Conditions = new[] { new Condition { Property = traitKey, Operator = Operator.Equal, Value = new ConditionValueUnion { String = "premium" } } },
+                            },
+                        },
+                    },
+                },
+            };
+
+            // When
+            var result = _iengine.GetEvaluationResult(context);
+
+            // Then
+            Assert.Equal("premium", Assert.Single(result.Segments).Name);
+        }
+
         [Fact]
         public void TestGetEvaluationResult_ShouldNotMutateOriginalContextIdentity()
         {

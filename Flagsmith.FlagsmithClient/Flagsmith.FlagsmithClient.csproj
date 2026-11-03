@@ -30,8 +30,9 @@
             <PrivateAssets>all</PrivateAssets>
         </PackageReference>
 
-        <!-- currently we duplicate the semver dependency here from Engine project -->
+        <!-- currently we duplicate the Engine project dependencies here -->
         <!-- TODO: build the Engine at build time and reference it using a PackageReference -->
+        <PackageReference Include="JsonPath.Net" Version="3.0.3"/>
         <PackageReference Include="semver" Version="2.3.0"/>
 
         <ProjectReference Include="..\Flagsmith.Engine\Flagsmith.Engine.csproj" PrivateAssets="all"/>
