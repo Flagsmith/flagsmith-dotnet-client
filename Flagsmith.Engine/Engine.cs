@@ -338,9 +338,49 @@ namespace FlagsmithEngine
             return (jsonPath.Segments[index].Selectors[0] as NameSelector)?.Name;
         }
 
-        private static JsonNode ToJsonNode(object value) => value is null ? null : ToJsonNode(JToken.FromObject(value));
+        private static JsonNode ToJsonNode(EnvironmentContext environment) => new JsonObject { ["key"] = environment.Key, ["name"] = environment.Name };
+
+        private static JsonNode ToJsonNode(IdentityContext identity)
+        {
+            if (identity is null)
+                return null;
+            var jsonObject = new JsonObject { ["identifier"] = identity.Identifier };
+            if (identity.Key != null)
+                jsonObject["key"] = identity.Key;
+            if (identity.Traits != null)
+            {
+                var traits = new JsonObject();
+                foreach (var trait in identity.Traits)
+                    traits[trait.Key] = ToJsonNode(trait.Value);
+                jsonObject["traits"] = traits;
+            }
+            return jsonObject;
+        }
 
         // Converts in memory: a round trip through a JSON string dominates evaluation.
+        private static JsonNode ToJsonNode(object value)
+        {
+            switch (value)
+            {
+                case null:
+                    return null;
+                case string text:
+                    return JsonValue.Create(text);
+                case bool boolean:
+                    return JsonValue.Create(boolean);
+                case int integer:
+                    return JsonValue.Create((long)integer);
+                case long integer:
+                    return JsonValue.Create(integer);
+                case double number:
+                    return JsonValue.Create(number);
+                case JToken token:
+                    return ToJsonNode(token);
+                default:
+                    return ToJsonNode(JToken.FromObject(value));
+            }
+        }
+
         private static JsonNode ToJsonNode(JToken token)
         {
             switch (token)
@@ -360,14 +400,11 @@ namespace FlagsmithEngine
                     {
                         case null:
                             return null;
-                        case string text:
-                            return JsonValue.Create(text);
-                        case bool boolean:
-                            return JsonValue.Create(boolean);
-                        case long integer:
-                            return JsonValue.Create(integer);
-                        case double number:
-                            return JsonValue.Create(number);
+                        case string _:
+                        case bool _:
+                        case long _:
+                        case double _:
+                            return ToJsonNode(jValue.Value);
                         default:
                             return JsonValue.Create(jValue.ToString(CultureInfo.InvariantCulture));
                     }
