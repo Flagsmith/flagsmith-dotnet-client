@@ -1,3 +1,4 @@
+using System;
 using System.Linq;
 using FlagsmithEngine;
 using Xunit;
@@ -94,11 +95,13 @@ namespace Flagsmith.FlagsmithClientTest
             Assert.Equal(2, mvFeatureWithIds.Metadata.Id);
 
             // First variant: ID=100, should have priority 100
+            Assert.Equal("variant_a", mvFeatureWithIds.Variants[0].Key);
             Assert.Equal("variant_a", mvFeatureWithIds.Variants[0].Value);
             Assert.Equal(30.0, mvFeatureWithIds.Variants[0].Weight);
             Assert.Equal(100, mvFeatureWithIds.Variants[0].Priority);
 
             // Second variant: ID=200, should have priority 200
+            Assert.Null(mvFeatureWithIds.Variants[1].Key);
             Assert.Equal("variant_b", mvFeatureWithIds.Variants[1].Value);
             Assert.Equal(70.0, mvFeatureWithIds.Variants[1].Weight);
             Assert.Equal(200, mvFeatureWithIds.Variants[1].Priority);
@@ -126,6 +129,52 @@ namespace Flagsmith.FlagsmithClientTest
             Assert.Equal("option_z", mvFeatureWithoutIds.Variants[2].Value);
             Assert.Equal(25.0, mvFeatureWithoutIds.Variants[2].Weight);
             Assert.Equal(2, mvFeatureWithoutIds.Variants[2].Priority); // Third in sorted UUID order
+        }
+
+        [Fact]
+        public void MapContextToEnvironmentFlagsContext_KeepsOnlySegmentsEvaluableWithoutIdentity()
+        {
+            // Given
+            SegmentContext<SegmentMetadata, FeatureMetadata> Segment(string property, Operator @operator) => new SegmentContext<SegmentMetadata, FeatureMetadata>
+            {
+                Key = property,
+                Name = property,
+                Rules = new[]
+                {
+                    new SegmentRule
+                    {
+                        Type = TypeEnum.All,
+                        Conditions = Array.Empty<Condition>(),
+                        Rules = new[]
+                        {
+                            new SegmentRule
+                            {
+                                Type = TypeEnum.Any,
+                                Conditions = new[] { new Condition { Property = property, Operator = @operator, Value = new ConditionValueUnion { String = "" } } },
+                            },
+                        },
+                    },
+                },
+            };
+            var context = new EvaluationContext<SegmentMetadata, FeatureMetadata>
+            {
+                Environment = new EnvironmentContext { Key = "test_key", Name = "Test Environment" },
+                Segments = new[]
+                {
+                    Segment("$.environment.name", Operator.Equal),
+                    Segment("$.flags[\"payments\"].enabled", Operator.NotEqual),
+                    Segment("plan", Operator.IsNotSet),
+                    Segment("$.identity.identifier", Operator.In),
+                    Segment("", Operator.PercentageSplit),
+                }.ToDictionary(segment => segment.Key),
+            };
+
+            // When
+            var environmentFlagsContext = Mappers.MapContextToEnvironmentFlagsContext(context);
+
+            // Then
+            Assert.Equal(new[] { "$.environment.name", "$.flags[\"payments\"].enabled" }, environmentFlagsContext.Segments.Keys);
+            Assert.Equal(5, context.Segments.Count);
         }
     }
 }
