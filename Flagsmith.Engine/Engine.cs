@@ -7,10 +7,11 @@ using FlagsmithEngine.Segment;
 using FlagsmithEngine.Utils;
 using System.Collections.Concurrent;
 using System.Diagnostics;
-using System.Text.Json;
+using System.Globalization;
 using System.Text.Json.Nodes;
 using Json.Path;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using Semver;
 
 namespace FlagsmithEngine
@@ -237,7 +238,7 @@ namespace FlagsmithEngine
                         {
                             inValues = new HashSet<string>(JsonConvert.DeserializeObject<string[]>(condition.Value.String));
                         }
-                        catch (Newtonsoft.Json.JsonException)
+                        catch (JsonException)
                         {
                             inValues = new HashSet<string>(condition.Value.String.Split(','));
                         }
@@ -337,24 +338,55 @@ namespace FlagsmithEngine
             return (jsonPath.Segments[index].Selectors[0] as NameSelector)?.Name;
         }
 
-        private static JsonNode ToJsonNode(object value) => value is null ? null : JsonNode.Parse(JsonConvert.SerializeObject(value));
+        private static JsonNode ToJsonNode(object value) => value is null ? null : ToJsonNode(JToken.FromObject(value));
 
-        private static object ToContextValue(JsonValue jsonValue)
+        // Converts in memory: a round trip through a JSON string dominates evaluation.
+        private static JsonNode ToJsonNode(JToken token)
         {
-            var element = jsonValue.GetValue<JsonElement>();
-            switch (element.ValueKind)
+            switch (token)
             {
-                case JsonValueKind.String:
-                    return element.GetString();
-                case JsonValueKind.Number:
-                    return element.TryGetInt64(out var integer) ? (object)integer : element.GetDouble();
-                case JsonValueKind.True:
-                    return true;
-                case JsonValueKind.False:
-                    return false;
+                case JObject jObject:
+                    var jsonObject = new JsonObject();
+                    foreach (var property in jObject)
+                        jsonObject[property.Key] = ToJsonNode(property.Value);
+                    return jsonObject;
+                case JArray jArray:
+                    var jsonArray = new JsonArray();
+                    foreach (var item in jArray)
+                        jsonArray.Add(ToJsonNode(item));
+                    return jsonArray;
+                case JValue jValue:
+                    switch (jValue.Value)
+                    {
+                        case null:
+                            return null;
+                        case string text:
+                            return JsonValue.Create(text);
+                        case bool boolean:
+                            return JsonValue.Create(boolean);
+                        case long integer:
+                            return JsonValue.Create(integer);
+                        case double number:
+                            return JsonValue.Create(number);
+                        default:
+                            return JsonValue.Create(jValue.ToString(CultureInfo.InvariantCulture));
+                    }
                 default:
                     return null;
             }
+        }
+
+        private static object ToContextValue(JsonValue jsonValue)
+        {
+            if (jsonValue.TryGetValue<string>(out var text))
+                return text;
+            if (jsonValue.TryGetValue<bool>(out var boolean))
+                return boolean;
+            if (jsonValue.TryGetValue<long>(out var integer))
+                return integer;
+            if (jsonValue.TryGetValue<double>(out var number))
+                return number;
+            return null;
         }
 
         private static FlagResult<FeatureMetadataT> GetFlagResult<_, FeatureMetadataT>(EvaluationContext<_, FeatureMetadataT> context, FeatureContext<FeatureMetadataT> featureContext, String reason)
