@@ -14,7 +14,11 @@ namespace FlagsmithEngine.Segment.Models
         public string Property { get; set; }
 
         public bool EvaluateNotContains(string traitValue) => !traitValue.Contains(Value);
-        public bool EvaluateRegex(string traitValue) => Regex.Match(traitValue, Value).Success;
+        public bool EvaluateRegex(string traitValue)
+        {
+            var match = Regex.Match(traitValue, Value);
+            return match.Success && match.Index == 0;
+        }
         public bool EvaluateModulo(string traitValue)
         {
             try
