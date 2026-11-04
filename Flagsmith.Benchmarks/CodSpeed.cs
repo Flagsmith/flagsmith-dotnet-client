@@ -49,6 +49,7 @@ namespace Flagsmith.Benchmarks
             if (instrument_hooks_start_benchmark(_hooks) != 0)
                 throw new InvalidOperationException("CodSpeed: failed to start the benchmark");
             // Toggle callgrind here, rather than in start_benchmark, to measure as little harness as possible.
+            callgrind_zero_stats();
             callgrind_start_instrumentation();
             try
             {
@@ -92,6 +93,9 @@ namespace Flagsmith.Benchmarks
 
         [DllImport(InstrumentHooks)]
         private static extern byte instrument_hooks_set_executed_benchmark(IntPtr hooks, int pid, [MarshalAs(UnmanagedType.LPUTF8Str)] string uri);
+
+        [DllImport(InstrumentHooks)]
+        private static extern void callgrind_zero_stats();
 
         [DllImport(InstrumentHooks)]
         private static extern void callgrind_start_instrumentation();
