@@ -58,11 +58,11 @@ namespace Flagsmith.Benchmarks
             finally
             {
                 callgrind_stop_instrumentation();
-                if (instrument_hooks_stop_benchmark(_hooks) != 0)
-                    Console.Error.WriteLine("CodSpeed: failed to stop the benchmark");
-                if (instrument_hooks_set_executed_benchmark(_hooks, Environment.ProcessId, uri) != 0)
-                    Console.Error.WriteLine("CodSpeed: failed to report the executed benchmark");
             }
+            if (instrument_hooks_stop_benchmark(_hooks) != 0)
+                throw new InvalidOperationException("CodSpeed: failed to stop the benchmark");
+            if (instrument_hooks_set_executed_benchmark(_hooks, Environment.ProcessId, uri) != 0)
+                throw new InvalidOperationException("CodSpeed: failed to report the executed benchmark");
         }
 
         // Root frame of the benchmark flame graph: everything measured runs inside it.
