@@ -26,6 +26,11 @@ namespace Flagsmith
         private const string UnusedKey = "";
 
         /// <summary>
+        /// Condition properties resolvable without an identity.
+        /// </summary>
+        private static readonly string[] IdentityFreePropertyPrefixes = { "$.environment.", "$.environment[", "$.flags.", "$.flags[" };
+
+        /// <summary>
         /// Parse the environment document into an EvaluationContext object
         /// </summary>
         public static EvaluationContext<SegmentMetadata, FeatureMetadata> MapEnvironmentDocumentToContext(
@@ -97,6 +102,28 @@ namespace Flagsmith
             return context;
         }
 
+        /// <summary>
+        /// Copies an evaluation context for flags served without an identity, keeping only the segments that
+        /// read neither identity nor traits
+        /// </summary>
+        public static EvaluationContext<SegmentMetadata, FeatureMetadata> MapContextToEnvironmentFlagsContext(
+            EvaluationContext<SegmentMetadata, FeatureMetadata> context)
+        {
+            context = context.Clone();
+            context.Segments = context.Segments?
+                .Where(segment => IsIdentityFree(segment.Value.Rules))
+                .ToDictionary(segment => segment.Key, segment => segment.Value);
+            return context;
+        }
+
+        private static bool IsIdentityFree(IEnumerable<SegmentRule> rules)
+        {
+            return (rules ?? Enumerable.Empty<SegmentRule>()).All(rule =>
+                (rule.Conditions ?? Enumerable.Empty<Condition>()).All(condition =>
+                    IdentityFreePropertyPrefixes.Any(prefix => condition.Property?.StartsWith(prefix) ?? false)) &&
+                IsIdentityFree(rule.Rules));
+        }
+
         private static SegmentRule[] MapEnvironmentDocumentRulesToContextRules(List<SegmentRuleModel> srcRules)
         {
             return srcRules.Select(srcRule => new SegmentRule
@@ -144,6 +171,7 @@ namespace Flagsmith
                     feature.Variants = featureState.MultivariateFeatureStateValues
                         .Select(mv => new FeatureValue
                         {
+                            Key = mv.MultivariateFeatureOption.Key,
                             Value = mv.MultivariateFeatureOption.Value,
                             Weight = mv.PercentageAllocation,
                             Priority = mv.Id != 0 ? mv.Id : Array.IndexOf(sortedUUIDs, mv.MvFsValueUUID),

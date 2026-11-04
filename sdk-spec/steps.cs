@@ -11,6 +11,10 @@ public static class Steps
     public static FlagsmithClient CreateClient(string environmentKey, string apiUrl) =>
         new(new FlagsmithConfiguration { EnvironmentKey = environmentKey, ApiUri = new Uri(apiUrl) });
 
+    // Create the SDK client with local evaluation
+    public static FlagsmithClient CreateClientWithLocalEvaluation(string environmentKey, string apiUrl) =>
+        new(new FlagsmithConfiguration { EnvironmentKey = environmentKey, ApiUri = new Uri(apiUrl), EnableLocalEvaluation = true });
+
     // When the application gets the environment flags
     public static async Task<IEnumerable<object>> GetEnvironmentFlags(FlagsmithClient flagsmith) =>
         AsSpecFlags(await flagsmith.GetEnvironmentFlags());

@@ -5,6 +5,11 @@ using System.Text.RegularExpressions;
 using FlagsmithEngine.Interfaces;
 using FlagsmithEngine.Segment;
 using FlagsmithEngine.Utils;
+using System.Collections.Concurrent;
+using System.Diagnostics;
+using System.Globalization;
+using System.Text.Json.Nodes;
+using Json.Path;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Semver;
@@ -17,12 +22,18 @@ namespace FlagsmithEngine
         public string SegmentName { get; set; }
     }
 
-    public class Engine : IEngine
+    public partial class Engine : IEngine
     {
         public static Hashing Hashing = new Hashing();
 
         public const double StrongestPriority = double.NegativeInfinity;
         public const double WeakestPriority = double.PositiveInfinity;
+
+        public const string CircularDependencyReason = "ERROR; code=CIRCULAR_DEPENDENCY";
+
+        private const string ControlVariant = "control";
+
+        private static readonly ConcurrentDictionary<string, JsonPath> JsonPaths = new ConcurrentDictionary<string, JsonPath>();
 
         /// <summary>
         /// Get the evaluation result for a given context
@@ -35,9 +46,12 @@ namespace FlagsmithEngine
         {
             context = GetEnrichedEvaluationContext(context);
             var result = new EvaluationResult<SegmentMetadataT, FeatureMetadataT>();
-            var segmentEvaluationResult = EvaluateSegments(context);
+            var flagDependencies = new FlagDependencies<SegmentMetadataT, FeatureMetadataT>(context);
+            var segmentEvaluationResult = EvaluateSegments(context, flagDependencies);
             result.Flags = EvaluateFlags(context, segmentEvaluationResult.SegmentOverrides);
             result.Segments = segmentEvaluationResult.Segments;
+            if (flagDependencies.Used)
+                flagDependencies.ApplyTo(result.Flags);
             return result;
         }
 
@@ -54,7 +68,7 @@ namespace FlagsmithEngine
             return context;
         }
 
-        private static (SegmentResult<SegmentMetadataT>[] Segments, Dictionary<string, SegmentOverride<FeatureMetadataT>> SegmentOverrides) EvaluateSegments<SegmentMetadataT, FeatureMetadataT>(EvaluationContext<SegmentMetadataT, FeatureMetadataT> context)
+        private static (SegmentResult<SegmentMetadataT>[] Segments, Dictionary<string, SegmentOverride<FeatureMetadataT>> SegmentOverrides) EvaluateSegments<SegmentMetadataT, FeatureMetadataT>(EvaluationContext<SegmentMetadataT, FeatureMetadataT> context, FlagDependencies<SegmentMetadataT, FeatureMetadataT> flagDependencies)
         {
             var segmentOverrides = new Dictionary<string, SegmentOverride<FeatureMetadataT>>();
 
@@ -67,7 +81,8 @@ namespace FlagsmithEngine
             {
                 var segmentContext = segmentItem.Value;
 
-                if (!IsContextInSegment(context, segmentContext))
+                var cycleHits = flagDependencies.CycleHits;
+                if (!IsContextInSegment(context, segmentContext, flagDependencies) || flagDependencies.CycleHits != cycleHits)
                     continue;
 
                 segmentResults.Add(new SegmentResult<SegmentMetadataT>
@@ -81,13 +96,9 @@ namespace FlagsmithEngine
 
                 foreach (var segmentOverride in segmentContext.Overrides)
                 {
-                    var featureName = segmentOverride.Name;
-                    if (segmentOverrides.ContainsKey(featureName))
-                    {
-                        var existingPriority = segmentOverrides[featureName].FeatureContext.Priority ?? WeakestPriority;
-                        if ((segmentOverride.Priority ?? WeakestPriority) > existingPriority)
-                            continue;
-                    }
+                    segmentOverrides.TryGetValue(segmentOverride.Name, out var incumbent);
+                    if (!WinsOver(segmentOverride, incumbent?.FeatureContext))
+                        continue;
                     segmentOverrides[segmentOverride.Name] = new SegmentOverride<FeatureMetadataT>
                     {
                         FeatureContext = segmentOverride,
@@ -99,6 +110,14 @@ namespace FlagsmithEngine
             return (segmentResults.ToArray(), segmentOverrides);
         }
 
+        /// <summary>
+        /// Whether a segment override takes precedence over the one held so far: the lowest priority wins, and the first seen wins a tie.
+        /// </summary>
+        private static bool WinsOver<FeatureMetadataT>(FeatureContext<FeatureMetadataT> candidate, FeatureContext<FeatureMetadataT> incumbent)
+        {
+            return incumbent is null || (candidate.Priority ?? WeakestPriority) < (incumbent.Priority ?? WeakestPriority);
+        }
+
         private static Dictionary<string, FlagResult<FeatureMetadataT>> EvaluateFlags<Any, FeatureMetadataT>(EvaluationContext<Any, FeatureMetadataT> context, Dictionary<string, SegmentOverride<FeatureMetadataT>> segmentOverrides)
         {
             var flags = new Dictionary<string, FlagResult<FeatureMetadataT>>();
@@ -106,45 +125,51 @@ namespace FlagsmithEngine
             if (context?.Features is null)
                 return flags;
 
-            foreach (var featureItem in context.Features)
+            var featureNamesWithSegmentOverrides = new HashSet<string>(
+                (context.Segments?.Values ?? Enumerable.Empty<SegmentContext<Any, FeatureMetadataT>>())
+                    .SelectMany(segment => segment.Overrides ?? Enumerable.Empty<FeatureContext<FeatureMetadataT>>())
+                    .Select(segmentOverride => segmentOverride.Name)
+            );
+
+            foreach (var featureContext in context.Features.Values)
             {
-                var featureContext = featureItem.Value;
-                var featureName = featureContext.Name;
-                if (segmentOverrides.ContainsKey(featureName))
-                {
-                    var segmentOverride = segmentOverrides[featureName];
-                    flags[featureName] = GetFlagResult(
-                        context,
-                        segmentOverride.FeatureContext,
-                        $"TARGETING_MATCH; segment={segmentOverride.SegmentName}"
-                    );
-                }
-                else
-                {
-                    flags[featureName] = GetFlagResult(
-                        context,
-                        featureContext,
-                        "DEFAULT"
-                    );
-                }
+                segmentOverrides.TryGetValue(featureContext.Name, out var segmentOverride);
+                flags[featureContext.Name] = GetFeatureFlagResult(
+                    context,
+                    featureContext,
+                    segmentOverride,
+                    featureNamesWithSegmentOverrides.Contains(featureContext.Name)
+                );
             }
 
             return flags;
         }
 
-        private static bool IsContextInSegment<_, __>(EvaluationContext<_, __> context, SegmentContext<_, __> segmentContext)
+        /// <summary>
+        /// Get the flag result of a feature, served by its segment override if any, or else by its environment default:
+        /// DEFAULT if the feature has segment overrides that did not match, STATIC if it has none.
+        /// </summary>
+        private static FlagResult<FeatureMetadataT> GetFeatureFlagResult<_, FeatureMetadataT>(EvaluationContext<_, FeatureMetadataT> context, FeatureContext<FeatureMetadataT> featureContext, SegmentOverride<FeatureMetadataT> segmentOverride, bool hasSegmentOverrides)
+        {
+            if (segmentOverride != null)
+                return GetFlagResult(context, segmentOverride.FeatureContext, $"TARGETING_MATCH; segment={segmentOverride.SegmentName}");
+            return GetFlagResult(context, featureContext, hasSegmentOverrides ? "DEFAULT" : "STATIC");
+        }
+
+        private static bool IsContextInSegment<_, __>(EvaluationContext<_, __> context, SegmentContext<_, __> segmentContext, FlagDependencies<_, __> flagDependencies)
         {
             return (
                 segmentContext?.Rules != null &&
                 segmentContext.Rules.All(rule => ContextMatchesRule(
                     context,
                     rule,
-                    segmentContext.Key
+                    segmentContext.Key,
+                    flagDependencies
                 ))
             );
         }
 
-        private static bool ContextMatchesRule<_, __>(EvaluationContext<_, __> context, SegmentRule rule, string segmentKey)
+        private static bool ContextMatchesRule<_, __>(EvaluationContext<_, __> context, SegmentRule rule, string segmentKey, FlagDependencies<_, __> flagDependencies)
         {
             bool matchesConditions;
 
@@ -155,13 +180,13 @@ namespace FlagsmithEngine
                 switch (rule.Type)
                 {
                     case TypeEnum.All:
-                        matchesConditions = rule.Conditions.All(condition => ContextMatchesCondition(context, condition, segmentKey));
+                        matchesConditions = rule.Conditions.All(condition => ContextMatchesCondition(context, condition, segmentKey, flagDependencies));
                         break;
                     case TypeEnum.Any:
-                        matchesConditions = rule.Conditions.Any(condition => ContextMatchesCondition(context, condition, segmentKey));
+                        matchesConditions = rule.Conditions.Any(condition => ContextMatchesCondition(context, condition, segmentKey, flagDependencies));
                         break;
                     case TypeEnum.None:
-                        matchesConditions = !rule.Conditions.Any(condition => ContextMatchesCondition(context, condition, segmentKey));
+                        matchesConditions = !rule.Conditions.Any(condition => ContextMatchesCondition(context, condition, segmentKey, flagDependencies));
                         break;
                     default:
                         matchesConditions = false;
@@ -178,13 +203,13 @@ namespace FlagsmithEngine
             switch (rule.Type)
             {
                 case TypeEnum.All:
-                    matchesSubRules = rule.Rules.All(r => ContextMatchesRule(context, r, segmentKey));
+                    matchesSubRules = rule.Rules.All(r => ContextMatchesRule(context, r, segmentKey, flagDependencies));
                     break;
                 case TypeEnum.Any:
-                    matchesSubRules = rule.Rules.Any(r => ContextMatchesRule(context, r, segmentKey));
+                    matchesSubRules = rule.Rules.Any(r => ContextMatchesRule(context, r, segmentKey, flagDependencies));
                     break;
                 case TypeEnum.None:
-                    matchesSubRules = !rule.Rules.Any(r => ContextMatchesRule(context, r, segmentKey));
+                    matchesSubRules = !rule.Rules.Any(r => ContextMatchesRule(context, r, segmentKey, flagDependencies));
                     break;
                 default:
                     matchesSubRules = false;
@@ -193,9 +218,9 @@ namespace FlagsmithEngine
             return matchesSubRules;
         }
 
-        private static bool ContextMatchesCondition<_, __>(EvaluationContext<_, __> context, Condition condition, string segmentKey)
+        private static bool ContextMatchesCondition<_, __>(EvaluationContext<_, __> context, Condition condition, string segmentKey, FlagDependencies<_, __> flagDependencies)
         {
-            var contextValue = GetContextValue(context, condition.Property);
+            var contextValue = GetContextValue(context, condition.Property, flagDependencies);
 
             switch (condition.Operator)
             {
@@ -257,45 +282,159 @@ namespace FlagsmithEngine
             }
         }
 
-        private static object GetContextValue<_, __>(EvaluationContext<_, __> context, string property)
+        private static object GetContextValue<_, __>(EvaluationContext<_, __> context, string property, FlagDependencies<_, __> flagDependencies)
         {
             object value = null;
             if (!(context.Identity?.Traits?.TryGetValue(property, out value) ?? false))
             {
-                if (property.StartsWith("$."))
+                var jsonPath = property.StartsWith("$.") ? JsonPaths.GetOrAdd(property, ParseJsonPath) : null;
+                if (jsonPath != null)
                 {
-                    var jToken = GetJsonPathRoot(context, property).SelectToken(property);
-                    if (jToken is JValue jValue)
-                    {
-                        value = jValue.ToObject<object>();
-                    }
+                    value = EvaluateJsonPath(context, property, jsonPath, flagDependencies);
                 }
             }
             return value;
         }
 
-        // Serialise only the context member a JSONPath reads: serialising every feature and segment dominates evaluation.
-        private static JToken GetJsonPathRoot<_, __>(EvaluationContext<_, __> context, string property)
+        // A trait starting with "$." but not a valid JSONPath is read as a trait key only.
+        private static JsonPath ParseJsonPath(string property) => JsonPath.TryParse(property, out var jsonPath) ? jsonPath : null;
+
+        private static object EvaluateJsonPath<_, __>(EvaluationContext<_, __> context, string property, JsonPath jsonPath, FlagDependencies<_, __> flagDependencies)
         {
-            var memberEnd = property.IndexOfAny(new[] { '.', '[' }, 2);
-            switch (memberEnd < 0 ? property.Substring(2) : property.Substring(2, memberEnd - 2))
+            try
+            {
+                var matches = jsonPath.Evaluate(GetJsonPathRoot(context, jsonPath, flagDependencies)).Matches;
+                return matches?.Count > 0 && matches[0].Value is JsonValue jsonValue ? ToContextValue(jsonValue) : null;
+            }
+            catch (Exception exception) // Not expected to happen: the query is valid and the context serialisable
+            {
+                Trace.TraceWarning($"Failed to evaluate JSONPath query '{property}' in context: {exception.Message}");
+                return null;
+            }
+        }
+
+        // Serialise only the context member a JSONPath reads: serialising every feature and segment dominates evaluation.
+        private static JsonNode GetJsonPathRoot<_, __>(EvaluationContext<_, __> context, JsonPath jsonPath, FlagDependencies<_, __> flagDependencies)
+        {
+            switch (GetSegmentName(jsonPath, 0))
             {
                 case "environment":
-                    return new JObject { ["environment"] = JToken.FromObject(context.Environment) };
+                    return new JsonObject { ["environment"] = ToJsonNode(context.Environment) };
                 case "identity":
-                    return new JObject { ["identity"] = context.Identity is null ? JValue.CreateNull() : JToken.FromObject(context.Identity) };
+                    return new JsonObject { ["identity"] = ToJsonNode(context.Identity) };
+                case "flags":
+                    var featureName = GetSegmentName(jsonPath, 1);
+                    var flag = featureName is null ? null : flagDependencies.Get(featureName);
+                    return new JsonObject { ["flags"] = flag is null ? new JsonObject() : new JsonObject { [featureName] = ToJsonNode(flag) } };
                 default:
-                    return JToken.FromObject(context);
+                    return ToJsonNode(context);
             }
+        }
+
+        private static string GetSegmentName(JsonPath jsonPath, int index)
+        {
+            if (jsonPath.Segments.Length <= index || jsonPath.Segments[index].IsRecursive || jsonPath.Segments[index].Selectors.Length != 1)
+                return null;
+            return (jsonPath.Segments[index].Selectors[0] as NameSelector)?.Name;
+        }
+
+        private static JsonNode ToJsonNode(EnvironmentContext environment) => new JsonObject { ["key"] = environment.Key, ["name"] = environment.Name };
+
+        private static JsonNode ToJsonNode(IdentityContext identity)
+        {
+            if (identity is null)
+                return null;
+            var jsonObject = new JsonObject { ["identifier"] = identity.Identifier };
+            if (identity.Key != null)
+                jsonObject["key"] = identity.Key;
+            if (identity.Traits != null)
+            {
+                var traits = new JsonObject();
+                foreach (var trait in identity.Traits)
+                    traits[trait.Key] = ToJsonNode(trait.Value);
+                jsonObject["traits"] = traits;
+            }
+            return jsonObject;
+        }
+
+        // Converts in memory: a round trip through a JSON string dominates evaluation.
+        private static JsonNode ToJsonNode(object value)
+        {
+            switch (value)
+            {
+                case null:
+                    return null;
+                case string text:
+                    return JsonValue.Create(text);
+                case bool boolean:
+                    return JsonValue.Create(boolean);
+                case int integer:
+                    return JsonValue.Create((long)integer);
+                case long integer:
+                    return JsonValue.Create(integer);
+                case double number:
+                    return JsonValue.Create(number);
+                case JToken token:
+                    return ToJsonNode(token);
+                default:
+                    return ToJsonNode(JToken.FromObject(value));
+            }
+        }
+
+        private static JsonNode ToJsonNode(JToken token)
+        {
+            switch (token)
+            {
+                case JObject jObject:
+                    var jsonObject = new JsonObject();
+                    foreach (var property in jObject)
+                        jsonObject[property.Key] = ToJsonNode(property.Value);
+                    return jsonObject;
+                case JArray jArray:
+                    var jsonArray = new JsonArray();
+                    foreach (var item in jArray)
+                        jsonArray.Add(ToJsonNode(item));
+                    return jsonArray;
+                case JValue jValue:
+                    switch (jValue.Value)
+                    {
+                        case null:
+                            return null;
+                        case string _:
+                        case bool _:
+                        case long _:
+                        case double _:
+                            return ToJsonNode(jValue.Value);
+                        default:
+                            return JsonValue.Create(jValue.ToString(CultureInfo.InvariantCulture));
+                    }
+                default:
+                    return null;
+            }
+        }
+
+        private static object ToContextValue(JsonValue jsonValue)
+        {
+            if (jsonValue.TryGetValue<string>(out var text))
+                return text;
+            if (jsonValue.TryGetValue<bool>(out var boolean))
+                return boolean;
+            if (jsonValue.TryGetValue<long>(out var integer))
+                return integer;
+            if (jsonValue.TryGetValue<double>(out var number))
+                return number;
+            return null;
         }
 
         private static FlagResult<FeatureMetadataT> GetFlagResult<_, FeatureMetadataT>(EvaluationContext<_, FeatureMetadataT> context, FeatureContext<FeatureMetadataT> featureContext, String reason)
         {
             FlagResult<FeatureMetadataT> flagResult = null;
+            string variantKey = null;
             var key = context?.Identity?.Key;
 
-            if (key != null && featureContext.Variants != null)
+            if (key != null && featureContext.Variants != null && featureContext.Variants.Any())
             {
+                variantKey = ControlVariant;
                 var percentageValue = Hashing.GetHashedPercentageForObjectIds(new List<string>() { featureContext.Key, key });
                 var startPercentage = 0.0f;
                 float limit;
@@ -313,6 +452,7 @@ namespace FlagsmithEngine
                             Value = variant.Value,
                             Metadata = featureContext.Metadata,
                             Reason = FormattableString.Invariant($"SPLIT; weight={weight}"),
+                            Variant = variant.Key,
                         };
                         break;
                     }
@@ -328,7 +468,8 @@ namespace FlagsmithEngine
                     Enabled = featureContext.Enabled,
                     Value = featureContext.Value,
                     Metadata = featureContext.Metadata,
-                    Reason = reason
+                    Reason = reason,
+                    Variant = variantKey,
                 };
             }
 

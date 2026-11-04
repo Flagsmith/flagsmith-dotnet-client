@@ -38,6 +38,7 @@ namespace Flagsmith
     {
         private EnvironmentModel? Environment { get; set; }
         private EvaluationContext<SegmentMetadata, FeatureMetadata>? _evaluationContext;
+        private EvaluationContext<SegmentMetadata, FeatureMetadata>? _environmentFlagsEvaluationContext;
 
         private readonly FlagsmithConfiguration _config;
         private readonly IEngine _engine = new Engine();
@@ -61,6 +62,7 @@ namespace Flagsmith
             {
                 Environment = _config.OfflineHandler.GetEnvironment();
                 _evaluationContext = Mappers.MapEnvironmentDocumentToContext(Environment);
+                _environmentFlagsEvaluationContext = Mappers.MapContextToEnvironmentFlagsContext(_evaluationContext);
             }
 
             if (!_config.OfflineMode)
@@ -240,6 +242,7 @@ namespace Flagsmith
                 var json = await GetJson(HttpMethod.Get, new Uri(_config.ApiUri, "environment-document/").AbsoluteUri).ConfigureAwait(false);
                 Environment = JsonConvert.DeserializeObject<EnvironmentModel>(json);
                 _evaluationContext = Mappers.MapEnvironmentDocumentToContext(Environment);
+                _environmentFlagsEvaluationContext = Mappers.MapContextToEnvironmentFlagsContext(_evaluationContext);
                 _config.Logger?.LogInformation("Local Environment updated: " + json);
             }
             catch (FlagsmithAPIError ex)
@@ -291,12 +294,12 @@ namespace Flagsmith
 
         private IFlags GetEnvironmentFlagsFromLocalEvaluationContext()
         {
-            if (_evaluationContext == null)
+            if (_environmentFlagsEvaluationContext == null)
             {
                 throw new FlagsmithClientError("Evaluation context is not present");
             }
 
-            var result = _engine.GetEvaluationResult(_evaluationContext);
+            var result = _engine.GetEvaluationResult(_environmentFlagsEvaluationContext);
 
             return Flags.FromEvaluationResult(result, _analyticsProcessor, _config.DefaultFlagHandler);
         }

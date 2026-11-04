@@ -142,6 +142,13 @@ namespace FlagsmithEngine
     public partial class FeatureValue
     {
         /// <summary>
+        /// A stable, human-readable identifier for the variant. Omitted when the variant has no key
+        /// set.
+        /// </summary>
+        [JsonProperty("key", Required = Required.DisallowNull, NullValueHandling = NullValueHandling.Ignore)]
+        public string Key { get; set; }
+
+        /// <summary>
         /// Priority of the feature flag variant. Lower values indicate a higher priority when
         /// multiple variants apply to the same context key.
         /// </summary>
