@@ -111,11 +111,11 @@ namespace FlagsmithEngine
         }
 
         /// <summary>
-        /// Whether a segment override takes precedence over the one held so far: the lowest priority wins, and the latest seen wins a tie.
+        /// Whether a segment override takes precedence over the one held so far: the lowest priority wins, and the first seen wins a tie.
         /// </summary>
         private static bool WinsOver<FeatureMetadataT>(FeatureContext<FeatureMetadataT> candidate, FeatureContext<FeatureMetadataT> incumbent)
         {
-            return incumbent is null || (candidate.Priority ?? WeakestPriority) <= (incumbent.Priority ?? WeakestPriority);
+            return incumbent is null || (candidate.Priority ?? WeakestPriority) < (incumbent.Priority ?? WeakestPriority);
         }
 
         private static Dictionary<string, FlagResult<FeatureMetadataT>> EvaluateFlags<Any, FeatureMetadataT>(EvaluationContext<Any, FeatureMetadataT> context, Dictionary<string, SegmentOverride<FeatureMetadataT>> segmentOverrides)

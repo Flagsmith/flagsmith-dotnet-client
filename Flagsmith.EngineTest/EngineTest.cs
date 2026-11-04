@@ -146,6 +146,53 @@ namespace EngineTest
         }
 
         [Fact]
+        public void TestGetEvaluationResult_ServesTheFirstSegmentInContextAmongOverridesOfEqualPriority()
+        {
+            // Given
+            var everyone = new[]
+            {
+                new SegmentRule
+                {
+                    Type = TypeEnum.All,
+                    Conditions = new[] { new Condition { Property = "$.environment.name", Operator = Operator.Equal, Value = new ConditionValueUnion { String = "Test Environment" } } },
+                },
+            };
+            var context = new EvaluationContext<object, object>
+            {
+                Environment = new EnvironmentContext { Key = "test-env", Name = "Test Environment" },
+                Features = new Dictionary<string, FeatureContext<object>>
+                {
+                    ["colour"] = new FeatureContext<object> { Key = "1", Name = "colour", Enabled = false, Value = "default" },
+                },
+                Segments = new Dictionary<string, SegmentContext<object, object>>
+                {
+                    ["3"] = new SegmentContext<object, object>
+                    {
+                        Key = "3",
+                        Name = "red_colour",
+                        Rules = everyone,
+                        Overrides = new[] { new FeatureContext<object> { Key = "1", Name = "colour", Enabled = true, Value = "red", Priority = 0 } },
+                    },
+                    ["25"] = new SegmentContext<object, object>
+                    {
+                        Key = "25",
+                        Name = "blue_colour",
+                        Rules = everyone,
+                        Overrides = new[] { new FeatureContext<object> { Key = "1", Name = "colour", Enabled = true, Value = "blue", Priority = 0 } },
+                    },
+                },
+            };
+
+            // When
+            var result = _iengine.GetEvaluationResult(context);
+
+            // Then
+            Assert.Equal("red", result.Flags["colour"].Value);
+            Assert.Equal("TARGETING_MATCH; segment=red_colour", result.Flags["colour"].Reason);
+            Assert.Equal(new[] { "red_colour", "blue_colour" }, result.Segments.Select(segment => segment.Name));
+        }
+
+        [Fact]
         public void TestGetEvaluationResult_ShouldNotMutateOriginalContextIdentity()
         {
             // Arrange
