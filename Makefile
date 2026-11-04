@@ -1,6 +1,40 @@
-.PHONY: install 
+SDK_BENCHMARKS := Flagsmith.EngineTest/SdkBenchmarks
+INSTRUMENT_HOOKS := Flagsmith.Benchmarks/CodSpeed/instrument-hooks
+BENCHMARKS_BUILD := Flagsmith.Benchmarks/bin/Release/net10.0
+
+INSTRUMENT_HOOKS_CFLAGS := -std=gnu11 -O2 -fPIC -Wno-maybe-uninitialized -Wno-unused-variable -Wno-unused-parameter -Wno-unused-but-set-variable -Wno-type-limits -Wno-format -Wno-format-security
+ifeq ($(shell uname -s),Darwin)
+INSTRUMENT_HOOKS_LIB := $(BENCHMARKS_BUILD)/libinstrument_hooks.dylib
+INSTRUMENT_HOOKS_LDFLAGS := -dynamiclib
+else
+INSTRUMENT_HOOKS_LIB := $(BENCHMARKS_BUILD)/libinstrument_hooks.so
+INSTRUMENT_HOOKS_LDFLAGS := -shared
+endif
+
+.PHONY: install
 install: ## Install development dependencies
 	npm install -g quicktype
+
+$(SDK_BENCHMARKS)/environments:
+	git submodule update --init -- $(SDK_BENCHMARKS)
+
+$(INSTRUMENT_HOOKS)/dist/core.c:
+	git submodule update --init -- $(INSTRUMENT_HOOKS)
+
+$(INSTRUMENT_HOOKS_LIB): | $(INSTRUMENT_HOOKS)/dist/core.c
+	mkdir -p $(@D)
+	$(CC) $(INSTRUMENT_HOOKS_CFLAGS) -I$(INSTRUMENT_HOOKS)/includes $(INSTRUMENT_HOOKS_LDFLAGS) -o $@ $(INSTRUMENT_HOOKS)/dist/core.c
+
+.PHONY: benchmark benchmark-build benchmark-run
+benchmark: benchmark-build benchmark-run ## Run the SDK benchmarks
+
+# Kept apart from benchmark-run: CodSpeed's simulation mode runs its whole command under Valgrind
+benchmark-build: | $(SDK_BENCHMARKS)/environments
+	dotnet build Flagsmith.Benchmarks --configuration Release
+	$(MAKE) $(INSTRUMENT_HOOKS_LIB)
+
+benchmark-run: | $(SDK_BENCHMARKS)/environments
+	SDK_BENCHMARKS_ENVIRONMENTS_DIR=$(abspath $(SDK_BENCHMARKS)/environments) dotnet $(BENCHMARKS_BUILD)/Flagsmith.Benchmarks.dll
 
 .PHONY: clone-engine-test-data
 clone-engine-test-data: ## (temporary) Clone the engine test data submodule

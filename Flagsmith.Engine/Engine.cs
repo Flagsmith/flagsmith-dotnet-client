@@ -264,7 +264,7 @@ namespace FlagsmithEngine
             {
                 if (property.StartsWith("$."))
                 {
-                    var jToken = JToken.FromObject(context).SelectToken(property);
+                    var jToken = GetJsonPathRoot(context, property).SelectToken(property);
                     if (jToken is JValue jValue)
                     {
                         value = jValue.ToObject<object>();
@@ -272,6 +272,21 @@ namespace FlagsmithEngine
                 }
             }
             return value;
+        }
+
+        // Serialise only the context member a JSONPath reads: serialising every feature and segment dominates evaluation.
+        private static JToken GetJsonPathRoot<_, __>(EvaluationContext<_, __> context, string property)
+        {
+            var memberEnd = property.IndexOfAny(new[] { '.', '[' }, 2);
+            switch (memberEnd < 0 ? property.Substring(2) : property.Substring(2, memberEnd - 2))
+            {
+                case "environment":
+                    return new JObject { ["environment"] = JToken.FromObject(context.Environment) };
+                case "identity":
+                    return new JObject { ["identity"] = context.Identity is null ? JValue.CreateNull() : JToken.FromObject(context.Identity) };
+                default:
+                    return JToken.FromObject(context);
+            }
         }
 
         private static FlagResult<FeatureMetadataT> GetFlagResult<_, FeatureMetadataT>(EvaluationContext<_, FeatureMetadataT> context, FeatureContext<FeatureMetadataT> featureContext, String reason)
