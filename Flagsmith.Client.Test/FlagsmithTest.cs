@@ -129,6 +129,53 @@ namespace Flagsmith.FlagsmithClientTest
             mockHttpClient.VerifyHttpRequest(HttpMethod.Get, "/api/v1/environment-document/", Times.Once);
         }
         [Fact]
+        public async Task TestGetEnvironmentFlagsKeepsEmptyStringValue()
+        {
+            // Given
+            var mockHttpClient = HttpMocker.MockHttpResponse(new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.OK,
+                Content = new StringContent(Fixtures.ApiFlagResponse.Replace("'some-value'", "''"))
+            });
+            var flagsmithClientTest = new FlagsmithClient(new FlagsmithConfiguration
+            {
+                EnvironmentKey = Fixtures.ApiKey,
+                HttpClient = mockHttpClient.Object
+            });
+
+            // When
+            var flag = await (await flagsmithClientTest.GetEnvironmentFlags()).GetFlag("some_feature");
+
+            // Then
+            Assert.True(flag.Enabled);
+            Assert.Equal("", flag.Value);
+        }
+        [Fact]
+        public async Task TestGetEnvironmentFlagsKeepsEmptyStringValueWithLocalEvaluation()
+        {
+            // Given
+            var environment = (JObject)Fixtures.JsonObject.DeepClone();
+            environment["feature_states"]![0]!["feature_state_value"] = "";
+            var mockHttpClient = HttpMocker.MockHttpResponse(new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.OK,
+                Content = new StringContent(environment.ToString())
+            });
+            var flagsmithClientTest = new FlagsmithClient(new FlagsmithConfiguration
+            {
+                EnvironmentKey = Fixtures.ApiKey,
+                HttpClient = mockHttpClient.Object,
+                EnableLocalEvaluation = true
+            });
+
+            // When
+            var flag = await (await flagsmithClientTest.GetEnvironmentFlags()).GetFlag("some_feature");
+
+            // Then
+            Assert.True(flag.Enabled);
+            Assert.Equal("", flag.Value);
+        }
+        [Fact]
         public async Task TestThatCacheDictionaryDoesNotThrowUnderLoad()
         {
             const int numberOfThreads = 500;
