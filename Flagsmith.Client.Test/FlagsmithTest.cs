@@ -246,6 +246,56 @@ namespace Flagsmith.FlagsmithClientTest
             Assert.Equal("some-overridden-value", flag.Value);
         }
         [Fact]
+        public async Task TestLocalEvaluationFollowsEnvironmentDocumentPages()
+        {
+            // Given
+            HttpResponseMessage Page(JObject document, string nextPageId)
+            {
+                var response = new HttpResponseMessage
+                {
+                    StatusCode = HttpStatusCode.OK,
+                    Content = new StringContent(document.ToString())
+                };
+                if (nextPageId != null)
+                {
+                    response.Headers.Add("Link", $"</api/v1/environment-document/?page_id={Uri.EscapeDataString(nextPageId)}>; rel=\"next\"");
+                }
+                return response;
+            }
+            JObject OverridePage(string identifier, string value)
+            {
+                var identityOverride = (JObject)Fixtures.JsonObject["identity_overrides"][0].DeepClone();
+                identityOverride["identifier"] = identifier;
+                identityOverride["identity_features"][0]["feature_state_value"] = value;
+                return new JObject { ["identity_overrides"] = new JArray(identityOverride) };
+            }
+            var responses = new Dictionary<string, HttpResponseMessage>
+            {
+                { "/api/v1/environment-document/", Page(Fixtures.JsonObject, "identity_override:1:page-2") },
+                { "/api/v1/environment-document/?page_id=identity_override%3A1%3Apage-2", Page(OverridePage("page-2-id", "page-2-value"), "identity_override:1:page-3") },
+                { "/api/v1/environment-document/?page_id=identity_override%3A1%3Apage-3", Page(OverridePage("page-3-id", "page-3-value"), null) }
+            };
+            var mockHttpClient = HttpMocker.MockHttpResponse(responses);
+
+            // When
+            var flagsmithClientTest = new FlagsmithClient(new FlagsmithConfiguration
+            {
+                EnvironmentKey = Fixtures.ApiKey,
+                HttpClient = mockHttpClient.Object,
+                EnableLocalEvaluation = true
+            });
+
+            // Then
+            mockHttpClient.Verify(x => x.SendAsync(It.IsAny<HttpRequestMessage>(), It.IsAny<CancellationToken>()), Times.Exactly(3));
+            foreach (var (identifier, value) in new[] { ("overridden-id", "some-overridden-value"), ("page-2-id", "page-2-value"), ("page-3-id", "page-3-value") })
+            {
+                var flag = await (await flagsmithClientTest.GetIdentityFlags(identifier)).GetFlag("some_feature");
+                Assert.Equal(value, flag.Value);
+            }
+            var environmentFlag = await (await flagsmithClientTest.GetEnvironmentFlags()).GetFlag("some_feature");
+            Assert.Equal("some-value", environmentFlag.Value);
+        }
+        [Fact]
         public async Task TestRequestConnectionErrorRaisesFlagsmithApiError()
         {
             var mockHttpClient = HttpMocker.MockHttpThrowConnectionError();
