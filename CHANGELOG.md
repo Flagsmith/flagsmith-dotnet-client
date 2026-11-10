@@ -1,5 +1,16 @@
 # Changelog
 
+## [10.0.0](https://github.com/Flagsmith/flagsmith-dotnet-client/compare/v9.1.0...v10.0.0) (2026-11-10)
+
+
+### ⚠ BREAKING CHANGES
+
+* `IFlagsmithClient` has new members `GetExperimentFlag`, `TrackEvent`, `TrackExposureEvent` and `FlushEvents`. Classes that implement `IFlagsmithClient` must implement them. Code that only calls the interface, or mocks it, is unaffected.
+
+### Features
+
+* Support `getExperimentFlag`, `trackEvent` and `trackExposure` methods ([#214](https://github.com/Flagsmith/flagsmith-dotnet-client/issues/214)) ([af82ba5](https://github.com/Flagsmith/flagsmith-dotnet-client/commit/af82ba58ff1e294fb3ef72d238fef2089d8e1d2b))
+
 ## [9.1.0](https://github.com/Flagsmith/flagsmith-dotnet-client/compare/v9.0.0...v9.1.0) (2026-11-04)
 
 
