@@ -25,6 +25,17 @@ public static class Steps
             EventsApiUri = new Uri(eventsApiUrl),
         });
 
+    // Create the SDK client with local evaluation and events enabled
+    public static FlagsmithClient CreateClientWithLocalEvaluationAndEvents(string environmentKey, string apiUrl, string eventsApiUrl) =>
+        new(new FlagsmithConfiguration
+        {
+            EnvironmentKey = environmentKey,
+            ApiUri = new Uri(apiUrl),
+            EnableLocalEvaluation = true,
+            EnableEvents = true,
+            EventsApiUri = new Uri(eventsApiUrl),
+        });
+
     // When the application gets the environment flags
     public static async Task<IEnumerable<object>> GetEnvironmentFlags(FlagsmithClient flagsmith) =>
         AsSpecFlags(await flagsmith.GetEnvironmentFlags());
@@ -48,6 +59,21 @@ public static class Steps
     public static void TrackExposureEvent(
         FlagsmithClient flagsmith, string feature, string identifier, object? value, Dictionary<string, object?> metadata) =>
         flagsmith.TrackExposureEvent(feature, identifier, value, metadata: metadata);
+
+    // When the application tracks events "event_{first}" to "event_{last}" for identity "{identifier}"
+    public static void TrackNumberedEvents(FlagsmithClient flagsmith, long first, long last, string identifier)
+    {
+        for (var number = first; number <= last; number++)
+        {
+            flagsmith.TrackEvent($"event_{number}", identifier);
+        }
+    }
+
+    // When the application flushes events
+    public static Task FlushEvents(FlagsmithClient flagsmith) => flagsmith.FlushEvents();
+
+    // When the application closes the client with a timeout of {timeout} seconds
+    public static Task CloseClient(FlagsmithClient flagsmith, double timeout) => flagsmith.Close(TimeSpan.FromSeconds(timeout));
 
     private static List<ITrait> AsTraits(Dictionary<string, object?> traits) =>
         traits.Select(trait => (ITrait)new Trait(trait.Key, trait.Value)).ToList();

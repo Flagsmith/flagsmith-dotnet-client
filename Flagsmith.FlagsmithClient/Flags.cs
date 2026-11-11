@@ -43,7 +43,8 @@ namespace Flagsmith
                 new Feature(flagContext.Name, flagContext.Metadata.Id),
                 flagContext.Enabled,
                 flagContext.Value?.ToString(),
-                flagContext.Metadata.Id
+                flagContext.Variant,
+                flagContext.Metadata.Experiment
             )).ToList<IFlag>();
 
             return new Flags(flags, analyticsProcessor, defaultFlagHandler);

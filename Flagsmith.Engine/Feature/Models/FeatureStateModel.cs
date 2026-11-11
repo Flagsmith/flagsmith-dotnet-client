@@ -22,6 +22,8 @@ namespace FlagsmithEngine.Feature.Models
         public string FeatureStateUUID { get; set; }
         [JsonProperty(PropertyName = "feature_segment")]
         public FeatureSegmentModel FeatureSegment { get; set; } = null;
+        [JsonProperty(PropertyName = "metadata")]
+        public FeatureStateMetadataModel Metadata { get; set; }
 
         [OnSerialized()]
         private void ValidatePercentageAllocations(StreamingContext _)

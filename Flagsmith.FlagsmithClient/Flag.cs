@@ -15,6 +15,11 @@ namespace Flagsmith
             this.Value = value;
             this.Feature = feature;
         }
+        internal Flag(Feature feature, bool enabled, string value, string variant, ExperimentMetadata experiment) : this(feature, enabled, value)
+        {
+            this.Variant = variant;
+            this.Metadata = experiment == null ? null : new FlagMetadata { Experiment = experiment };
+        }
         [JsonProperty("feature")]
         private Feature Feature { get; set; }
 
