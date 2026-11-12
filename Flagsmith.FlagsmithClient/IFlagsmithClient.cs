@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace Flagsmith
@@ -40,6 +41,11 @@ namespace Flagsmith
         /// Send the buffered events now.
         /// </summary>
         Task FlushEvents();
+
+        /// <summary>
+        /// Stop the client's background work, and send the buffered events, waiting at most <paramref name="timeout"/> (5 seconds by default).
+        /// </summary>
+        Task Close(TimeSpan? timeout = null);
 
         List<ISegment> GetIdentitySegments(string identifier);
         List<ISegment> GetIdentitySegments(string identifier, List<ITrait> traits);

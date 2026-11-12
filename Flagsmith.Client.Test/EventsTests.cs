@@ -409,6 +409,32 @@ namespace Flagsmith.FlagsmithClientTest
         }
 
         [Fact]
+        public async Task TestKeptBatchFillingTheBufferWaitsForTheNextFlush()
+        {
+            // Given
+            var mockHttpClient = MockEventsApi(HttpStatusCode.ServiceUnavailable, HttpStatusCode.ServiceUnavailable, HttpStatusCode.ServiceUnavailable);
+            var config = EventsConfiguration(mockHttpClient);
+            config.EventsMaxBufferItems = 3;
+            var flagsmith = new FlagsmithClient(config);
+            flagsmith.TrackEvent("event_1", "user_123");
+            flagsmith.TrackEvent("event_2", "user_123");
+            flagsmith.TrackEvent("event_3", "user_123");
+            await flagsmith.FlushEvents();
+
+            // When
+            flagsmith.TrackEvent("event_4", "user_123");
+            flagsmith.TrackEvent("event_5", "user_123");
+            var sentBeforeFlush = mockHttpClient.PostedJson("/v1/events").Count;
+            await flagsmith.FlushEvents();
+
+            // Then
+            Assert.Equal(3, sentBeforeFlush);
+            var batches = mockHttpClient.PostedJson("/v1/events");
+            Assert.Equal(4, batches.Count);
+            Assert.Equal(new[] { "event_3", "event_4", "event_5" }, batches.Last()["events"].Select(e => (string)e["event"]));
+        }
+
+        [Fact]
         public async Task TestClosingTheClientSendsTheBufferedEventsRetriesIncluded()
         {
             // Given

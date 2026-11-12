@@ -53,6 +53,9 @@ namespace Flagsmith
         private long _takenCount;
         private bool _isSending;
         private bool _fullBufferFlushPending;
+        // Whether the buffer holds a batch kept after failing: filling the buffer then waits for the next
+        // flush rather than starting another round of retries with each event tracked.
+        private bool _holdsKeptBatch;
         private bool _refused;
         private bool _isClosed;
 
@@ -149,7 +152,7 @@ namespace Flagsmith
                 }
                 _buffer.Add(@event);
                 _trackedCount++;
-                if (_buffer.Count < _maxBufferItems || _fullBufferFlushPending)
+                if (_buffer.Count < _maxBufferItems || _fullBufferFlushPending || _holdsKeptBatch)
                 {
                     return;
                 }
@@ -184,6 +187,7 @@ namespace Flagsmith
                     _buffer = new List<Event>();
                     _bufferedExposures.Clear();
                     _takenCount = _trackedCount;
+                    _holdsKeptBatch = false;
                     _isSending = true;
                 }
 
@@ -194,6 +198,7 @@ namespace Flagsmith
                     _isSending = false;
                     if (outcome == DeliveryOutcome.Kept)
                     {
+                        _holdsKeptBatch = true;
                         _buffer = events.Concat(_buffer).Skip(Math.Max(0, events.Count + _buffer.Count - _maxBufferItems)).ToList();
                         _bufferedExposures.Clear();
                         _bufferedExposures.UnionWith(_buffer.Where(e => e.Name == FlagExposureEvent).Select(e => e.ExposureKey));
