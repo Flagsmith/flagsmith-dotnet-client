@@ -147,8 +147,14 @@ namespace Flagsmith
                 }
                 if (_buffer.Count >= _maxBufferItems)
                 {
-                    _logger?.LogWarning("Events buffer is full, dropping the oldest {Event} event", _buffer[0].Name);
+                    var evicted = _buffer[0];
+                    _logger?.LogWarning("Events buffer is full, dropping the oldest {Event} event", evicted.Name);
                     _buffer.RemoveAt(0);
+                    // A kept batch and the events tracked since may both hold an equal exposure.
+                    if (evicted.Name == FlagExposureEvent && !_buffer.Any(e => e.Name == FlagExposureEvent && e.ExposureKey.Equals(evicted.ExposureKey)))
+                    {
+                        _bufferedExposures.Remove(evicted.ExposureKey);
+                    }
                 }
                 _buffer.Add(@event);
                 _trackedCount++;

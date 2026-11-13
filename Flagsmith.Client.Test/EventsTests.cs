@@ -409,6 +409,27 @@ namespace Flagsmith.FlagsmithClientTest
         }
 
         [Fact]
+        public async Task TestExposureEvictedFromAFullBufferIsSentWhenTrackedAgain()
+        {
+            // Given
+            var mockHttpClient = MockEventsApi(HttpStatusCode.ServiceUnavailable, HttpStatusCode.ServiceUnavailable, HttpStatusCode.ServiceUnavailable);
+            var config = EventsConfiguration(mockHttpClient);
+            config.EventsMaxBufferItems = 2;
+            var flagsmith = new FlagsmithClient(config);
+            flagsmith.TrackExposureEvent("banner", "user_123", "control");
+            flagsmith.TrackEvent("signed_up", "user_123");
+            await flagsmith.FlushEvents();
+            flagsmith.TrackEvent("checkout", "user_123");
+
+            // When
+            flagsmith.TrackExposureEvent("banner", "user_123", "control");
+            await flagsmith.FlushEvents();
+
+            // Then
+            Assert.Equal(new[] { "checkout", "$flag_exposure" }, mockHttpClient.PostedJson("/v1/events").Last()["events"].Select(e => (string)e["event"]));
+        }
+
+        [Fact]
         public async Task TestKeptBatchFillingTheBufferWaitsForTheNextFlush()
         {
             // Given
