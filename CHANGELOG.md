@@ -1,5 +1,12 @@
 # Changelog
 
+## [10.1.0](https://github.com/Flagsmith/flagsmith-dotnet-client/compare/v10.0.0...v10.1.0) (2026-11-13)
+
+
+### Features
+
+* Retry event delivery and flush on close ([#217](https://github.com/Flagsmith/flagsmith-dotnet-client/issues/217)) ([0e94d8b](https://github.com/Flagsmith/flagsmith-dotnet-client/commit/0e94d8b6b9e084221b2632feb80ef642ecfdc22f))
+
 ## [10.0.0](https://github.com/Flagsmith/flagsmith-dotnet-client/compare/v9.1.0...v10.0.0) (2026-11-10)
 
 
