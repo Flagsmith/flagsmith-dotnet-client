@@ -80,7 +80,7 @@ namespace Flagsmith
                     _analyticsProcessor = new AnalyticsProcessor(_config.HttpClient, _config.EnvironmentKey, _config.ApiUri.ToString(), _config.Logger, _config.CustomHeaders);
 
                 if (_config.EnableEvents)
-                    _eventProcessor = new EventProcessor(_config.HttpClient, _config.EnvironmentKey, _config.EventsApiUri, _config.EventsFlushInterval, _config.EventsMaxBufferItems, TimeSpan.FromSeconds(_config.RequestTimeout ?? 5), _config.Logger);
+                    _eventProcessor = new EventProcessor(_config.HttpClient, _config.EnvironmentKey, _config.EventsApiUri, _config.EventsFlushInterval, _config.EventsMaxBufferItems, EventProcessor.RequestTimeout, _config.Logger);
 
                 if (_config.EnableLocalEvaluation)
                 {
@@ -169,7 +169,6 @@ namespace Flagsmith
         /// <summary>
         /// Get an identity's flag for a feature, and record which variant the identity was exposed to
         /// when it is enrolled in a running experiment on the feature. Requires <see cref="FlagsmithConfiguration.EnableEvents"/>.
-        /// Only remote evaluation knows about experiments, so local evaluation records no exposure.
         /// </summary>
         public async Task<IFlag> GetExperimentFlag(string featureName, string identifier, List<ITrait>? traits = null)
         {
@@ -227,6 +226,20 @@ namespace Flagsmith
         /// Call it before the application exits, so that no events are lost.
         /// </summary>
         public Task FlushEvents() => _eventProcessor?.Flush() ?? Task.CompletedTask;
+
+        /// <summary>
+        /// Stop the client's background work, and send the buffered events, retries included.
+        /// Call it before the application exits, so that no events are lost. Events tracked afterwards are not sent.
+        /// </summary>
+        /// <param name="timeout">How long to wait for the buffered events to be sent, 5 seconds by default. Events not sent by then are lost.</param>
+        public async Task Close(TimeSpan? timeout = null)
+        {
+            _pollingManager?.StopPoll();
+            if (_eventProcessor != null)
+            {
+                await _eventProcessor.Close(timeout ?? EventProcessor.DefaultCloseTimeout).ConfigureAwait(false);
+            }
+        }
 
         private EventProcessor RequireEventProcessor(string action) =>
             _eventProcessor ?? throw new FlagsmithClientError($"Enable events to {action}.");

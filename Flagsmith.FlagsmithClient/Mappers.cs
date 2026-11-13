@@ -157,7 +157,11 @@ namespace Flagsmith
                     Enabled = featureState.Enabled,
                     Value = featureState.Value,
                     Priority = featureState.FeatureSegment?.Priority,
-                    Metadata = new FeatureMetadata { Id = featureState.Feature.Id },
+                    Metadata = new FeatureMetadata
+                    {
+                        Id = featureState.Feature.Id,
+                        Experiment = MapExperiment(featureState.Metadata?.Experiment),
+                    },
                     Variants = Array.Empty<FeatureValue>(),
                 };
 
@@ -183,6 +187,11 @@ namespace Flagsmith
             }
 
             return featureContexts;
+        }
+
+        private static ExperimentMetadata MapExperiment(FeatureStateExperimentModel experiment)
+        {
+            return experiment == null ? null : new ExperimentMetadata(experiment.Id, experiment.Name, experiment.InExperiment);
         }
 
         private static Dictionary<string, SegmentContext<SegmentMetadata, FeatureMetadata>> MapIdentityOverridesToSegments(

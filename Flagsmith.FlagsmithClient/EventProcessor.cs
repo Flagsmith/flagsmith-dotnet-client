@@ -3,6 +3,7 @@
 using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Text;
@@ -16,13 +17,21 @@ namespace Flagsmith
     /// <summary>
     /// Buffers tracking and exposure events, and sends them to the Flagsmith events API in batches:
     /// on a timer, and as soon as the buffer fills. Equal exposures are only sent once per batch.
+    /// One batch is in flight at a time. A batch is sent up to <see cref="MaxAttempts"/> times, backing off
+    /// with full jitter between attempts. A batch whose last attempt fails transiently is kept for the next
+    /// flush, unless that attempt got a 500. A batch the events API rejects is dropped, and an events API
+    /// refusing the environment key stops event tracking. When the buffer is full, its oldest event is dropped.
     /// </summary>
     internal class EventProcessor : IDisposable
     {
         internal const string FlagExposureEvent = "$flag_exposure";
 
-        private const int MaxAttempts = 2;
+        internal const int MaxAttempts = 3;
+        internal static readonly TimeSpan RequestTimeout = TimeSpan.FromSeconds(3);
+        internal static readonly TimeSpan DefaultCloseTimeout = TimeSpan.FromSeconds(5);
         private static readonly TimeSpan RetryBackoff = TimeSpan.FromSeconds(1);
+        private static readonly int[] RetriedClientErrors = { 408, 429 };
+        private static readonly Random Jitter = new Random();
 
         private readonly HttpClient _httpClient;
         private readonly string _eventsEndpoint;
@@ -32,9 +41,23 @@ namespace Flagsmith
         private readonly ILogger? _logger;
         private readonly Timer _timer;
         private readonly object _lock = new object();
+        // Held while a batch is in flight, so that one batch is sent at a time.
+        private readonly SemaphoreSlim _sendLock = new SemaphoreSlim(1, 1);
+        // Cancelled on close, to stop waiting on retries and unanswered requests.
+        private readonly CancellationTokenSource _closed = new CancellationTokenSource();
         private List<Event> _buffer = new List<Event>();
         private readonly HashSet<(string?, string?, string?, string?)> _bufferedExposures = new HashSet<(string?, string?, string?, string?)>();
-        private readonly HashSet<Task> _pendingSends = new HashSet<Task>();
+        // Events tracked so far, and of those, events taken into a batch: a flush waiting for a batch in flight
+        // does not send again the events it carried.
+        private long _trackedCount;
+        private long _takenCount;
+        private bool _isSending;
+        private bool _fullBufferFlushPending;
+        // Whether the buffer holds a batch kept after failing: filling the buffer then waits for the next
+        // flush rather than starting another round of retries with each event tracked.
+        private bool _holdsKeptBatch;
+        private bool _refused;
+        private bool _isClosed;
 
         public EventProcessor(HttpClient httpClient, string environmentKey, Uri eventsApiUri, TimeSpan flushInterval, int maxBufferItems, TimeSpan requestTimeout, ILogger? logger)
         {
@@ -63,74 +86,144 @@ namespace Flagsmith
             Buffer(new Event(FlagExposureEvent, featureName, identifier, value, traits, metadata));
 
         /// <summary>
-        /// Sends every event buffered so far, and waits for batches already being sent.
-        /// A batch the events API does not accept is logged and dropped.
+        /// Sends the events tracked so far, and completes once each of them has been delivered, dropped,
+        /// or kept for the next flush, retries included. Waits for a batch already in flight first, and
+        /// does not send again the events it carried.
         /// </summary>
         public Task Flush()
         {
-            List<Event>? events = null;
-            TaskCompletionSource<bool>? sent = null;
-            Task[] pendingSends;
+            long? trackedCount;
             lock (_lock)
             {
-                if (_buffer.Count > 0)
-                {
-                    events = _buffer;
-                    _buffer = new List<Event>();
-                    _bufferedExposures.Clear();
-                    // Registered before the lock is released, so a concurrent Flush always waits for this batch.
-                    sent = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
-                    _pendingSends.Add(sent.Task);
-                }
-                pendingSends = _pendingSends.ToArray();
+                trackedCount = _isSending ? _trackedCount : (long?)null;
             }
-
-            if (events != null)
-            {
-                _ = SendTracked(events, sent!);
-            }
-            return Task.WhenAll(pendingSends);
+            return Send(trackedCount);
         }
 
-        public void Dispose() => _timer.Dispose();
+        /// <summary>
+        /// Stops sending on a timer, and sends the buffered events, waiting for at most <paramref name="timeout"/>.
+        /// Events not sent by then are not retried, and events tracked afterwards are not sent.
+        /// </summary>
+        public async Task Close(TimeSpan timeout)
+        {
+            lock (_lock)
+            {
+                if (_isClosed)
+                {
+                    return;
+                }
+                _isClosed = true;
+            }
+            _timer.Dispose();
+
+            var finalFlush = Send(null);
+            if (await Task.WhenAny(finalFlush, Task.Delay(timeout)).ConfigureAwait(false) != finalFlush)
+            {
+                _logger?.LogWarning("Gave up sending events after {Timeout} while closing", timeout);
+            }
+            _closed.Cancel();
+        }
+
+        public void Dispose()
+        {
+            _timer.Dispose();
+            _closed.Cancel();
+        }
 
         private void Buffer(Event @event)
         {
-            bool isFull;
+            long trackedCount;
             lock (_lock)
             {
+                if (_isClosed || _refused)
+                {
+                    _logger?.LogDebug("Not tracking {Event} event: {Reason}", @event.Name, _isClosed ? "the client is closed" : "the events API refused the environment key");
+                    return;
+                }
                 if (@event.Name == FlagExposureEvent && !_bufferedExposures.Add(@event.ExposureKey))
                 {
                     _logger?.LogDebug("Skipping duplicate {Event} event for feature {FeatureName} and identity {Identifier}", @event.Name, @event.FeatureName, @event.Identifier);
                     return;
                 }
+                if (_buffer.Count >= _maxBufferItems)
+                {
+                    var evicted = _buffer[0];
+                    _logger?.LogWarning("Events buffer is full, dropping the oldest {Event} event", evicted.Name);
+                    _buffer.RemoveAt(0);
+                    // A kept batch and the events tracked since may both hold an equal exposure.
+                    if (evicted.Name == FlagExposureEvent && !_buffer.Any(e => e.Name == FlagExposureEvent && e.ExposureKey.Equals(evicted.ExposureKey)))
+                    {
+                        _bufferedExposures.Remove(evicted.ExposureKey);
+                    }
+                }
                 _buffer.Add(@event);
-                isFull = _buffer.Count >= _maxBufferItems;
+                _trackedCount++;
+                if (_buffer.Count < _maxBufferItems || _fullBufferFlushPending || _holdsKeptBatch)
+                {
+                    return;
+                }
+                _fullBufferFlushPending = true;
+                trackedCount = _trackedCount;
             }
 
-            if (isFull)
-            {
-                _ = Flush();
-            }
+            _ = Send(trackedCount, fullBuffer: true);
         }
 
-        private async Task SendTracked(List<Event> events, TaskCompletionSource<bool> sent)
+        /// <summary>
+        /// Sends the buffered events as one batch. Given <paramref name="trackedCount"/>, does nothing if every
+        /// event tracked up to it has been taken into a batch since.
+        /// </summary>
+        private async Task Send(long? trackedCount, bool fullBuffer = false)
         {
+            await _sendLock.WaitAsync().ConfigureAwait(false);
             try
             {
-                await Send(events).ConfigureAwait(false);
+                List<Event> events;
+                lock (_lock)
+                {
+                    if (fullBuffer)
+                    {
+                        _fullBufferFlushPending = false;
+                    }
+                    if (_buffer.Count == 0 || (trackedCount != null && _takenCount >= trackedCount))
+                    {
+                        return;
+                    }
+                    events = _buffer;
+                    _buffer = new List<Event>();
+                    _bufferedExposures.Clear();
+                    _takenCount = _trackedCount;
+                    _holdsKeptBatch = false;
+                    _isSending = true;
+                }
+
+                var outcome = await Deliver(events).ConfigureAwait(false);
+
+                lock (_lock)
+                {
+                    _isSending = false;
+                    if (outcome == DeliveryOutcome.Kept)
+                    {
+                        _holdsKeptBatch = true;
+                        _buffer = events.Concat(_buffer).Skip(Math.Max(0, events.Count + _buffer.Count - _maxBufferItems)).ToList();
+                        _bufferedExposures.Clear();
+                        _bufferedExposures.UnionWith(_buffer.Where(e => e.Name == FlagExposureEvent).Select(e => e.ExposureKey));
+                    }
+                    else if (outcome == DeliveryOutcome.Refused)
+                    {
+                        _refused = true;
+                        _buffer.Clear();
+                        _bufferedExposures.Clear();
+                    }
+                }
             }
             finally
             {
-                lock (_lock)
-                {
-                    _pendingSends.Remove(sent.Task);
-                }
-                sent.SetResult(true);
+                _sendLock.Release();
             }
         }
 
-        private async Task Send(List<Event> events)
+        private async Task<DeliveryOutcome> Deliver(List<Event> events)
         {
             string body;
             try
@@ -140,13 +233,27 @@ namespace Flagsmith
             catch (Exception e)
             {
                 _logger?.LogError(e, "Dropping {EventCount} events that could not be serialised", events.Count);
-                return;
+                return DeliveryOutcome.Dropped;
             }
 
-            for (var attempt = 1; ; attempt++)
+            int? status = null;
+            for (var attempt = 1; attempt <= MaxAttempts; attempt++)
             {
+                if (attempt > 1)
+                {
+                    var backoff = TimeSpan.FromMilliseconds(RetryBackoff.TotalMilliseconds * Math.Pow(2, attempt - 2) * NextJitter());
+                    try
+                    {
+                        await Task.Delay(backoff, _closed.Token).ConfigureAwait(false);
+                    }
+                    catch (OperationCanceledException)
+                    {
+                        _logger?.LogWarning("Not retrying {EventCount} events: the client is closed", events.Count);
+                        return DeliveryOutcome.Kept;
+                    }
+                }
+
                 string failure;
-                bool retryable;
                 try
                 {
                     var request = new HttpRequestMessage(HttpMethod.Post, _eventsEndpoint)
@@ -159,34 +266,64 @@ namespace Flagsmith
                         },
                         Content = new StringContent(body, Encoding.UTF8, "application/json")
                     };
-                    using var cancellationTokenSource = new CancellationTokenSource(_requestTimeout);
-                    var response = await _httpClient.SendAsync(request, cancellationTokenSource.Token).ConfigureAwait(false);
+                    using var cancellationTokenSource = CancellationTokenSource.CreateLinkedTokenSource(_closed.Token);
+                    cancellationTokenSource.CancelAfter(_requestTimeout);
+                    using var response = await _httpClient.SendAsync(request, cancellationTokenSource.Token).ConfigureAwait(false);
+                    status = (int)response.StatusCode;
                     if (response.IsSuccessStatusCode)
                     {
-                        return;
+                        return DeliveryOutcome.Delivered;
                     }
-                    failure = $"HTTP {(int)response.StatusCode}";
-                    retryable = (int)response.StatusCode >= 500;
+                    if (status == 401 || status == 403)
+                    {
+                        _logger?.LogError("The events API refused the environment key with HTTP {Status}, stopping event tracking", status);
+                        return DeliveryOutcome.Refused;
+                    }
+                    if (status < 500 && !RetriedClientErrors.Contains(status.Value))
+                    {
+                        _logger?.LogError("Dropping {EventCount} events the events API rejected with HTTP {Status}", events.Count, status);
+                        return DeliveryOutcome.Dropped;
+                    }
+                    failure = $"HTTP {status}";
                 }
-                catch (Exception e) when (e is HttpRequestException || e is TaskCanceledException)
+                catch (Exception e) when (e is HttpRequestException || e is OperationCanceledException || e is IOException)
                 {
-                    failure = e.Message;
-                    retryable = true;
+                    status = null;
+                    failure = e is OperationCanceledException ? "no response" : e.Message;
                 }
                 catch (Exception e)
                 {
-                    failure = e.Message;
-                    retryable = false;
+                    _logger?.LogError(e, "Dropping {EventCount} events that could not be sent", events.Count);
+                    return DeliveryOutcome.Dropped;
                 }
 
-                if (!retryable || attempt >= MaxAttempts)
-                {
-                    _logger?.LogError("Dropping {EventCount} events the events API did not accept: {Failure}", events.Count, failure);
-                    return;
-                }
-                _logger?.LogWarning("Retrying {EventCount} events the events API did not accept: {Failure}", events.Count, failure);
-                await Task.Delay(RetryBackoff).ConfigureAwait(false);
+                _logger?.LogWarning("Failed to send {EventCount} events, attempt {Attempt} of {MaxAttempts}: {Failure}", events.Count, attempt, MaxAttempts, failure);
             }
+
+            // A 500 may be the batch's own doing, so sending it again would only fail again.
+            if (status == 500)
+            {
+                _logger?.LogError("Dropping {EventCount} events the events API failed with HTTP 500", events.Count);
+                return DeliveryOutcome.Dropped;
+            }
+            _logger?.LogWarning("Keeping {EventCount} events for the next flush", events.Count);
+            return DeliveryOutcome.Kept;
+        }
+
+        private static double NextJitter()
+        {
+            lock (Jitter)
+            {
+                return Jitter.NextDouble();
+            }
+        }
+
+        private enum DeliveryOutcome
+        {
+            Delivered,
+            Dropped,
+            Kept,
+            Refused,
         }
 
         private class Event

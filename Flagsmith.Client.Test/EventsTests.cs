@@ -1,5 +1,7 @@
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
@@ -252,26 +254,85 @@ namespace Flagsmith.FlagsmithClientTest
             Assert.Throws<ArgumentOutOfRangeException>(() => new FlagsmithClient(config));
         }
 
-        [Theory]
-        [InlineData(HttpStatusCode.InternalServerError, 2)]
-        [InlineData(HttpStatusCode.BadRequest, 1)]
-        public async Task TestEventsTheEventsApiDoesNotAcceptAreRetriedOnlyOnServerErrorsThenDropped(HttpStatusCode eventsStatus, int expectedAttempts)
+        // Answers the events API's requests with each of the given failures in turn, then accepts them:
+        // a status code, an exception to throw, or null for a request left unanswered until it is cancelled.
+        private static Mock<HttpClient> MockEventsApi(params object[] failures)
+        {
+            var queued = new ConcurrentQueue<object>(failures);
+            var mockHttpClient = new Mock<HttpClient>();
+            mockHttpClient.Setup(x => x.SendAsync(It.IsAny<HttpRequestMessage>(), It.IsAny<CancellationToken>()))
+                .Returns(async (HttpRequestMessage request, CancellationToken cancellationToken) =>
+                {
+                    if (!queued.TryDequeue(out var failure))
+                        return new HttpResponseMessage(HttpStatusCode.Accepted);
+                    if (failure is Exception exception)
+                        throw exception;
+                    if (failure is HttpStatusCode status)
+                        return new HttpResponseMessage(status);
+                    await Task.Delay(Timeout.Infinite, cancellationToken);
+                    throw new InvalidOperationException("Unreachable");
+                });
+            return mockHttpClient;
+        }
+
+        private static string[] SentEvents(Mock<HttpClient> mockHttpClient) =>
+            mockHttpClient.PostedJson("/v1/events").SelectMany(batch => batch["events"].Select(e => (string)e["event"])).ToArray();
+
+        [Fact]
+        public async Task TestBatchIsRetriedUntilTheEventsApiAcceptsIt()
         {
             // Given
-            var mockHttpClient = MockFlagsmith(eventsStatus: eventsStatus);
+            var mockHttpClient = MockEventsApi(HttpStatusCode.ServiceUnavailable, new HttpRequestException("Connection reset"));
             var flagsmith = new FlagsmithClient(EventsConfiguration(mockHttpClient));
-            flagsmith.TrackEvent("checkout_completed", "user_123");
+            flagsmith.TrackEvent("checkout", "user_123");
 
             // When
             await flagsmith.FlushEvents();
             await flagsmith.FlushEvents();
 
             // Then
-            Assert.Equal(expectedAttempts, mockHttpClient.PostedJson("/v1/events").Count);
+            Assert.Equal(new[] { "checkout", "checkout", "checkout" }, SentEvents(mockHttpClient));
         }
 
         [Fact]
-        public async Task TestEventsAreRetriedOnceWhenTheEventsApiIsUnreachable()
+        public async Task TestUnansweredRequestIsGivenUpAfterTheRequestTimeoutAndRetried()
+        {
+            // Given
+            var mockHttpClient = MockEventsApi(new object[] { null });
+            var flagsmith = new FlagsmithClient(EventsConfiguration(mockHttpClient));
+            flagsmith.TrackEvent("checkout", "user_123");
+            var stopwatch = Stopwatch.StartNew();
+
+            // When
+            await flagsmith.FlushEvents();
+
+            // Then
+            Assert.InRange(stopwatch.Elapsed, TimeSpan.FromSeconds(2.9), TimeSpan.FromSeconds(5));
+            Assert.Equal(new[] { "checkout", "checkout" }, SentEvents(mockHttpClient));
+        }
+
+        [Theory]
+        [InlineData(HttpStatusCode.ServiceUnavailable, HttpStatusCode.ServiceUnavailable, HttpStatusCode.ServiceUnavailable)]
+        [InlineData(HttpStatusCode.InternalServerError, HttpStatusCode.InternalServerError, HttpStatusCode.ServiceUnavailable)]
+        [InlineData(HttpStatusCode.TooManyRequests, HttpStatusCode.RequestTimeout, HttpStatusCode.BadGateway)]
+        public async Task TestBatchWhoseLastAttemptFailsTransientlyIsSentWithTheNextFlushAheadOfNewerEvents(params HttpStatusCode[] failures)
+        {
+            // Given
+            var mockHttpClient = MockEventsApi(failures.Cast<object>().ToArray());
+            var flagsmith = new FlagsmithClient(EventsConfiguration(mockHttpClient));
+            flagsmith.TrackEvent("add_to_cart", "user_123");
+            await flagsmith.FlushEvents();
+
+            // When
+            flagsmith.TrackEvent("checkout", "user_123");
+            await flagsmith.FlushEvents();
+
+            // Then
+            Assert.Equal(new[] { "add_to_cart", "add_to_cart", "add_to_cart", "add_to_cart", "checkout" }, SentEvents(mockHttpClient));
+        }
+
+        [Fact]
+        public async Task TestBatchIsKeptWhenTheEventsApiIsUnreachable()
         {
             // Given
             var mockHttpClient = HttpMocker.MockHttpThrowConnectionError();
@@ -280,9 +341,152 @@ namespace Flagsmith.FlagsmithClientTest
 
             // When
             await flagsmith.FlushEvents();
+            await flagsmith.FlushEvents();
 
             // Then
-            Assert.Equal(2, mockHttpClient.PostedJson("/v1/events").Count);
+            Assert.Equal(6, mockHttpClient.PostedJson("/v1/events").Count);
+        }
+
+        [Theory]
+        [InlineData(new[] { HttpStatusCode.BadRequest }, 1)]
+        [InlineData(new[] { HttpStatusCode.ServiceUnavailable, HttpStatusCode.ServiceUnavailable, HttpStatusCode.InternalServerError }, 3)]
+        public async Task TestBatchTheEventsApiRejectsOrFailsWithA500IsDropped(HttpStatusCode[] failures, int expectedAttempts)
+        {
+            // Given
+            var mockHttpClient = MockEventsApi(failures.Cast<object>().ToArray());
+            var flagsmith = new FlagsmithClient(EventsConfiguration(mockHttpClient));
+            flagsmith.TrackEvent("add_to_cart", "user_123");
+            await flagsmith.FlushEvents();
+
+            // When
+            flagsmith.TrackEvent("checkout", "user_123");
+            await flagsmith.FlushEvents();
+
+            // Then
+            Assert.Equal(Enumerable.Repeat("add_to_cart", expectedAttempts).Append("checkout"), SentEvents(mockHttpClient));
+        }
+
+        [Theory]
+        [InlineData(HttpStatusCode.Unauthorized)]
+        [InlineData(HttpStatusCode.Forbidden)]
+        public async Task TestEventsApiRefusingTheEnvironmentKeyStopsEventTracking(HttpStatusCode status)
+        {
+            // Given
+            var mockHttpClient = MockEventsApi(status);
+            var flagsmith = new FlagsmithClient(EventsConfiguration(mockHttpClient));
+            flagsmith.TrackEvent("add_to_cart", "user_123");
+            await flagsmith.FlushEvents();
+
+            // When
+            flagsmith.TrackEvent("checkout", "user_123");
+            await flagsmith.FlushEvents();
+
+            // Then
+            Assert.Equal(new[] { "add_to_cart" }, SentEvents(mockHttpClient));
+        }
+
+        [Fact]
+        public async Task TestFullBufferDropsItsOldestEvent()
+        {
+            // Given
+            var mockHttpClient = MockEventsApi(HttpStatusCode.ServiceUnavailable, HttpStatusCode.ServiceUnavailable, HttpStatusCode.ServiceUnavailable);
+            var config = EventsConfiguration(mockHttpClient);
+            config.EventsMaxBufferItems = 3;
+            var flagsmith = new FlagsmithClient(config);
+            flagsmith.TrackEvent("event_1", "user_123");
+            flagsmith.TrackEvent("event_2", "user_123");
+            flagsmith.TrackEvent("event_3", "user_123");
+            await flagsmith.FlushEvents();
+
+            // When
+            flagsmith.TrackEvent("event_4", "user_123");
+            await flagsmith.FlushEvents();
+
+            // Then
+            var batches = mockHttpClient.PostedJson("/v1/events");
+            Assert.Equal(4, batches.Count);
+            Assert.Equal(new[] { "event_2", "event_3", "event_4" }, batches.Last()["events"].Select(e => (string)e["event"]));
+        }
+
+        [Fact]
+        public async Task TestExposureEvictedFromAFullBufferIsSentWhenTrackedAgain()
+        {
+            // Given
+            var mockHttpClient = MockEventsApi(HttpStatusCode.ServiceUnavailable, HttpStatusCode.ServiceUnavailable, HttpStatusCode.ServiceUnavailable);
+            var config = EventsConfiguration(mockHttpClient);
+            config.EventsMaxBufferItems = 2;
+            var flagsmith = new FlagsmithClient(config);
+            flagsmith.TrackExposureEvent("banner", "user_123", "control");
+            flagsmith.TrackEvent("signed_up", "user_123");
+            await flagsmith.FlushEvents();
+            flagsmith.TrackEvent("checkout", "user_123");
+
+            // When
+            flagsmith.TrackExposureEvent("banner", "user_123", "control");
+            await flagsmith.FlushEvents();
+
+            // Then
+            Assert.Equal(new[] { "checkout", "$flag_exposure" }, mockHttpClient.PostedJson("/v1/events").Last()["events"].Select(e => (string)e["event"]));
+        }
+
+        [Fact]
+        public async Task TestKeptBatchFillingTheBufferWaitsForTheNextFlush()
+        {
+            // Given
+            var mockHttpClient = MockEventsApi(HttpStatusCode.ServiceUnavailable, HttpStatusCode.ServiceUnavailable, HttpStatusCode.ServiceUnavailable);
+            var config = EventsConfiguration(mockHttpClient);
+            config.EventsMaxBufferItems = 3;
+            var flagsmith = new FlagsmithClient(config);
+            flagsmith.TrackEvent("event_1", "user_123");
+            flagsmith.TrackEvent("event_2", "user_123");
+            flagsmith.TrackEvent("event_3", "user_123");
+            await flagsmith.FlushEvents();
+
+            // When
+            flagsmith.TrackEvent("event_4", "user_123");
+            flagsmith.TrackEvent("event_5", "user_123");
+            var sentBeforeFlush = mockHttpClient.PostedJson("/v1/events").Count;
+            await flagsmith.FlushEvents();
+
+            // Then
+            Assert.Equal(3, sentBeforeFlush);
+            var batches = mockHttpClient.PostedJson("/v1/events");
+            Assert.Equal(4, batches.Count);
+            Assert.Equal(new[] { "event_3", "event_4", "event_5" }, batches.Last()["events"].Select(e => (string)e["event"]));
+        }
+
+        [Fact]
+        public async Task TestClosingTheClientSendsTheBufferedEventsRetriesIncluded()
+        {
+            // Given
+            var mockHttpClient = MockEventsApi(HttpStatusCode.ServiceUnavailable);
+            var flagsmith = new FlagsmithClient(EventsConfiguration(mockHttpClient));
+            flagsmith.TrackEvent("checkout", "user_123");
+
+            // When
+            await flagsmith.Close(TimeSpan.FromSeconds(5));
+            flagsmith.TrackEvent("signed_out", "user_123");
+            await flagsmith.FlushEvents();
+
+            // Then
+            Assert.Equal(new[] { "checkout", "checkout" }, SentEvents(mockHttpClient));
+        }
+
+        [Fact]
+        public async Task TestClosingTheClientReturnsWithinItsTimeoutWhenTheEventsApiDoesNotAnswer()
+        {
+            // Given
+            var mockHttpClient = MockEventsApi(null, null, null);
+            var flagsmith = new FlagsmithClient(EventsConfiguration(mockHttpClient));
+            flagsmith.TrackEvent("checkout", "user_123");
+            var stopwatch = Stopwatch.StartNew();
+
+            // When
+            await flagsmith.Close(TimeSpan.FromSeconds(1));
+
+            // Then
+            Assert.InRange(stopwatch.Elapsed, TimeSpan.FromSeconds(0.9), TimeSpan.FromSeconds(2));
+            Assert.Single(mockHttpClient.PostedJson("/v1/events"));
         }
 
         [Fact]
@@ -337,6 +541,105 @@ namespace Flagsmith.FlagsmithClientTest
 
             // Then
             Assert.Equal("hello", flag.Value);
+            Assert.Empty(mockHttpClient.PostedJson("/v1/events"));
+        }
+
+        // An environment document running an experiment on "checkout", as Flagsmith serves it: the experiment's
+        // rollout segment enrolls `rolloutPercentage` of identities, and serves them "treatment" at `variantPercentage`.
+        private static string ExperimentEnvironmentDocument(int rolloutPercentage, int variantPercentage) => $@"{{
+            'api_key': 'test_key',
+            'name': 'Test Environment',
+            'project': {{
+                'id': 1,
+                'name': 'Test project',
+                'hide_disabled_flags': false,
+                'organisation': {{ 'id': 1, 'name': 'Test Org', 'feature_analytics': false, 'persist_trait_data': true, 'stop_serving_flags': false }},
+                'segments': [{{
+                    'id': 1,
+                    'name': 'experiment-7-rollout',
+                    'rules': [{{
+                        'type': 'ALL',
+                        'rules': [],
+                        'conditions': [{{ 'operator': 'PERCENTAGE_SPLIT', 'value': '{rolloutPercentage}', 'property_': '$.identity.key' }}]
+                    }}],
+                    'feature_states': [{CheckoutFeatureState(2, "{ 'priority': 0 }", variantPercentage, inExperiment: true)}]
+                }}]
+            }},
+            'feature_states': [{CheckoutFeatureState(1, "null", 0, inExperiment: false)}],
+            'identity_overrides': []
+        }}";
+
+        private static string CheckoutFeatureState(int id, string featureSegment, int variantPercentage, bool inExperiment) => $@"{{
+            'feature': {{ 'id': 1, 'name': 'checkout', 'type': 'MULTIVARIATE' }},
+            'enabled': true,
+            'django_id': {id},
+            'feature_segment': {featureSegment},
+            'featurestate_uuid': '00000000-0000-0000-0000-00000000000{id}',
+            'feature_state_value': 'control',
+            'multivariate_feature_state_values': [{{
+                'multivariate_feature_option': {{ 'id': 1, 'key': 'treatment', 'value': 'new checkout' }},
+                'percentage_allocation': {variantPercentage},
+                'id': {id},
+                'mv_fs_value_uuid': '10000000-0000-0000-0000-00000000000{id}'
+            }}],
+            'metadata': {{ 'experiment': {{ 'id': 7, 'name': 'checkout experiment', 'in_experiment': {(inExperiment ? "true" : "false")} }} }}
+        }}";
+
+        private static FlagsmithClient LocalEvaluationClientWithEvents(Mock<HttpClient> mockHttpClient)
+        {
+            var config = EventsConfiguration(mockHttpClient);
+            config.EnableLocalEvaluation = true;
+            return new FlagsmithClient(config);
+        }
+
+        [Theory]
+        [InlineData(100, "new checkout", "treatment")]
+        [InlineData(0, "control", "control")]
+        public async Task TestLocallyEvaluatedIdentityInARunningExperimentIsExposedToTheVariantItWasServed(int variantPercentage, string expectedValue, string expectedVariant)
+        {
+            // Given
+            var mockHttpClient = HttpMocker.MockHttpResponse(new Dictionary<string, HttpResponseMessage>
+            {
+                { "/api/v1/environment-document/", new HttpResponseMessage { StatusCode = HttpStatusCode.OK, Content = new StringContent(ExperimentEnvironmentDocument(100, variantPercentage)) } },
+                { "/v1/events", new HttpResponseMessage { StatusCode = HttpStatusCode.Accepted } },
+            });
+            var flagsmith = LocalEvaluationClientWithEvents(mockHttpClient);
+
+            // When
+            var flag = (Flag)await flagsmith.GetExperimentFlag("checkout", "user_123", new List<ITrait> { new Trait("plan", "premium") });
+            await flagsmith.FlushEvents();
+
+            // Then
+            Assert.Equal(expectedValue, flag.Value);
+            Assert.Equal(expectedVariant, flag.Variant);
+            Assert.Equal(7, flag.Experiment.Id);
+            Assert.True(flag.Experiment.InExperiment);
+            mockHttpClient.VerifyHttpRequest(HttpMethod.Post, "/api/v1/identities/", Times.Never);
+            var exposure = mockHttpClient.PostedJson("/v1/events").Single()["events"].Single();
+            Assert.Equal("$flag_exposure", (string)exposure["event"]);
+            Assert.Equal("checkout", (string)exposure["feature_name"]);
+            Assert.Equal(expectedVariant, (string)exposure["value"]);
+            Assert.Equal(7, (int)exposure["metadata"]["experiment_id"]);
+        }
+
+        [Fact]
+        public async Task TestLocallyEvaluatedIdentityARunningExperimentDoesNotEnrollIsNotExposed()
+        {
+            // Given
+            var mockHttpClient = HttpMocker.MockHttpResponse(new Dictionary<string, HttpResponseMessage>
+            {
+                { "/api/v1/environment-document/", new HttpResponseMessage { StatusCode = HttpStatusCode.OK, Content = new StringContent(ExperimentEnvironmentDocument(0, 100)) } },
+                { "/v1/events", new HttpResponseMessage { StatusCode = HttpStatusCode.Accepted } },
+            });
+            var flagsmith = LocalEvaluationClientWithEvents(mockHttpClient);
+
+            // When
+            var flag = (Flag)await flagsmith.GetExperimentFlag("checkout", "user_123");
+            await flagsmith.FlushEvents();
+
+            // Then
+            Assert.Equal("control", flag.Value);
+            Assert.False(flag.Experiment.InExperiment);
             Assert.Empty(mockHttpClient.PostedJson("/v1/events"));
         }
 

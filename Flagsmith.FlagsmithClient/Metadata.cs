@@ -11,6 +11,11 @@ namespace Flagsmith
         /// The feature identifier from the API.
         /// </summary>
         public int Id { get; set; }
+
+        /// <summary>
+        /// The running experiment the feature state belongs to, if any.
+        /// </summary>
+        public ExperimentMetadata? Experiment { get; set; }
     }
 
     /// <summary>
