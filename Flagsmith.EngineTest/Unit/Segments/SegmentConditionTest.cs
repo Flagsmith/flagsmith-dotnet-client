@@ -17,7 +17,14 @@ namespace EngineTest.Unit.Segments
         [InlineData(95.5, Operator.GreaterThan, "90", true)]
         [InlineData(95.5, Operator.NotEqual, "foo", false)]
         [InlineData(95.5, Operator.Contains, "9", false)]
-        public void TestNumericTraitMatchesSegmentByNumericValue(object traitValue, Operator conditionOperator, string conditionValue, bool expectedMatch)
+        [InlineData("production", Operator.Regex, "prod", true)]
+        [InlineData("nonproduction", Operator.Regex, "prod", false)]
+        [InlineData("jane@example.com", Operator.Regex, "@example\\.com$", false)]
+        [InlineData("jane@example.com", Operator.Regex, "^[^@]+@example\\.com$", true)]
+        [InlineData("staging", Operator.Regex, "prod|stag", true)]
+        [InlineData(12345, Operator.Regex, "\\d{3}", true)]
+        [InlineData(12345, Operator.Regex, "345", false)]
+        public void TestTraitMatchesSegmentCondition(object traitValue, Operator conditionOperator, string conditionValue, bool expectedMatch)
         {
             // Given
             var context = new EvaluationContext<object, object>
