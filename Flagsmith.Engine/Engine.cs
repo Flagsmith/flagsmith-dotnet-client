@@ -483,12 +483,19 @@ namespace FlagsmithEngine
                 case Operator.NotContains:
                     return !contextValue.ToString().Contains(condition.Value.String);
                 case Operator.Regex:
-                    return Regex.Match(contextValue.ToString(), condition.Value.String).Success;
+                    return EvaluateRegex(contextValue.ToString(), condition.Value.String);
                 case Operator.Modulo:
                     return EvaluateModulo(contextValue.ToString(), condition.Value.String);
                 default:
                     return MatchingFunctionName(contextValue, condition);
             }
+        }
+
+        // Regex conditions match from the start of the value, but do not need to match the whole value.
+        private static bool EvaluateRegex(string contextValue, string conditionValue)
+        {
+            var match = Regex.Match(contextValue, conditionValue);
+            return match.Success && match.Index == 0;
         }
 
         private static bool EvaluateModulo(string contextValue, string conditionValue)
