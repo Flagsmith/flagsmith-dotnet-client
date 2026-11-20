@@ -81,7 +81,7 @@ public static class Steps
     private static IEnumerable<object> AsSpecFlags(IFlags flags) => flags.AllFlags().Select(AsSpecFlag);
 
     private static object AsSpecFlag(IFlag flag) =>
-        new { feature = flag.GetFeatureName(), enabled = flag.Enabled, value = AsSpecValue(flag.Value) };
+        new { feature = flag.GetFeatureName(), enabled = flag.Enabled, value = AsSpecValue(flag.Value), reason = (flag as Flag)?.Reason };
 
     // The SDK exposes flag values as strings (42 -> "42", true -> "true"), so restore numbers and booleans.
     private static object? AsSpecValue(string? value) =>

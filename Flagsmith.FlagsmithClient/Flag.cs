@@ -15,9 +15,10 @@ namespace Flagsmith
             this.Value = value;
             this.Feature = feature;
         }
-        internal Flag(Feature feature, bool enabled, string value, string variant, ExperimentMetadata experiment) : this(feature, enabled, value)
+        internal Flag(Feature feature, bool enabled, string value, string variant, ExperimentMetadata experiment, string reason = null) : this(feature, enabled, value)
         {
             this.Variant = variant;
+            this.Reason = reason;
             this.Metadata = experiment == null ? null : new FlagMetadata { Experiment = experiment };
         }
         [JsonProperty("feature")]
@@ -34,6 +35,12 @@ namespace Flagsmith
         /// </summary>
         [JsonProperty("variant")]
         public string Variant { get; private set; }
+
+        /// <summary>
+        /// Why the flag was evaluated to its value, e.g. "STATIC", "DEFAULT" or "TARGETING_MATCH; segment=premium_users", if known.
+        /// </summary>
+        [JsonProperty("reason")]
+        public string Reason { get; private set; }
 
         [JsonProperty("metadata")]
         private FlagMetadata Metadata { get; set; }
