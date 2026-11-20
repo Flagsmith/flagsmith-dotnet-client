@@ -44,7 +44,8 @@ namespace Flagsmith
                 flagContext.Enabled,
                 flagContext.Value?.ToString(),
                 flagContext.Variant,
-                flagContext.Metadata.Experiment
+                flagContext.Metadata.Experiment,
+                flagContext.Reason
             )).ToList<IFlag>();
 
             return new Flags(flags, analyticsProcessor, defaultFlagHandler);
