@@ -176,6 +176,115 @@ namespace Flagsmith.FlagsmithClientTest
             Assert.Equal("", flag.Value);
         }
         [Fact]
+        public async Task TestGetEnvironmentFlagsExposesTheReasonFlagsmithReturned()
+        {
+            // Given
+            var mockHttpClient = HttpMocker.MockHttpResponse(new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.OK,
+                Content = new StringContent(Fixtures.ApiFlagResponse.Replace("'feature_segment': null", "'feature_segment': null, 'reason': 'STATIC'"))
+            });
+            var flagsmithClientTest = new FlagsmithClient(new FlagsmithConfiguration
+            {
+                EnvironmentKey = Fixtures.ApiKey,
+                HttpClient = mockHttpClient.Object
+            });
+
+            // When
+            var flag = (Flag)await (await flagsmithClientTest.GetEnvironmentFlags()).GetFlag("some_feature");
+
+            // Then
+            Assert.Equal("STATIC", flag.Reason);
+        }
+        [Fact]
+        public async Task TestGetEnvironmentFlagsHasNoReasonWhenFlagsmithReturnsNone()
+        {
+            // Given
+            var mockHttpClient = HttpMocker.MockHttpResponse(new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.OK,
+                Content = new StringContent(Fixtures.ApiFlagResponse)
+            });
+            var flagsmithClientTest = new FlagsmithClient(new FlagsmithConfiguration
+            {
+                EnvironmentKey = Fixtures.ApiKey,
+                HttpClient = mockHttpClient.Object
+            });
+
+            // When
+            var flag = (Flag)await (await flagsmithClientTest.GetEnvironmentFlags()).GetFlag("some_feature");
+
+            // Then
+            Assert.Null(flag.Reason);
+        }
+        [Fact]
+        public async Task TestGetIdentityFlagsExposesTheReasonFlagsmithReturned()
+        {
+            // Given
+            var mockHttpClient = HttpMocker.MockHttpResponse(new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.OK,
+                Content = new StringContent(Fixtures.ApiIdentityResponse.Replace("'feature_segment': null", "'feature_segment': null, 'reason': 'TARGETING_MATCH; segment=premium_users'"))
+            });
+            var flagsmithClientTest = new FlagsmithClient(new FlagsmithConfiguration
+            {
+                EnvironmentKey = Fixtures.ApiKey,
+                HttpClient = mockHttpClient.Object
+            });
+
+            // When
+            var flag = (Flag)await (await flagsmithClientTest.GetIdentityFlags("identifier")).GetFlag("some_feature");
+
+            // Then
+            Assert.Equal("TARGETING_MATCH; segment=premium_users", flag.Reason);
+        }
+        [Fact]
+        public async Task TestGetEnvironmentFlagsExposesTheEvaluatedReasonWithLocalEvaluation()
+        {
+            // Given
+            var mockHttpClient = HttpMocker.MockHttpResponse(new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.OK,
+                Content = new StringContent(Fixtures.JsonObject.ToString())
+            });
+            var flagsmithClientTest = new FlagsmithClient(new FlagsmithConfiguration
+            {
+                EnvironmentKey = Fixtures.ApiKey,
+                HttpClient = mockHttpClient.Object,
+                EnableLocalEvaluation = true
+            });
+
+            // When
+            var flag = (Flag)await (await flagsmithClientTest.GetEnvironmentFlags()).GetFlag("some_feature");
+
+            // Then
+            Assert.Equal("STATIC", flag.Reason);
+        }
+        [Theory]
+        [InlineData("overridden-id", "TARGETING_MATCH; segment=identity_overrides")]
+        [InlineData("identifier", "DEFAULT")]
+        public async Task TestGetIdentityFlagsExposesTheEvaluatedReasonWithLocalEvaluation(string identifier, string expectedReason)
+        {
+            // Given
+            var mockHttpClient = HttpMocker.MockHttpResponse(new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.OK,
+                Content = new StringContent(Fixtures.JsonObject.ToString())
+            });
+            var flagsmithClientTest = new FlagsmithClient(new FlagsmithConfiguration
+            {
+                EnvironmentKey = Fixtures.ApiKey,
+                HttpClient = mockHttpClient.Object,
+                EnableLocalEvaluation = true
+            });
+
+            // When
+            var flag = (Flag)await (await flagsmithClientTest.GetIdentityFlags(identifier, new List<ITrait>())).GetFlag("some_feature");
+
+            // Then
+            Assert.Equal(expectedReason, flag.Reason);
+        }
+        [Fact]
         public async Task TestThatCacheDictionaryDoesNotThrowUnderLoad()
         {
             const int numberOfThreads = 500;
