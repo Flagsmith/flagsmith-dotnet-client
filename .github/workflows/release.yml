@@ -5,6 +5,8 @@ on:
     types:
       - published
 
+permissions: {}
+
 env:
   DOTNET_SKIP_FIRST_TIME_EXPERIENCE: 1
   DOTNET_NOLOGO: true
@@ -18,6 +20,8 @@ defaults:
 jobs:
   create_nuget:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@v4
         with:
@@ -46,6 +50,8 @@ jobs:
     runs-on: ubuntu-latest
     needs:
       - create_nuget
+    permissions:
+      contents: read
     steps:
       # Install the .NET SDK indicated in the global.json file
       - name: Setup .NET
@@ -76,7 +82,6 @@ jobs:
       - validate_nuget
     permissions:
       id-token: write # required for NuGet trusted publishing (OIDC)
-      contents: read
     steps:
       # Download the NuGet package created in the previous job
       - uses: actions/download-artifact@v4
@@ -105,8 +110,25 @@ jobs:
               dotnet nuget push $file --api-key "${{ steps.nuget-login.outputs.NUGET_API_KEY }}" --source https://api.nuget.org/v3/index.json
           }
 
-      - name: Upload Release Asset
-        uses: shogo82148/actions-upload-release-asset@v1
+  upload_release_asset:
+    runs-on: ubuntu-latest
+    # Only attach the package to the GitHub release once it has been published to NuGet.org
+    needs:
+      - create_nuget
+      - publish
+    permissions:
+      contents: write # required to upload assets to the GitHub release
+    steps:
+      # Download the NuGet package created in the previous job
+      - uses: actions/download-artifact@v4
         with:
-          upload_url: ${{ github.event.release.upload_url }}
-          asset_path: ${{ env.NuGetDirectory }}/*.nupkg
+          name: nuget
+          path: ${{ env.NuGetDirectory }}
+
+      - name: Upload release asset
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          TAG: ${{ github.event.release.tag_name }}
+        run: gh release upload "$TAG" "$NuGetDirectory"/*.nupkg --clobber
