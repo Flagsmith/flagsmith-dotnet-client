@@ -1,5 +1,12 @@
 # Changelog
 
+## [10.2.1](https://github.com/Flagsmith/flagsmith-dotnet-client/compare/v10.2.0...v10.2.1) (2026-11-23)
+
+
+### CI
+
+* Upload release asset from a separate job with `contents: write` ([#223](https://github.com/Flagsmith/flagsmith-dotnet-client/issues/223)) ([2dc1671](https://github.com/Flagsmith/flagsmith-dotnet-client/commit/2dc1671dcff2dabb34fb48bfe1127ba1e60807ab))
+
 ## [10.2.0](https://github.com/Flagsmith/flagsmith-dotnet-client/compare/v10.1.0...v10.2.0) (2026-11-23)
 
 
