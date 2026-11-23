@@ -1,13 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using System.Net.Http;
-using Polly.Retry;
-using System.Net;
-using Polly;
 using System.Linq;
+using System.Net;
+using System.Net.Http;
 using System.Threading.Tasks;
-using System.Threading;
 
 namespace Flagsmith
 {
@@ -20,10 +15,31 @@ namespace Flagsmith
                    HttpStatusCode.ServiceUnavailable, // 503
                    HttpStatusCode.GatewayTimeout // 504
                 };
-        public static AsyncRetryPolicy<HttpResponseMessage> GetRetryPolicyAwaitable(int? retries)
-        => Policy
-                .Handle<HttpRequestException>()
-                .OrResult<HttpResponseMessage>(r => httpStatusCodesWorthRetrying.Contains(r.StatusCode))
-                .WaitAndRetryAsync(retries ?? 3, retryAttempt => TimeSpan.FromSeconds(Math.Pow(0.5, retryAttempt)));
+
+        public static async Task<HttpResponseMessage> ExecuteWithRetryAsync(int? retries, Func<Task<HttpResponseMessage>> action)
+        {
+            var retryCount = retries ?? 3;
+            if (retryCount < 0)
+            {
+                throw new ArgumentOutOfRangeException(nameof(retries), retryCount, "Value must be greater than or equal to zero.");
+            }
+
+            for (var attempt = 1; ; attempt++)
+            {
+                try
+                {
+                    var response = await action().ConfigureAwait(false);
+                    if (attempt > retryCount || !httpStatusCodesWorthRetrying.Contains(response.StatusCode))
+                    {
+                        return response;
+                    }
+                }
+                catch (HttpRequestException) when (attempt <= retryCount)
+                {
+                }
+
+                await Task.Delay(TimeSpan.FromSeconds(Math.Pow(0.5, attempt))).ConfigureAwait(false);
+            }
+        }
     }
 }
