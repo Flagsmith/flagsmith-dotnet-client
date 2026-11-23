@@ -13,8 +13,8 @@ namespace Flagsmith.FlagsmithClientTest
         /// <summary>
         /// This class provides some extra functionality to help particularly in unit testing.
         /// </summary>
-        public AnalyticsProcessorTest(HttpClient httpClient, string environmentKey, string baseApiUrl, int timeOut = 3)
-            : base(httpClient, environmentKey, baseApiUrl, timeOut: timeOut)
+        public AnalyticsProcessorTest(HttpClient httpClient, string environmentKey, Uri analyticsUri, int timeOut = 3)
+            : base(httpClient, environmentKey, analyticsUri, timeOut: timeOut)
         {
         }
         /// <summary>

@@ -18,7 +18,7 @@ namespace Flagsmith
 
         private int _FlushIntervalSeconds = 10;
         private readonly DisposableLock _lock = new DisposableLock();
-        private readonly string _AnalyticsEndPoint;
+        private readonly Uri _AnalyticsUri;
         private readonly string _EnvironmentKey;
         private readonly int _TimeOut;
         private DateTime _LastFlushed;
@@ -28,9 +28,14 @@ namespace Flagsmith
         private ConcurrentDictionary<string, Dictionary<string, int>> AnalyticsDataThreads;
 
         public AnalyticsProcessor(HttpClient httpClient, string environmentKey, string baseApiUrl, ILogger logger = null, Dictionary<string, string> customHeaders = null, int timeOut = 3, int flushIntervalSeconds = 10)
+            : this(httpClient, environmentKey, new Uri(baseApiUrl + "analytics/flags/", UriKind.RelativeOrAbsolute), logger, customHeaders, timeOut, flushIntervalSeconds)
+        {
+        }
+
+        public AnalyticsProcessor(HttpClient httpClient, string environmentKey, Uri analyticsUri, ILogger logger = null, Dictionary<string, string> customHeaders = null, int timeOut = 3, int flushIntervalSeconds = 10)
         {
             _EnvironmentKey = environmentKey;
-            _AnalyticsEndPoint = baseApiUrl + "analytics/flags/";
+            _AnalyticsUri = analyticsUri;
             _TimeOut = timeOut;
             _LastFlushed = DateTime.UtcNow;
             _HttpClient = httpClient;
@@ -71,7 +76,7 @@ namespace Flagsmith
             try
             {
                 var analyticsJson = JsonConvert.SerializeObject(GetAggregatedAnalyticsWithoutLock());
-                var request = new HttpRequestMessage(HttpMethod.Post, _AnalyticsEndPoint)
+                var request = new HttpRequestMessage(HttpMethod.Post, _AnalyticsUri)
                 {
                     Headers =
                         {
