@@ -9,7 +9,7 @@ namespace Flagsmith.FlagsmithClientTest
         public void TestGetUserAgentReturnsExpectedVersion()
         {
             // x-release-please-start-version
-            string expectedVersion = "10.1.0";
+            string expectedVersion = "10.2.0";
             // x-release-please-end
 
             // When

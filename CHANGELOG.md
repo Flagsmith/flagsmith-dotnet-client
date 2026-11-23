@@ -1,5 +1,12 @@
 # Changelog
 
+## [10.2.0](https://github.com/Flagsmith/flagsmith-dotnet-client/compare/v10.1.0...v10.2.0) (2026-11-23)
+
+
+### Features
+
+* Every SDK includes `reason` in responses for identity and environment flags ([#220](https://github.com/Flagsmith/flagsmith-dotnet-client/issues/220)) ([8c2486c](https://github.com/Flagsmith/flagsmith-dotnet-client/commit/8c2486c7109948611ff5447ac205bf80107ea404))
+
 ## [10.1.0](https://github.com/Flagsmith/flagsmith-dotnet-client/compare/v10.0.0...v10.1.0) (2026-11-13)
 
 
